@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import gargoyle.rpycg.ui.Banner?>
+<?import javafx.scene.control.Label?>
+<fx:root xmlns:fx="http://javafx.com/fxml"
+         xmlns="http://javafx.com/javafx" type="Banner">
+    <center>
+        <Label text="%banner" styleClass="banner" maxWidth="Infinity" alignment="CENTER"/>
+    </center>
+</fx:root>
