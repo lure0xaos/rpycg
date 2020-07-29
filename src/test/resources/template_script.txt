@@ -1,0 +1,11 @@
+<
+variable_name1(str);custom name
+variable_name2(str)
+<submenu_title
+variable_name3(str)
+variable_name4(str)
+>
+variable_name5(str)
+fixed_variable6=100(int)
+fixed_variable7=100(int);custom name
+>

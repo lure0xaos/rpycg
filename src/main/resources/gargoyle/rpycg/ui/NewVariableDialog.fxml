@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.Tooltip?>
+<?import javafx.scene.layout.GridPane?>
+<GridPane xmlns:fx="http://javafx.com/fxml"
+          xmlns="http://javafx.com/javafx">
+    <Label text="%name" GridPane.columnIndex="0" GridPane.rowIndex="0">
+        <tooltip>
+            <Tooltip text="%name-tooltip"/>
+        </tooltip>
+    </Label>
+    <TextField fx:id="name" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+    <Label text="=" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+    <Label text="%value" GridPane.columnIndex="2" GridPane.rowIndex="0">
+        <tooltip>
+            <Tooltip text="%value-tooltip"/>
+        </tooltip>
+    </Label>
+    <TextField fx:id="value" GridPane.columnIndex="2" GridPane.rowIndex="1"/>
+    <Label text="%type" GridPane.columnIndex="3" GridPane.rowIndex="0">
+        <tooltip>
+            <Tooltip text="%type-tooltip"/>
+        </tooltip>
+    </Label>
+    <ComboBox fx:id="type" GridPane.columnIndex="3" GridPane.rowIndex="1"/>
+    <Label text="%label" GridPane.columnIndex="0" GridPane.rowIndex="2" GridPane.columnSpan="4">
+        <tooltip>
+            <Tooltip text="%label-tooltip"/>
+        </tooltip>
+    </Label>
+    <TextField fx:id="label" GridPane.columnIndex="0" GridPane.rowIndex="3" GridPane.columnSpan="4"/>
+</GridPane>

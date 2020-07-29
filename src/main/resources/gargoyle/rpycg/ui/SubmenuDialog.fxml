@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.GridPane?>
+<GridPane xmlns:fx="http://javafx.com/fxml"
+          xmlns="http://javafx.com/javafx">
+    <Label text="%label" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+    <TextField fx:id="label" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+</GridPane>

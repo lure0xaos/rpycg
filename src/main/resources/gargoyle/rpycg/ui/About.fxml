@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import gargoyle.rpycg.ui.About?>
+<?import javafx.scene.control.Hyperlink?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<fx:root xmlns:fx="http://javafx.com/fxml"
+         xmlns="http://javafx.com/javafx" type="About">
+    <ImageView GridPane.rowIndex="0" GridPane.columnIndex="0" GridPane.halignment="CENTER" GridPane.valignment="CENTER">
+        <Image url="@About.png"/>
+    </ImageView>
+    <BorderPane GridPane.rowIndex="0" GridPane.columnIndex="1" GridPane.halignment="CENTER"
+                GridPane.valignment="CENTER">
+        <top>
+            <Label text="%created" alignment="CENTER" maxWidth="Infinity"/>
+        </top>
+        <center>
+            <Label text="%usage" wrapText="true" alignment="CENTER" maxWidth="Infinity"/>
+        </center>
+        <bottom>
+            <Hyperlink text="%link" alignment="CENTER" maxWidth="Infinity" fx:id="link" onAction="#onLink"
+                       userData="https://github.com/lure0xaos/rpycg"/>
+        </bottom>
+    </BorderPane>
+    <columnConstraints>
+        <ColumnConstraints percentWidth="50"/>
+        <ColumnConstraints percentWidth="50"/>
+    </columnConstraints>
+</fx:root>

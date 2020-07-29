@@ -1,0 +1,309 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import gargoyle.rpycg.ui.About?>
+<?import gargoyle.rpycg.ui.Banner?>
+<?import gargoyle.rpycg.ui.KeyText?>
+<?import gargoyle.rpycg.ui.Main?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ButtonBar?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.TabPane?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.TitledPane?>
+<?import javafx.scene.control.Tooltip?>
+<?import javafx.scene.control.TreeTableColumn?>
+<?import javafx.scene.control.TreeTableView?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.input.KeyCodeCombination?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.VBox?>
+<fx:root xmlns:fx="http://javafx.com/fxml"
+         xmlns="http://javafx.com/javafx"
+         prefHeight="480.0" prefWidth="800.0" type="Main">
+    <top>
+        <Banner/>
+    </top>
+    <center>
+        <BorderPane>
+            <top>
+                <ButtonBar>
+                    <buttons>
+                        <Button text="%create-variable" ButtonBar.buttonData="LEFT" onAction="#onVariable">
+                            <tooltip>
+                                <Tooltip text="%create-variable-tooltip"/>
+                            </tooltip>
+                            <graphic>
+                                <ImageView>
+                                    <Image url="@icons/var.png"/>
+                                </ImageView>
+                            </graphic>
+                        </Button>
+                        <Button text="%create-submenu" ButtonBar.buttonData="LEFT" onAction="#onSubmenu">
+                            <tooltip>
+                                <Tooltip text="%create-submenu-tooltip"/>
+                            </tooltip>
+                            <graphic>
+                                <ImageView>
+                                    <Image url="@icons/menu.png"/>
+                                </ImageView>
+                            </graphic>
+                        </Button>
+                    </buttons>
+                </ButtonBar>
+            </top>
+            <center>
+                <TabPane tabClosingPolicy="UNAVAILABLE">
+                    <Tab text="%tab-builder" fx:id="tabBuilder">
+                        <tooltip>
+                            <Tooltip text="%tab-builder-tooltip"/>
+                        </tooltip>
+                        <graphic>
+                            <ImageView>
+                                <Image url="@icons/builder.png"/>
+                            </ImageView>
+                        </graphic>
+                        <ScrollPane fitToHeight="true" fitToWidth="true">
+                            <TreeTableView fx:id="tree" editable="true">
+                                <columnResizePolicy>
+                                    <TreeTableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
+                                </columnResizePolicy>
+                                <placeholder>
+                                    <Label text="%creator-placeholder"/>
+                                </placeholder>
+                                <columns>
+                                    <TreeTableColumn fx:id="modelTypeColumn" minWidth="24" maxWidth="24"
+                                                     resizable="false" editable="false" sortable="false"/>
+                                    <TreeTableColumn text="%name" fx:id="nameColumn"/>
+                                    <TreeTableColumn text="%value" fx:id="valueColumn"/>
+                                    <TreeTableColumn text="%type" fx:id="typeColumn" minWidth="84" maxWidth="84"/>
+                                    <TreeTableColumn text="%label" fx:id="labelColumn"/>
+                                </columns>
+                            </TreeTableView>
+                        </ScrollPane>
+                    </Tab>
+                    <Tab text="%tab-creator" fx:id="tabCreator">
+                        <tooltip>
+                            <Tooltip text="%tab-creator-tooltip"/>
+                        </tooltip>
+                        <graphic>
+                            <ImageView>
+                                <Image url="@icons/creator.png"/>
+                            </ImageView>
+                        </graphic>
+                        <ScrollPane fitToHeight="true" fitToWidth="true">
+                            <TextArea fx:id="source"/>
+                        </ScrollPane>
+                    </Tab>
+                    <Tab text="%tab-settings">
+                        <tooltip>
+                            <Tooltip text="%tab-settings-tooltip"/>
+                        </tooltip>
+                        <graphic>
+                            <ImageView>
+                                <Image url="@icons/settings.png"/>
+                            </ImageView>
+                        </graphic>
+                        <GridPane>
+                            <TitledPane text="%pane-shortcuts" GridPane.columnIndex="0" GridPane.rowIndex="0"
+                                        GridPane.fillHeight="true" GridPane.valignment="TOP" collapsible="false">
+                                <GridPane>
+                                    <Label GridPane.columnIndex="0" GridPane.rowIndex="0" text="%key-cheat"/>
+                                    <KeyText GridPane.columnIndex="0" GridPane.rowIndex="1"
+                                             fx:id="keyCheat">
+                                        <defaultCombination>
+                                            <KeyCodeCombination>
+                                                <code>C</code>
+                                                <shift>DOWN</shift>
+                                                <control>UP</control>
+                                                <alt>UP</alt>
+                                                <meta>UP</meta>
+                                                <shortcut>UP</shortcut>
+                                            </KeyCodeCombination>
+                                        </defaultCombination>
+                                    </KeyText>
+                                    <Label GridPane.columnIndex="0" GridPane.rowIndex="2"
+                                           text="%key-console"/>
+                                    <KeyText GridPane.columnIndex="0" GridPane.rowIndex="3"
+                                             fx:id="keyConsole">
+                                        <defaultCombination>
+                                            <KeyCodeCombination>
+                                                <code>O</code>
+                                                <shift>DOWN</shift>
+                                                <control>UP</control>
+                                                <alt>UP</alt>
+                                                <meta>UP</meta>
+                                                <shortcut>UP</shortcut>
+                                            </KeyCodeCombination>
+                                        </defaultCombination>
+                                    </KeyText>
+                                    <Label GridPane.columnIndex="0" GridPane.rowIndex="4"
+                                           text="%key-console"/>
+                                    <KeyText GridPane.columnIndex="0" GridPane.rowIndex="5"
+                                             fx:id="keyDeveloper">
+                                        <defaultCombination>
+                                            <KeyCodeCombination>
+                                                <code>D</code>
+                                                <shift>DOWN</shift>
+                                                <control>UP</control>
+                                                <alt>UP</alt>
+                                                <meta>UP</meta>
+                                                <shortcut>UP</shortcut>
+                                            </KeyCodeCombination>
+                                        </defaultCombination>
+                                    </KeyText>
+                                    <Label GridPane.columnIndex="0" GridPane.rowIndex="6"
+                                           text="%key-write"/>
+                                    <KeyText GridPane.columnIndex="0" GridPane.rowIndex="7"
+                                             fx:id="keyWrite">
+                                        <defaultCombination>
+                                            <KeyCodeCombination>
+                                                <code>V</code>
+                                                <shift>DOWN</shift>
+                                                <control>UP</control>
+                                                <alt>UP</alt>
+                                                <meta>UP</meta>
+                                                <shortcut>UP</shortcut>
+                                            </KeyCodeCombination>
+                                        </defaultCombination>
+                                    </KeyText>
+                                    <Label GridPane.columnIndex="0" GridPane.rowIndex="8"
+                                           text="%reset-description"/>
+                                    <Button text="%reset" onAction="#onResetKeys" GridPane.columnIndex="0"
+                                            GridPane.rowIndex="9">
+                                        <graphic>
+                                            <ImageView>
+                                                <Image url="@icons/reset.png"/>
+                                            </ImageView>
+                                        </graphic>
+                                    </Button>
+                                </GridPane>
+                            </TitledPane>
+                            <TitledPane text="%pane-features" GridPane.columnIndex="1" GridPane.rowIndex="0"
+                                        GridPane.fillHeight="true" GridPane.valignment="TOP" collapsible="false">
+                                <VBox>
+                                    <CheckBox text="%enable-cheat" fx:id="chkEnableCheat" selected="true"/>
+                                    <Label text="%enable-cheat-description"/>
+                                    <CheckBox text="%enable-console" fx:id="chkEnableConsole" selected="true"/>
+                                    <Label text="%enable-console-description"/>
+                                    <CheckBox text="%enable-developer" fx:id="chkEnableDeveloper" selected="true"/>
+                                    <Label text="%enable-developer-description"/>
+                                    <CheckBox text="%enable-write" fx:id="chkEnableWrite" selected="true"/>
+                                    <Label wrapText="true" text="%enable-write-description"/>
+                                    <CheckBox text="%enable-rollback" fx:id="chkEnableRollback" selected="true"/>
+                                    <Label wrapText="true" text="%enable-rollback-description"/>
+                                </VBox>
+                            </TitledPane>
+                            <columnConstraints>
+                                <ColumnConstraints percentWidth="50"/>
+                                <ColumnConstraints percentWidth="50"/>
+                            </columnConstraints>
+                        </GridPane>
+                    </Tab>
+                    <Tab text="%tab-about">
+                        <graphic>
+                            <ImageView>
+                                <Image url="@icons/about.png"/>
+                            </ImageView>
+                        </graphic>
+                        <About/>
+                    </Tab>
+                </TabPane>
+            </center>
+            <bottom>
+            </bottom>
+        </BorderPane>
+    </center>
+    <bottom>
+        <ButtonBar>
+            <buttons>
+                <Button text="%load" ButtonBar.buttonData="LEFT" onAction="#onLoad" fx:id="btnLoad">
+                    <tooltip>
+                        <Tooltip text="%load-tooltip"/>
+                    </tooltip>
+                    <graphic>
+                        <ImageView>
+                            <Image url="@icons/load.png"/>
+                        </ImageView>
+                    </graphic>
+                </Button>
+                <Button text="%reload" ButtonBar.buttonData="LEFT" onAction="#onReload" disable="true"
+                        fx:id="btnReload">
+                    <tooltip>
+                        <Tooltip text="%reload-tooltip"/>
+                    </tooltip>
+                    <graphic>
+                        <ImageView>
+                            <Image url="@icons/reload.png"/>
+                        </ImageView>
+                    </graphic>
+                </Button>
+                <Button text="%save" ButtonBar.buttonData="LEFT" onAction="#onSave" disable="true" fx:id="btnSave">
+                    <tooltip>
+                        <Tooltip text="%save-tooltip"/>
+                    </tooltip>
+                    <graphic>
+                        <ImageView>
+                            <Image url="@icons/save.png"/>
+                        </ImageView>
+                    </graphic>
+                </Button>
+                <Button text="%save-as" ButtonBar.buttonData="LEFT" onAction="#onSaveAs" fx:id="btnSaveAs">
+                    <tooltip>
+                        <Tooltip text="%save-as-tooltip"/>
+                    </tooltip>
+                    <graphic>
+                        <ImageView>
+                            <Image url="@icons/save-as.png"/>
+                        </ImageView>
+                    </graphic>
+                </Button>
+                <Button text="%clear" ButtonBar.buttonData="LEFT" onAction="#onClear">
+                    <tooltip>
+                        <Tooltip text="%clear-tooltip"/>
+                    </tooltip>
+                    <graphic>
+                        <ImageView>
+                            <Image url="@icons/clear.png"/>
+                        </ImageView>
+                    </graphic>
+                </Button>
+                <Button text="%template" ButtonBar.buttonData="RIGHT" onAction="#onTemplate">
+                    <tooltip>
+                        <Tooltip text="%template-tooltip"/>
+                    </tooltip>
+                    <graphic>
+                        <ImageView>
+                            <Image url="@icons/template.png"/>
+                        </ImageView>
+                    </graphic>
+                </Button>
+                <Button text="%generate" ButtonBar.buttonData="RIGHT" onAction="#onGenerate">
+                    <tooltip>
+                        <Tooltip text="%generate-tooltip"/>
+                    </tooltip>
+                    <graphic>
+                        <ImageView>
+                            <Image url="@icons/generate.png"/>
+                        </ImageView>
+                    </graphic>
+                </Button>
+                <Button text="%install" ButtonBar.buttonData="RIGHT" onAction="#onInstall">
+                    <tooltip>
+                        <Tooltip text="%install-tooltip"/>
+                    </tooltip>
+                    <graphic>
+                        <ImageView>
+                            <Image url="@icons/save.png"/>
+                        </ImageView>
+                    </graphic>
+                </Button>
+            </buttons>
+        </ButtonBar>
+    </bottom>
+</fx:root>
