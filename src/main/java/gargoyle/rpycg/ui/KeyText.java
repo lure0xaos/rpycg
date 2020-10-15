@@ -21,8 +21,8 @@ import java.util.ResourceBundle;
 
 @DefaultProperty("keyCode")
 public final class KeyText extends TextField {
-    private static final String KEY_DEFAULT = "default-is";
-    private static final String KEY_PRESS_ANY_KEY = "press-any-key";
+    private static final String LC_DEFAULT = "default-is";
+    private static final String LC_PRESS_ANY_KEY = "press-any-key";
     @NotNull
     private final Property<Boolean> activated;
     @NotNull
@@ -36,8 +36,8 @@ public final class KeyText extends TextField {
         activated = new SimpleBooleanProperty(false);
         FXContext context = FXContextFactory.currentContext();
         Optional<ResourceBundle> optional = FXLoad.loadResources(context, FXLoad.getBaseName(getClass()));
-        String tooltip = optional.map(resources -> resources.getString(KEY_DEFAULT)).orElse(KEY_DEFAULT);
-        String pressKey = optional.map(resources -> resources.getString(KEY_PRESS_ANY_KEY)).orElse(KEY_PRESS_ANY_KEY);
+        String tooltip = optional.map(resources -> resources.getString(LC_DEFAULT)).orElse(LC_DEFAULT);
+        String pressKey = optional.map(resources -> resources.getString(LC_PRESS_ANY_KEY)).orElse(LC_PRESS_ANY_KEY);
         defaultCombination.addListener((observable, oldValue, newValue) -> {
             if (oldValue == null) {
                 combination.setValue(newValue);
@@ -75,18 +75,19 @@ public final class KeyText extends TextField {
         });
     }
 
-    private KeyCodeCombination toCombination(@NotNull KeyEvent event) {
+    private void updateTooltip(@Nullable KeyCodeCombination keyCodeCombination, @NotNull String tooltipString) {
+        Optional.ofNullable(keyCodeCombination).ifPresent(newKeyCode ->
+                setTooltip(new Tooltip(tooltipString + ' ' + newKeyCode.getDisplayText())));
+    }
+
+    @NotNull
+    private static KeyCodeCombination toCombination(@NotNull KeyEvent event) {
         return new KeyCodeCombination(event.getCode(),
                 event.isShiftDown() ? KeyCombination.ModifierValue.DOWN : KeyCombination.ModifierValue.UP,
                 event.isControlDown() ? KeyCombination.ModifierValue.DOWN : KeyCombination.ModifierValue.UP,
                 event.isAltDown() ? KeyCombination.ModifierValue.DOWN : KeyCombination.ModifierValue.UP,
                 event.isMetaDown() ? KeyCombination.ModifierValue.DOWN : KeyCombination.ModifierValue.UP,
                 event.isShortcutDown() ? KeyCombination.ModifierValue.DOWN : KeyCombination.ModifierValue.UP);
-    }
-
-    private void updateTooltip(@Nullable KeyCodeCombination newValue, @NotNull String tooltipString) {
-        Optional.ofNullable(newValue).ifPresent(newKeyCode ->
-                setTooltip(new Tooltip(tooltipString + ' ' + newKeyCode.getDisplayText())));
     }
 
     @NotNull

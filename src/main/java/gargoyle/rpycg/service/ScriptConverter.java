@@ -1,43 +1,72 @@
 package gargoyle.rpycg.service;
 
+import gargoyle.rpycg.ex.AppUserException;
+import gargoyle.rpycg.fx.FXContextFactory;
+import gargoyle.rpycg.fx.FXLoad;
 import gargoyle.rpycg.model.ModelItem;
 import gargoyle.rpycg.model.ModelType;
 import gargoyle.rpycg.model.VarType;
+import gargoyle.rpycg.util.Check;
 import org.jetbrains.annotations.NotNull;
 
+import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
+import java.util.ResourceBundle;
 import java.util.regex.Pattern;
 
 public final class ScriptConverter {
+    private static final String LC_ERROR_FAIL_TYPE = "error.fail-type";
+    private static final String LC_ERROR_VALUE_TYPE = "error.value-type";
+    private static final String LC_ERROR_WRONG_MODEL_TYPE = "error.wrong-model-type";
+    private static final String LC_ERROR_WRONG_TYPE = "error.wrong-type";
     private static final Pattern RE_FLOAT = Pattern.compile("^[0-9]+.[0-9]+$");
     private static final Pattern RE_INT = Pattern.compile("^[0-9]+$");
 
+    private final ResourceBundle resources;
+
+    public ScriptConverter() {
+        resources = FXLoad.loadResources(FXContextFactory.currentContext(), FXLoad.getBaseName(getClass()))
+                .orElseThrow(() -> new AppUserException(AppUserException.LC_ERROR_NO_RESOURCES, getClass().getName()));
+    }
+
     @NotNull
     public ModelItem fromScript(@NotNull Iterable<String> lines) {
-        ModelItem root = ModelItem.createMenu("");
+        ModelItem root = ModelItem.createMenu("", "");
         ModelItem menu = root;
-        for (String line : lines) {
-            if (line.isBlank()) {
+        for (String raw : lines) {
+            if (raw.isBlank()) {
                 continue;
             }
+            String line = raw.trim();
             if (line.charAt(0) == '<') {
-                ModelItem child = ModelItem.createMenu(line.substring(1).trim());
+                String substring = line.substring(1);
+                int posName = substring.lastIndexOf(';');
+                String label;
+                String name;
+                if (posName > 0) {
+                    label = substring.substring(0, posName).trim();
+                    name = substring.substring(posName + 1).trim();
+                } else {
+                    label = substring;
+                    name = substring;
+                }
+                ModelItem child = ModelItem.createMenu(label, name);
                 menu.addChild(child);
                 menu = child;
                 continue;
             }
-            if (">".equals(line.trim())) {
+            if (line.charAt(0) == '>') {
                 menu = menu.getParent();
                 if (menu == null) {
                     return root;
                 }
                 continue;
             }
-            String expr = line.trim();
+            String expr = line;
             int posLabel = expr.lastIndexOf(';');
             String label;
             if (posLabel > 0) {
@@ -54,8 +83,9 @@ public final class ScriptConverter {
                     try {
                         type = VarType.valueOf(typeValue.toUpperCase(Locale.ENGLISH));
                     } catch (IllegalArgumentException e) {
-                        throw new IllegalArgumentException(String.format("wrong type %s, should be on of %s", typeValue,
-                                Arrays.toString(VarType.values())), e);
+                        throw new IllegalArgumentException(
+                                MessageFormat.format(resources.getString(LC_ERROR_WRONG_TYPE),
+                                        typeValue, Arrays.toString(VarType.values())), e);
                     }
                     expr = expr.substring(0, open).trim();
                 }
@@ -67,8 +97,9 @@ public final class ScriptConverter {
                 String val = expr.substring(posEq + 1).trim();
                 name = expr.substring(0, posEq).trim();
                 int len = val.length();
-                if (val.charAt(0) == '\'' && val.charAt(len - 1) == '\'' ||
-                    val.charAt(0) == '\"' && val.charAt(len - 1) == '\"') {
+                char first = val.charAt(0);
+                char last = val.charAt(len - 1);
+                if (first == '\'' && last == '\'' || first == '\"' && last == '\"') {
                     type = VarType.STR;
                     value = val.substring(1, len - 2).trim();
                 } else {
@@ -81,12 +112,28 @@ public final class ScriptConverter {
             if (type == null) {
                 if (value.isBlank()) {
                     type = VarType.STR;
-                } else if (RE_FLOAT.matcher(value).matches()) {
+                } else if (Check.isFloat(value)) {
                     type = VarType.FLOAT;
-                } else if (RE_INT.matcher(value).matches()) {
+                } else if (Check.isInteger(value)) {
                     type = VarType.INT;
                 } else {
-                    throw new IllegalStateException("unable determine type");
+                    throw new IllegalStateException(resources.getString(LC_ERROR_FAIL_TYPE));
+                }
+            }
+            if (!value.isBlank()) {
+                switch (type) {
+                    case INT:
+                        if (!Check.isInteger(value)) {
+                            throw new IllegalStateException(resources.getString(LC_ERROR_VALUE_TYPE));
+                        }
+                        break;
+                    case FLOAT:
+                        if (!Check.isFloat(value)) {
+                            throw new IllegalStateException(resources.getString(LC_ERROR_VALUE_TYPE));
+                        }
+                        break;
+                    case STR:
+                        break;
                 }
             }
             menu.addChild(ModelItem.createVariable(type, label, name, value));
@@ -97,32 +144,32 @@ public final class ScriptConverter {
     @NotNull
     public List<String> toScript(@NotNull ModelItem item) {
         String label = item.getLabel();
+        String name = item.getName();
         ModelType modelType = item.getModelType();
         switch (modelType) {
             case MENU:
                 List<String> lines = new LinkedList<>();
-                if (!label.isBlank()) {
-                    lines.add(String.format("<%s", label));
+                if (!name.isBlank()) {
+                    lines.add(MessageFormat.format("<{0};{1}", label, name));
                 }
                 for (ModelItem child : item.getChildren()) {
                     lines.addAll(toScript(child));
                 }
-                if (!label.isBlank()) {
+                if (!name.isBlank()) {
                     lines.add(">");
                 }
                 return lines;
             case VARIABLE:
-                String name = item.getName();
                 String value = item.getValue();
                 String keyword = item.getType() == null ? "" : item.getType().getKeyword();
-                return Collections.singletonList(String.format("%s%s(%s)%s",
+                return Collections.singletonList(MessageFormat.format("{0}{1}({2}){3}",
                         name,
                         value.isBlank() ? "" : '=' + value,
                         keyword,
                         label.isBlank() || label.equals(name) ? "" : ';' + label
                 ));
             default:
-                throw new IllegalStateException("unsupported model type " + modelType);
+                throw new IllegalStateException(resources.getString(LC_ERROR_WRONG_MODEL_TYPE) + " " + modelType);
         }
     }
 }

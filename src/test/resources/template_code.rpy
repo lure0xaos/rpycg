@@ -38,7 +38,7 @@ menu:
     "variable_name2 \[[variable_name2]\]" :
         $variable_name2 = str(renpy.input("Change variable_name2 from [variable_name2] to?").strip() or variable_name2)
         jump CheatMenu
-    "~submenu_title~":
+    "~menu_title~":
         menu:
             "variable_name3 \[[variable_name3]\]" :
                 $variable_name3 = str(renpy.input("Change variable_name3 from [variable_name3] to?").strip() or variable_name3)

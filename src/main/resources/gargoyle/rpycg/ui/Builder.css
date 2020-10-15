@@ -1,0 +1,72 @@
+.tree-cell.menu {
+    -fx-border-style: solid;
+    -fx-border-color: #000000 #ffffff #ffffff #ffffff;
+    -fx-border-width: 1;
+}
+
+.tree-cell.variable {
+    -fx-border-style: dotted;
+    -fx-border-color: #ffffff #ffffff #ffffff #ffffff;
+    -fx-border-width: 1;
+}
+
+.tree-cell.variable.first-child {
+    -fx-border-style: dotted;
+    -fx-border-color: #ffffff #ffffff #ffffff #ffffff;
+    -fx-border-width: 1;
+}
+
+.tree-cell.variable.last-child {
+    -fx-border-style: solid;
+    -fx-border-color: #ffffff #ffffff #ffffff #ffffff;
+    -fx-border-width: 1;
+}
+
+.tree-cell.menu.even {
+    -fx-background-color: #ffffff;
+}
+
+.tree-cell.menu.odd {
+    -fx-background-color: #a8a8a8;
+}
+
+.tree-cell.menu.warn.even {
+    -fx-background-color: #ffff5233;
+}
+
+.tree-cell.menu.warn.odd {
+    -fx-background-color: #eeee6333;
+}
+
+.tree-cell.menu.danger.even {
+    -fx-background-color: #ff525233;
+}
+
+.tree-cell.menu.danger.odd {
+    -fx-background-color: #ee636333;
+}
+
+.tree-cell.variable.even {
+    -fx-background-color: #ffffff33;
+}
+
+.tree-cell.variable.odd {
+    -fx-background-color: #c4c4c433;
+}
+
+.tree-cell.variable.warn.even {
+    -fx-background-color: #f3f39533;
+}
+
+.tree-cell.variable.warn.odd {
+    -fx-background-color: #f3f39533;
+}
+
+.tree-cell.variable.danger.even {
+    -fx-background-color: #ff8a8a33;
+}
+
+.tree-cell.variable.danger.odd {
+    -fx-background-color: #f3959533;
+}
+

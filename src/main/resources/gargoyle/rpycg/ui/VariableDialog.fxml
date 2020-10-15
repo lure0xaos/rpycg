@@ -13,7 +13,7 @@
         </tooltip>
     </Label>
     <TextField fx:id="name" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
-    <Label text="=" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+    <Label text="=" GridPane.columnIndex="1" GridPane.rowIndex="1" minWidth="10"/>
     <Label text="%value" GridPane.columnIndex="2" GridPane.rowIndex="0">
         <tooltip>
             <Tooltip text="%value-tooltip"/>

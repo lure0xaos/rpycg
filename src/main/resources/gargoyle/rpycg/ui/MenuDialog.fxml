@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.Tooltip?>
+<?import javafx.scene.layout.GridPane?>
+<GridPane xmlns:fx="http://javafx.com/fxml"
+          xmlns="http://javafx.com/javafx">
+    <Label text="%name" GridPane.columnIndex="0" GridPane.rowIndex="0">
+        <tooltip>
+            <Tooltip text="%name-tooltip"/>
+        </tooltip>
+    </Label>
+    <TextField fx:id="name" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+    <Label text="%label" GridPane.columnIndex="1" GridPane.rowIndex="0">
+        <tooltip>
+            <Tooltip text="%label-tooltip"/>
+        </tooltip>
+    </Label>
+    <TextField fx:id="label" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+</GridPane>

@@ -1,7 +1,7 @@
 <
 variable_name1(str);custom name
 variable_name2(str)
-<submenu_title
+<menu_title
 variable_name3(str)
 variable_name4(str)
 >

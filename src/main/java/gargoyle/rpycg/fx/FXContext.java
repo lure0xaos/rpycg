@@ -7,6 +7,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.Charset;
 import java.util.Locale;
+import java.util.prefs.Preferences;
 
 public interface FXContext {
 
@@ -24,4 +25,10 @@ public interface FXContext {
 
     @Nullable
     Application.Parameters getParameters();
+
+    @Nullable
+    Preferences getPreferences();
+
+    @Nullable
+    String getSkin();
 }

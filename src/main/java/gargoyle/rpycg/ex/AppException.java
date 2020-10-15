@@ -1,13 +1,15 @@
 package gargoyle.rpycg.ex;
 
-public final class AppException extends RuntimeException {
+import org.jetbrains.annotations.NotNull;
+
+public class AppException extends RuntimeException {
     private static final long serialVersionUID = -1035913638893456880L;
 
-    public AppException(String message) {
+    public AppException(@NotNull String message) {
         super(message);
     }
 
-    public AppException(String message, Throwable cause) {
+    public AppException(@NotNull String message, @NotNull Throwable cause) {
         super(message, cause);
     }
 }

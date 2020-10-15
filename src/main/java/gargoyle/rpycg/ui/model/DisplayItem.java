@@ -10,14 +10,20 @@ import javafx.scene.control.TreeItem;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.text.MessageFormat;
 import java.util.Objects;
 
 public final class DisplayItem {
 
+    @NotNull
     private final Property<String> label;
+    @NotNull
     private final ReadOnlyProperty<ModelType> modelType;
+    @NotNull
     private final Property<String> name;
+    @NotNull
     private final Property<VarType> type;
+    @NotNull
     private final Property<String> value;
 
     private DisplayItem(@NotNull ModelType modelType,
@@ -32,32 +38,35 @@ public final class DisplayItem {
 
     @NotNull
     public static DisplayItem createRoot() {
-        return createSubmenu("");
+        return createMenu("", "");
     }
 
-    public static DisplayItem createSubmenu(@NotNull String label) {
-        return new DisplayItem(ModelType.MENU, label, "", "", null);
+    @NotNull
+    public static DisplayItem createMenu(@NotNull String label, @NotNull String name) {
+        return new DisplayItem(ModelType.MENU, label, name, "", null);
     }
 
+    @NotNull
     public static DisplayItem createVariable(@NotNull VarType type,
                                              @NotNull String label, @NotNull String name, @NotNull String value) {
         return new DisplayItem(ModelType.VARIABLE, label, name, value, type);
     }
 
     @NotNull
-    public static TreeItem<DisplayItem> toTreeItem(@NotNull DisplayItem item) {
+    public static TreeItem<DisplayItem> toTreeItem(@NotNull DisplayItem item, boolean expanded) {
         TreeItem<DisplayItem> treeItem = new DisplayTreeItem(item);
-        treeItem.setExpanded(item.getModelType() == ModelType.MENU);
+        treeItem.setExpanded(expanded);
         return treeItem;
+    }
+
+    @NotNull
+    public DisplayItem copyOf() {
+        return new DisplayItem(getModelType(), getLabel(), getName(), getValue(), getType());
     }
 
     @NotNull
     public ModelType getModelType() {
         return modelType.getValue();
-    }
-
-    public DisplayItem copyOf() {
-        return new DisplayItem(getModelType(), getLabel(), getName(), getValue(), getType());
     }
 
     @NotNull
@@ -70,12 +79,16 @@ public final class DisplayItem {
         return name.getValue();
     }
 
+    public void setName(@NotNull String name) {
+        this.name.setValue(name);
+    }
+
     @NotNull
     public String getValue() {
         return value.getValue();
     }
 
-    @NotNull
+    @Nullable
     public VarType getType() {
         return type.getValue();
     }
@@ -88,17 +101,13 @@ public final class DisplayItem {
         this.value.setValue(value);
     }
 
-    public void setName(@NotNull String name) {
-        this.name.setValue(name);
-    }
-
     public void setLabel(@NotNull String label) {
         this.label.setValue(label);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(modelType, label, name, value);
+        return Objects.hash(modelType, name);
     }
 
     @Override
@@ -110,15 +119,13 @@ public final class DisplayItem {
             return false;
         }
         DisplayItem item = (DisplayItem) obj;
-        return modelType.equals(item.modelType) &&
-                label.equals(item.label) &&
-                name.equals(item.name) &&
-                value.equals(item.value);
+        return modelType.getValue() == item.modelType.getValue() && name.getValue().equals(item.name.getValue());
     }
 
     @Override
     public String toString() {
-        return String.format("%s[%s]{type=%s, label=%s, name=%s, value=%s}", getClass().getSimpleName(),
+        return MessageFormat.format("{0}[{1}]'{'type={2}, label={3}, name={4}, value={5}'}'",
+                getClass().getSimpleName(),
                 modelType.getValue(), type.getValue(), label.getValue(),
                 name.getValue(), value.getValue());
     }

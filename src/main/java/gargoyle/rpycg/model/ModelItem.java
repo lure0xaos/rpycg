@@ -1,8 +1,10 @@
 package gargoyle.rpycg.model;
 
+import gargoyle.rpycg.ui.model.FULLNESS;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.text.MessageFormat;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Objects;
@@ -11,7 +13,7 @@ import java.util.Set;
 
 public final class ModelItem {
     @NotNull
-    private final Set<ModelItem> children = new LinkedHashSet<>();
+    private final Set<ModelItem> children = new LinkedHashSet<>(FULLNESS.FULL.getSize());
     @NotNull
     private final String label;
     @NotNull
@@ -35,14 +37,14 @@ public final class ModelItem {
     }
 
     @NotNull
-    public static ModelItem createMenu(@NotNull String label) {
-        return new ModelItem(ModelType.MENU, label, label, "", null);
+    public static ModelItem createMenu(@NotNull String label, @NotNull String name) {
+        return new ModelItem(ModelType.MENU, label, name, "", null);
     }
 
     @NotNull
-    public static ModelItem createVariable(@NotNull VarType type,
+    public static ModelItem createVariable(@Nullable VarType type,
                                            @NotNull String label, @NotNull String name, @NotNull String value) {
-        return new ModelItem(ModelType.VARIABLE, label, name, value, Objects.requireNonNull(type));
+        return new ModelItem(ModelType.VARIABLE, label, name, value, type);
     }
 
     public void addChild(@NotNull ModelItem child) {
@@ -50,6 +52,7 @@ public final class ModelItem {
         child.parent = this;
     }
 
+    @NotNull
     public Set<ModelItem> getChildren() {
         return Collections.unmodifiableSet(children);
     }
@@ -86,7 +89,7 @@ public final class ModelItem {
 
     @Override
     public int hashCode() {
-        return Objects.hash(parent, modelType, label, name, value);
+        return Objects.hash(modelType, name);
     }
 
     @Override
@@ -98,16 +101,13 @@ public final class ModelItem {
             return false;
         }
         ModelItem modelItem = (ModelItem) obj;
-        return modelType == modelItem.modelType &&
-               Objects.equals(parent, modelItem.parent) &&
-               label.equals(modelItem.label) &&
-               name.equals(modelItem.name) &&
-               value.equals(modelItem.value);
+        return modelType == modelItem.modelType && name.equals(modelItem.name);
     }
 
     @Override
     public String toString() {
-        return String.format("%s[%s]{type=%s, label=%s, name=%s, value=%s,parent=%s}", getClass().getSimpleName(),
+        return MessageFormat.format("{0}[{1}]'{'type={2}, label={3}, name={4}, value={5},parent={6}'}'",
+                getClass().getSimpleName(),
                 modelType, type, label, name, value, Optional.ofNullable(parent).map(item -> item.label).orElse(""));
     }
 }

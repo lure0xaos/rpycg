@@ -1,0 +1,162 @@
+package gargoyle.rpycg.fx;
+
+import gargoyle.rpycg.ex.AppException;
+import gargoyle.rpycg.ex.AppUserException;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.text.MessageFormat;
+import java.util.Collections;
+import java.util.Map;
+import java.util.ResourceBundle;
+import java.util.TreeMap;
+import java.util.prefs.AbstractPreferences;
+import java.util.prefs.BackingStoreException;
+import java.util.prefs.Preferences;
+import java.util.stream.Stream;
+
+final class FilePreferences extends AbstractPreferences {
+
+    @SuppressWarnings("AccessOfSystemProperties")
+    public static final Path SYSTEM_ROOT_PATH = Paths.get(System.getProperty("user.home"));
+    @SuppressWarnings("AccessOfSystemProperties")
+    public static final Path USER_ROOT_PATH = Paths.get(System.getProperty("user.home"));
+    private static final String LC_ERROR_LOAD = "error.load";
+    private static final String LC_ERROR_SAVE = "error.save";
+    private static final String[] STRINGS = new String[0];
+    private static final String SUFFIX = ".prefs";
+    private static Preferences systemRoot;
+    private static Preferences userRoot;
+    private final boolean isUserRoot;
+    @NotNull
+    private final Map<String, String> properties;
+    @NotNull
+    private final ResourceBundle resources;
+
+    private FilePreferences(boolean isUserRoot, @Nullable AbstractPreferences parent, @NotNull String name) {
+        super(parent, name);
+        resources = FXLoad.loadResources(FXContextFactory.currentContext(), FXLoad.getBaseName(getClass()))
+                .orElseThrow(() -> new AppUserException(AppUserException.LC_ERROR_NO_RESOURCES, getClass().getName()));
+        this.isUserRoot = isUserRoot;
+        properties = Collections.synchronizedSortedMap(new TreeMap<>(String::compareToIgnoreCase));
+        try {
+            syncSpi();
+        } catch (BackingStoreException e) {
+            throw new AppException(MessageFormat.format(resources.getString(LC_ERROR_LOAD),
+                    FilePreferences.class.getName()), e);
+        }
+    }
+
+    @Override
+    protected String getSpi(String key) {
+        return properties.get(key);
+    }
+
+    @Override
+    protected void removeNodeSpi() throws BackingStoreException {
+        try {
+            Files.delete(getFilePath());
+        } catch (IOException e) {
+            throw new BackingStoreException(new AppException(MessageFormat.format(resources.getString(LC_ERROR_SAVE),
+                    FilePreferences.class.getName()), e));
+        }
+    }
+
+    @NotNull
+    static synchronized Preferences getSystemRoot() {
+        if (systemRoot == null) {
+            systemRoot = new FilePreferences(false, null, "");
+        }
+        return systemRoot;
+    }
+
+    @NotNull
+    static synchronized Preferences getUserRoot() {
+        if (userRoot == null) {
+            userRoot = new FilePreferences(true, null, "");
+        }
+        return userRoot;
+    }
+
+    @Override
+    protected void putSpi(String key, String value) {
+        properties.put(key, value);
+        try {
+            flush();
+        } catch (BackingStoreException e) {
+            throw new AppException(MessageFormat.format(resources.getString(LC_ERROR_SAVE),
+                    FilePreferences.class.getName()), e);
+        }
+    }
+
+    @NotNull
+    private Path getFilePath() {
+        return parent() == null ? getRootPath().resolve(SUFFIX) :
+                getRootPath().resolve((parent().absolutePath() + '/' + name()).replace('/', '.') + SUFFIX);
+    }
+
+    @Override
+    protected void removeSpi(String key) {
+        properties.remove(key);
+        try {
+            flush();
+        } catch (BackingStoreException e) {
+            throw new AppException(MessageFormat.format(resources.getString(LC_ERROR_SAVE),
+                    FilePreferences.class.getName()), e);
+        }
+    }
+
+    @NotNull
+    private Path getRootPath() {
+        return isUserRoot ? USER_ROOT_PATH : SYSTEM_ROOT_PATH;
+    }
+
+    @Override
+    protected String[] keysSpi() {
+        return properties.keySet().toArray(STRINGS);
+    }
+
+    @Override
+    protected String[] childrenNamesSpi() throws BackingStoreException {
+        try (Stream<Path> stream = Files.find(getRootPath(), 0, (path, basicFileAttributes) ->
+                path.getFileName().toString().endsWith(SUFFIX))) {
+            return stream.map(path -> {
+                String fileName = path.getFileName().toString();
+                return fileName.substring(0, fileName.length() - SUFFIX.length());
+            }).toArray(String[]::new);
+        } catch (IOException e) {
+            throw new AppException(MessageFormat.format(resources.getString(LC_ERROR_LOAD),
+                    FilePreferences.class.getName()), e);
+        }
+    }
+
+    @Override
+    protected AbstractPreferences childSpi(String name) {
+        return new FilePreferences(isUserRoot, this, name);
+    }
+
+    @Override
+    protected void syncSpi() throws BackingStoreException {
+        Path filePath = getFilePath();
+        try {
+            FilePreferencesStore.load(filePath, properties);
+        } catch (IOException e) {
+            throw new BackingStoreException(new AppException(MessageFormat.format(resources.getString(LC_ERROR_LOAD),
+                    FilePreferences.class.getName()), e));
+        }
+    }
+
+    @Override
+    protected void flushSpi() throws BackingStoreException {
+        try {
+            FilePreferencesStore.save(getFilePath(), properties, absolutePath());
+        } catch (IOException e) {
+            throw new BackingStoreException(new AppException(MessageFormat.format(resources.getString(LC_ERROR_LOAD),
+                    FilePreferences.class.getName()), e));
+        }
+    }
+}

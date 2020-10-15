@@ -1,0 +1,11 @@
+.text-area {
+    -fx-background-color: #d0d0d0;
+    -fx-background-image: url("Creator_girl.jpg");
+    -fx-background-repeat: no-repeat;
+    -fx-background-position: bottom right;
+}
+
+.text-area .scroll-pane .viewport,
+.text-area .content {
+    -fx-background-color: null;
+}

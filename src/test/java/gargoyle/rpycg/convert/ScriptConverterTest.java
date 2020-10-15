@@ -3,6 +3,7 @@ package gargoyle.rpycg.convert;
 import gargoyle.rpycg.model.ModelItem;
 import gargoyle.rpycg.model.VarType;
 import gargoyle.rpycg.service.ScriptConverter;
+import gargoyle.rpycg.util.Check;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -12,8 +13,8 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.MessageFormat;
 import java.util.List;
-import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -35,17 +36,17 @@ class ScriptConverterTest {
 
     @NotNull
     private static URL getResource(String name) {
-        return Objects.requireNonNull(ScriptConverterTest.class.getClassLoader().getResource(name),
-                () -> String.format("no %s found", name));
+        return Check.requireNonNull(ScriptConverterTest.class.getClassLoader().getResource(name),
+                () -> MessageFormat.format("no {0} found", name));
     }
 
     @BeforeEach
     void setUp() {
         scriptConverter = new ScriptConverter();
-        ModelItem rootMenu = ModelItem.createMenu("");
+        ModelItem rootMenu = ModelItem.createMenu("", "");
         rootMenu.addChild(ModelItem.createVariable(VarType.STR, "custom name", "variable_name1", ""));
         rootMenu.addChild(ModelItem.createVariable(VarType.STR, "variable_name2", "variable_name2", ""));
-        ModelItem menu = ModelItem.createMenu("submenu_title");
+        ModelItem menu = ModelItem.createMenu("menu_title", "menu_title");
         menu.addChild(ModelItem.createVariable(VarType.STR, "variable_name3", "variable_name3", ""));
         menu.addChild(ModelItem.createVariable(VarType.STR, "variable_name4", "variable_name4", ""));
         rootMenu.addChild(menu);

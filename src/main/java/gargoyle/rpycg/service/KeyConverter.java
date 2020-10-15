@@ -5,9 +5,9 @@ import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Locale;
+import java.util.Set;
 
 public final class KeyConverter {
 
@@ -56,7 +56,7 @@ public final class KeyConverter {
     public KeyCodeCombination toCombination(@NotNull String keys, @NotNull KeyCodeCombination keyDefault) {
         try {
             KeyCode keyCode = keyDefault.getCode();
-            List<KeyCombination.Modifier> modifiers = new ArrayList<>(4);
+            Set<KeyCombination.Modifier> modifiers = new HashSet<>(4);
             for (String name : keys.split(UNDERSCORE)) {
                 KeyCode value = KeyCode.valueOf(name);
                 switch (value) {

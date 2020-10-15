@@ -17,10 +17,10 @@ class ModelConverterTest {
     @BeforeEach
     void setUp() {
         modelConverter = new ModelConverter();
-        ModelItem rootMenu = ModelItem.createMenu("");
+        ModelItem rootMenu = ModelItem.createMenu("", "");
         rootMenu.addChild(ModelItem.createVariable(VarType.STR, "custom name", "variable_name1", ""));
         rootMenu.addChild(ModelItem.createVariable(VarType.STR, "variable_name2", "variable_name2", ""));
-        ModelItem menu = ModelItem.createMenu("submenu_title");
+        ModelItem menu = ModelItem.createMenu("menu_title", "menu_title");
         menu.addChild(ModelItem.createVariable(VarType.STR, "variable_name3", "variable_name3", ""));
         menu.addChild(ModelItem.createVariable(VarType.STR, "variable_name4", "variable_name4", ""));
         rootMenu.addChild(menu);

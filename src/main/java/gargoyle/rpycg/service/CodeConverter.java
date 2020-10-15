@@ -11,12 +11,14 @@ import freemarker.template.TemplateMethodModelEx;
 import freemarker.template.TemplateModel;
 import freemarker.template.TemplateModelException;
 import freemarker.template.TemplateNumberModel;
-import gargoyle.rpycg.ex.AppException;
+import gargoyle.rpycg.ex.AppUserException;
 import gargoyle.rpycg.fx.FXContext;
+import gargoyle.rpycg.fx.FXContextFactory;
 import gargoyle.rpycg.fx.FXLoad;
 import gargoyle.rpycg.model.ModelItem;
 import gargoyle.rpycg.model.Settings;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.PropertyKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,10 +42,10 @@ public final class CodeConverter {
     private static final String PARAM_ENABLE_ROLLBACK = "enableRollback";
     private static final String PARAM_ENABLE_WRITE = "enableWrite";
     private static final String PARAM_FILE_VARIABLES = "fileVariables";
-    private static final String PARAM_KEY_CHEAT = "keyCheat";
-    private static final String PARAM_KEY_CONSOLE = "keyConsole";
-    private static final String PARAM_KEY_DEVELOPER = "keyDeveloper";
-    private static final String PARAM_KEY_WRITE = "keyWrite";
+    private static final String PARAM_KEY_CHEAT = Settings.PREF_KEY_CHEAT;
+    private static final String PARAM_KEY_CONSOLE = Settings.PREF_KEY_CONSOLE;
+    private static final String PARAM_KEY_DEVELOPER = Settings.PREF_KEY_DEVELOPER;
+    private static final String PARAM_KEY_WRITE = Settings.PREF_KEY_WRITE;
     private static final String PARAM_MODEL = "model";
     private static final String PARAM_MSG = "msg";
     private static final String PARAM_SETTINGS = "settings";
@@ -67,6 +69,7 @@ public final class CodeConverter {
         configuration = new Configuration(Configuration.DEFAULT_INCOMPATIBLE_IMPROVEMENTS);
         configuration.setClassLoaderForTemplateLoading(getClass().getClassLoader(),
                 getClass().getPackage().getName().replace('.', '/'));
+        configuration.setLocale(settings.getLocaleMenu());
         configuration.setEncoding(context.getLocale(), context.getCharset().name());
         configuration.setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER);
         configuration.setLogTemplateExceptions(true);
@@ -75,13 +78,13 @@ public final class CodeConverter {
         configuration.setWhitespaceStripping(false);
         configuration.setBooleanFormat(BOOLEAN_FORMAT);
         configuration.setSharedVariable(IndentDirective.DIRECTIVE_NAME, new IndentDirective(spaces));
-        resourceBundleMethodModel = new ResourceBundleMethodModel(context, getClass());
+        resourceBundleMethodModel = new ResourceBundleMethodModel(context, getClass(), settings);
     }
 
-    @SuppressWarnings("OverlyBroadCatchBlock")
     @NotNull
     public List<String> toCode(@NotNull ModelItem menu) {
         try (StringWriter writer = new StringWriter()) {
+            configuration.setLocale(settings.getLocaleMenu());
             configuration.getTemplate(TEMPLATE).process(Map.of(
                     PARAM_FILE_VARIABLES, fileVariables,
                     PARAM_SETTINGS, Map.of(
@@ -104,6 +107,8 @@ public final class CodeConverter {
 
     private static final class IndentDirective implements TemplateDirectiveModel {
         private static final String DIRECTIVE_NAME = "indent";
+        private static final String MSG_THE_PARAMETER_CANNOT_BE_NEGATIVE = "The \"{0}\" parameter cannot be negative";
+        private static final String MSG_THE_PARAMETER_MUST_BE_A_NUMBER = "The \"{0}\" parameter must be a number";
         private static final String PARAM_NAME = "count";
         private final int spaces;
 
@@ -116,11 +121,13 @@ public final class CodeConverter {
                 throws TemplateException, IOException {
             Object value = params.get(PARAM_NAME);
             if (!(value instanceof TemplateNumberModel)) {
-                throw new TemplateModelException(String.format("The \"%s\" parameter must be a number", PARAM_NAME));
+                throw new TemplateModelException(
+                        MessageFormat.format(MSG_THE_PARAMETER_MUST_BE_A_NUMBER, PARAM_NAME));
             }
             int count = ((TemplateNumberModel) value).getAsNumber().intValue();
             if (count < 0) {
-                throw new TemplateModelException(String.format("The \"%s\" parameter cannot be negative", PARAM_NAME));
+                throw new TemplateModelException(
+                        MessageFormat.format(MSG_THE_PARAMETER_CANNOT_BE_NEGATIVE, PARAM_NAME));
             }
             String message;
             try (StringWriter writer = new StringWriter()) {
@@ -137,23 +144,29 @@ public final class CodeConverter {
     }
 
     private static final class ResourceBundleMethodModel implements TemplateMethodModelEx {
+        public static final String MSG_INVALID_CODE_VALUE = "Invalid code value '{0}' ({1})";
+        public static final String MSG_NO_KEY_IN_RESOURCES = "no key {} in resources for {} found";
+        @NotNull
         private final Class<?> aClass;
+        @NotNull
         private final FXContext context;
-        private final ResourceBundle resources;
+        private final Settings settings;
 
-        private ResourceBundleMethodModel(@NotNull FXContext context, Class<?> aClass) {
+        private ResourceBundleMethodModel(@NotNull FXContext context, @NotNull Class<?> aClass, @NotNull Settings settings) {
             this.aClass = aClass;
             this.context = context;
-            resources = FXLoad.loadResources(context, FXLoad.getBaseName(aClass))
-                    .orElseThrow(() -> new AppException("resources not found for " + aClass));
+            this.settings = settings;
         }
 
         @Override
         public Object exec(List arguments) throws TemplateModelException {
+            ResourceBundle resources = FXLoad.loadResources(FXContextFactory.forLocale(context, settings.getLocaleMenu()),
+                    FXLoad.getBaseName(aClass))
+                    .orElseThrow(() -> new AppUserException(AppUserException.LC_ERROR_NO_RESOURCES, aClass.getName()));
             if (arguments.isEmpty()) {
                 throw new TemplateModelException("Wrong number of arguments");
             }
-            String key;
+            @PropertyKey(resourceBundle = "gargoyle.rpycg.service.CodeConverter") String key;
             Object argument = arguments.get(0);
             if (argument instanceof SimpleScalar) {
                 key = ((SimpleScalar) argument).getAsString();
@@ -161,14 +174,13 @@ public final class CodeConverter {
                 key = String.valueOf(argument);
             }
             if (key == null || key.isBlank()) {
-                throw new TemplateModelException(String.format("Invalid code value '%s' (%s)", key,
-                        context.getLocale()));
+                throw new TemplateModelException(MessageFormat.format(MSG_INVALID_CODE_VALUE, key, context.getLocale()));
             }
             if (resources.containsKey(key)) {
                 return MessageFormat.format(resources.getString(key).trim(),
                         arguments.subList(1, arguments.size()).toArray());
             }
-            log.warn("no key {} in resources for {} found", key, aClass);
+            log.warn(MSG_NO_KEY_IN_RESOURCES, key, aClass);
             return key;
         }
     }
