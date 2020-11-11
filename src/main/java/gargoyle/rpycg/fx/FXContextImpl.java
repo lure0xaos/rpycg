@@ -143,7 +143,7 @@ final class FXContextImpl implements FXContext {
     }
 
     @SuppressWarnings("AccessOfSystemProperties")
-    void initializePreferences(@NotNull Class<? extends Application> applicationClass) {
+    void initializePreferences(Class<? extends FXApplication> applicationClass) {
         System.setProperty("java.util.prefs.PreferencesFactory", FilePreferencesFactory.class.getName());
         preferences.setValue(Preferences.userNodeForPackage(applicationClass));
     }

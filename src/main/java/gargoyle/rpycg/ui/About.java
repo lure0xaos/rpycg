@@ -15,7 +15,7 @@ public final class About extends GridPane {
     private Hyperlink link;
 
     public About() {
-        FXLoad.loadComponent(FXContextFactory.currentContext(), FXLoad.getBaseName(getClass()), this, this)
+        FXLoad.loadComponent(this)
                 .orElseThrow(() -> new AppUserException(AppUserException.LC_ERROR_NO_VIEW, getClass().getName()));
     }
 

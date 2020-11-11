@@ -50,6 +50,7 @@ based on [this f95 thread](https://f95zone.to/threads/renpy-cheat-generator.1410
 - Improve a visual hint where dropped item will be placed, as it's difficult to aim
   - (should think of the way how to do it)
 - ~~Visually separate menus~~
+- Some kind of syntax highlighting in Creator tab
 
 ## The latest changes
 - 05.08.2020 18:00 - First final usable version.
@@ -70,6 +71,7 @@ based on [this f95 thread](https://f95zone.to/threads/renpy-cheat-generator.1410
 - 19.10.2020 19:00 - Validation and many bug fixes.
 - 20.10.2020 21:00 - Русский перевод.
 - 26.10.2020 16:00 - "Split menu" function (via context menu).
+- 13.11.2020 16:00 - Custom dialogs buttons for better user experience.
 
 ### List of tested games
 - Corruption

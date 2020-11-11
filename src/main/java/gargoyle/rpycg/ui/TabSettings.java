@@ -1,16 +1,19 @@
 package gargoyle.rpycg.ui;
 
 import gargoyle.rpycg.ex.AppUserException;
-import gargoyle.rpycg.fx.FXContext;
 import gargoyle.rpycg.fx.FXContextFactory;
 import gargoyle.rpycg.fx.FXDialogs;
+import gargoyle.rpycg.fx.FXLauncher;
 import gargoyle.rpycg.fx.FXLoad;
+import gargoyle.rpycg.fx.FXUtil;
 import gargoyle.rpycg.model.Settings;
 import gargoyle.rpycg.service.LocaleConverter;
+import gargoyle.rpycg.util.Check;
 import javafx.beans.binding.Bindings;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.control.ButtonBar;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.ListCell;
@@ -20,19 +23,27 @@ import javafx.stage.Stage;
 import javafx.util.Callback;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
 
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.function.BiConsumer;
 import java.util.prefs.Preferences;
 
 public final class TabSettings extends GridPane implements Initializable {
 
+    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.TabSettings")
     private static final String LC_NEED_RESTART = "need-restart";
+    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.TabSettings")
+    private static final String LC_NEED_RESTART_CANCEL = "need-restart-cancel";
+    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.TabSettings")
+    private static final String LC_NEED_RESTART_OK = "need-restart-ok";
     private static final String PREF_GAME = "game";
 
     private final LocaleConverter localeConverter = new LocaleConverter();
@@ -65,7 +76,7 @@ public final class TabSettings extends GridPane implements Initializable {
 
     public TabSettings() {
         preferences = Objects.requireNonNull(FXContextFactory.currentContext().getPreferences());
-        FXLoad.loadComponent(FXContextFactory.currentContext(), FXLoad.getBaseName(getClass()), this, this)
+        FXLoad.loadComponent(this)
                 .orElseThrow(() -> new AppUserException(AppUserException.LC_ERROR_NO_VIEW, getClass().getName()));
     }
 
@@ -93,7 +104,7 @@ public final class TabSettings extends GridPane implements Initializable {
                 keyDeveloper.getDefaultCombination(), keyWrite.getDefaultCombination(),
                 Locale.ENGLISH));
         initializeLocaleComboBox(cmbLocaleMenu, settings.getLocaleMenu());
-        initializeLocaleUi(resources);
+        initializeLocaleUi(Check.requireNonNull(resources, AppUserException.LC_ERROR_NO_RESOURCES, location.toExternalForm()));
     }
 
     @NotNull
@@ -147,22 +158,23 @@ public final class TabSettings extends GridPane implements Initializable {
 
     private void initializeLocaleUi(@NotNull ResourceBundle resources) {
         initializeLocaleComboBox(cmbLocaleUi, settings.getLocaleMenu());
-        FXContext context = FXContextFactory.currentContext();
-        cmbLocaleUi.getSelectionModel().select(context.getLocale());
+        cmbLocaleUi.getSelectionModel().select(FXContextFactory.currentContext().getLocale());
         cmbLocaleUi.valueProperty().bind(cmbLocaleUi.getSelectionModel().selectedItemProperty());
         cmbLocaleUi.valueProperty().addListener((observable, oldValue, newValue) -> {
             if (!Objects.equals(oldValue, newValue)) {
                 FXContextFactory.changeLocale(newValue);
-                if (FXDialogs.confirm(context, getStage(), resources.getString(LC_NEED_RESTART))) {
-                    RPyCGApp.requestRestart(getStage());
+                if (FXDialogs.confirm(getStage().orElse(null), resources.getString(LC_NEED_RESTART), Map.of(
+                        ButtonBar.ButtonData.OK_DONE, resources.getString(LC_NEED_RESTART_OK),
+                        ButtonBar.ButtonData.CANCEL_CLOSE, resources.getString(LC_NEED_RESTART_CANCEL)))) {
+                    FXLauncher.requestRestart(getStage().orElseThrow());
                 }
             }
         });
     }
 
     @NotNull
-    private Stage getStage() {
-        return (Stage) cmbLocaleMenu.getScene().getWindow();
+    private Optional<Stage> getStage() {
+        return FXUtil.findStage(cmbLocaleMenu);
     }
 
     @FXML

@@ -8,9 +8,8 @@ module RenPyCheatGenerator {
     requires freemarker;
     requires java.desktop;
 
-    exports gargoyle.rpycg.fx to java.prefs;
+    exports gargoyle.rpycg.fx to javafx.fxml, javafx.controls, javafx.graphics, java.prefs;
     exports gargoyle.rpycg.model to freemarker;
-    exports gargoyle.rpycg.ui to javafx.fxml, javafx.controls, javafx.graphics;
     exports gargoyle.rpycg.ui.model;
     opens gargoyle.rpycg;
     opens gargoyle.rpycg.model to javafx.base;

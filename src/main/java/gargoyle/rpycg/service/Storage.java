@@ -7,13 +7,16 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
 public final class Storage {
+    @PropertyKey(resourceBundle = "gargoyle.rpycg.service.Storage")
     public static final String LC_ERROR_LOAD = "error.load";
+    @PropertyKey(resourceBundle = "gargoyle.rpycg.service.Storage")
     public static final String LC_ERROR_SAVE = "error.save";
     @NotNull
     private final ScriptConverter converter;
@@ -51,10 +54,6 @@ public final class Storage {
         return reload();
     }
 
-    public @NotNull Property<Boolean> modifiedProperty() {
-        return modified;
-    }
-
     @NotNull
     private ModelItem reload() {
         try {
@@ -65,6 +64,10 @@ public final class Storage {
             modified.setValue(true);
             throw new AppUserException(e, LC_ERROR_LOAD, path.toString());
         }
+    }
+
+    public @NotNull Property<Boolean> modifiedProperty() {
+        return modified;
     }
 
     @NotNull

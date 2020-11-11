@@ -1,7 +1,5 @@
 package gargoyle.rpycg.ui;
 
-import gargoyle.rpycg.fx.FXContext;
-import gargoyle.rpycg.fx.FXContextFactory;
 import gargoyle.rpycg.fx.FXLoad;
 import javafx.beans.DefaultProperty;
 import javafx.beans.property.Property;
@@ -15,13 +13,16 @@ import javafx.scene.input.KeyCombination;
 import javafx.scene.input.KeyEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
 
 import java.util.Optional;
 import java.util.ResourceBundle;
 
 @DefaultProperty("keyCode")
 public final class KeyText extends TextField {
+    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.KeyText")
     private static final String LC_DEFAULT = "default-is";
+    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.KeyText")
     private static final String LC_PRESS_ANY_KEY = "press-any-key";
     @NotNull
     private final Property<Boolean> activated;
@@ -34,8 +35,7 @@ public final class KeyText extends TextField {
         defaultCombination = new SimpleObjectProperty<>(null);
         combination = new SimpleObjectProperty<>(null);
         activated = new SimpleBooleanProperty(false);
-        FXContext context = FXContextFactory.currentContext();
-        Optional<ResourceBundle> optional = FXLoad.loadResources(context, FXLoad.getBaseName(getClass()));
+        Optional<ResourceBundle> optional = FXLoad.loadResources(getClass());
         String tooltip = optional.map(resources -> resources.getString(LC_DEFAULT)).orElse(LC_DEFAULT);
         String pressKey = optional.map(resources -> resources.getString(LC_PRESS_ANY_KEY)).orElse(LC_PRESS_ANY_KEY);
         defaultCombination.addListener((observable, oldValue, newValue) -> {

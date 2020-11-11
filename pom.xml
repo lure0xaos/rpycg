@@ -8,7 +8,28 @@
     <description>${project.artifactId}</description>
     <organization>
         <name>${project.artifactId}</name>
+        <url>https://github.com/lure0xaos/rpycg</url>
     </organization>
+
+    <issueManagement>
+        <url>https://github.com/lure0xaos/rpycg/issues</url>
+        <system>GitHub Issues</system>
+    </issueManagement>
+
+    <scm>
+        <url>https://github.com/lure0xaos/rpycg</url>
+        <connection>scm:git:git://github.com/lure0xaos/rpycg.git</connection>
+        <developerConnection>scm:git:git@github.com:lure0xaos/rpycg.git</developerConnection>
+    </scm>
+
+    <developers>
+        <developer>
+            <id>lure0xaos</id>
+            <name>Lure of Chaos</name>
+            <email>lure.of.chaos@gmail.com</email>
+            <url>https://github.com/lure0xaos</url>
+        </developer>
+    </developers>
 
     <groupId>gargoyle.renpy-cheat-generator</groupId>
     <artifactId>renpy-cheat-generator</artifactId>
@@ -27,16 +48,50 @@
         <maven.compiler.source>${java-version}</maven.compiler.source>
         <maven.compiler.target>${java-version}</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <!--suppress UnresolvedMavenProperty -->
+        <developer.id>${project.developers[0].id}</developer.id>
+        <!--suppress UnresolvedMavenProperty -->
+        <developer.name>${project.developers[0].name}</developer.name>
+        <!--suppress UnresolvedMavenProperty -->
+        <developer.email>${project.developers[0].email}</developer.email>
+        <!--suppress UnresolvedMavenProperty -->
+        <developer.url>${project.developers[0].url}</developer.url>
     </properties>
 
     <build>
         <finalName>${project.artifactId}</finalName>
+        <resources>
+            <resource>
+                <directory>${project.basedir}/src/main/resources</directory>
+                <filtering>false</filtering>
+                <excludes>
+                    <exclude>**/*.properties</exclude>
+                </excludes>
+            </resource>
+            <resource>
+                <directory>${project.basedir}/src/main/resources</directory>
+                <filtering>true</filtering>
+                <includes>
+                    <include>**/*.properties</include>
+                </includes>
+            </resource>
+        </resources>
         <pluginManagement>
             <plugins>
                 <plugin>
                     <inherited>true</inherited>
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>3.8.1</version>
+                </plugin>
+                <plugin>
+                    <artifactId>maven-resources-plugin</artifactId>
+                    <version>3.1.0</version>
+                    <configuration>
+                        <delimiters>
+                            <delimiter>@</delimiter>
+                        </delimiters>
+                    </configuration>
                 </plugin>
                 <plugin>
                     <artifactId>maven-jar-plugin</artifactId>

@@ -1,13 +1,14 @@
 package gargoyle.rpycg.service;
 
 import gargoyle.rpycg.ex.AppUserException;
-import gargoyle.rpycg.fx.FXContextFactory;
+import gargoyle.rpycg.ex.MalformedScriptException;
 import gargoyle.rpycg.fx.FXLoad;
 import gargoyle.rpycg.model.ModelItem;
 import gargoyle.rpycg.model.ModelType;
 import gargoyle.rpycg.model.VarType;
 import gargoyle.rpycg.util.Check;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.PropertyKey;
 
 import java.text.MessageFormat;
 import java.util.Arrays;
@@ -16,20 +17,21 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.ResourceBundle;
-import java.util.regex.Pattern;
 
 public final class ScriptConverter {
+    @PropertyKey(resourceBundle = "gargoyle.rpycg.service.ScriptConverter")
     private static final String LC_ERROR_FAIL_TYPE = "error.fail-type";
+    @PropertyKey(resourceBundle = "gargoyle.rpycg.service.ScriptConverter")
     private static final String LC_ERROR_VALUE_TYPE = "error.value-type";
+    @PropertyKey(resourceBundle = "gargoyle.rpycg.service.ScriptConverter")
     private static final String LC_ERROR_WRONG_MODEL_TYPE = "error.wrong-model-type";
+    @PropertyKey(resourceBundle = "gargoyle.rpycg.service.ScriptConverter")
     private static final String LC_ERROR_WRONG_TYPE = "error.wrong-type";
-    private static final Pattern RE_FLOAT = Pattern.compile("^[0-9]+.[0-9]+$");
-    private static final Pattern RE_INT = Pattern.compile("^[0-9]+$");
 
     private final ResourceBundle resources;
 
     public ScriptConverter() {
-        resources = FXLoad.loadResources(FXContextFactory.currentContext(), FXLoad.getBaseName(getClass()))
+        resources = FXLoad.loadResources(getClass())
                 .orElseThrow(() -> new AppUserException(AppUserException.LC_ERROR_NO_RESOURCES, getClass().getName()));
     }
 
@@ -83,9 +85,8 @@ public final class ScriptConverter {
                     try {
                         type = VarType.valueOf(typeValue.toUpperCase(Locale.ENGLISH));
                     } catch (IllegalArgumentException e) {
-                        throw new IllegalArgumentException(
-                                MessageFormat.format(resources.getString(LC_ERROR_WRONG_TYPE),
-                                        typeValue, Arrays.toString(VarType.values())), e);
+                        throw new MalformedScriptException(MessageFormat.format(resources.getString(LC_ERROR_WRONG_TYPE),
+                                typeValue, Arrays.toString(VarType.values())), e);
                     }
                     expr = expr.substring(0, open).trim();
                 }
@@ -117,19 +118,19 @@ public final class ScriptConverter {
                 } else if (Check.isInteger(value)) {
                     type = VarType.INT;
                 } else {
-                    throw new IllegalStateException(resources.getString(LC_ERROR_FAIL_TYPE));
+                    throw new MalformedScriptException(resources.getString(LC_ERROR_FAIL_TYPE));
                 }
             }
             if (!value.isBlank()) {
                 switch (type) {
                     case INT:
                         if (!Check.isInteger(value)) {
-                            throw new IllegalStateException(resources.getString(LC_ERROR_VALUE_TYPE));
+                            throw new MalformedScriptException(resources.getString(LC_ERROR_VALUE_TYPE));
                         }
                         break;
                     case FLOAT:
                         if (!Check.isFloat(value)) {
-                            throw new IllegalStateException(resources.getString(LC_ERROR_VALUE_TYPE));
+                            throw new MalformedScriptException(resources.getString(LC_ERROR_VALUE_TYPE));
                         }
                         break;
                     case STR:

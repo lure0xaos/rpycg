@@ -14,6 +14,7 @@ public final class Check {
     private static final Pattern PATTERN_TEXT = Pattern.compile("^[^\n;]+$");
 
     private Check() {
+        throw new IllegalStateException(getClass().getName());
     }
 
     public static boolean isFloat(@NotNull String val) {
@@ -52,7 +53,7 @@ public final class Check {
 
     @NotNull
     public static <T> T requireNonNull(@Nullable T obj,
-                                       @PropertyKey(resourceBundle = AppUserException.EX_APP_USER_EXCEPTION)
+                                       @PropertyKey(resourceBundle = "gargoyle.rpycg.ex.AppUserException")
                                                String messageKey, @NotNull String... args) {
         if (obj == null) {
             throw new AppUserException(messageKey, args);

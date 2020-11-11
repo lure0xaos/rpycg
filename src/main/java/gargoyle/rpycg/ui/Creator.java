@@ -1,10 +1,9 @@
 package gargoyle.rpycg.ui;
 
 import gargoyle.rpycg.ex.AppUserException;
-import gargoyle.rpycg.fx.FXContextFactory;
 import gargoyle.rpycg.fx.FXLoad;
+import gargoyle.rpycg.fx.FXRun;
 import gargoyle.rpycg.util.Classes;
-import javafx.application.Platform;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -30,7 +29,7 @@ public final class Creator extends ScrollPane implements Initializable {
     private TextArea source;
 
     public Creator() {
-        FXLoad.loadComponent(FXContextFactory.currentContext(), FXLoad.getBaseName(getClass()), this, this)
+        FXLoad.loadComponent(this)
                 .orElseThrow(() -> new AppUserException(AppUserException.LC_ERROR_NO_VIEW, getClass().getName()));
     }
 
@@ -68,7 +67,7 @@ public final class Creator extends ScrollPane implements Initializable {
             if (!Objects.equals(oldValue, newValue)) {
                 changed.setValue(true);
                 if (!source.isFocused()) {
-                    Platform.runLater(() -> source.positionCaret(newValue.length()));
+                    FXRun.runLater(() -> source.positionCaret(newValue.length()));
                 }
             }
         });

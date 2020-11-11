@@ -5,8 +5,8 @@ import gargoyle.rpycg.fx.FXContext;
 import gargoyle.rpycg.fx.FXContextFactory;
 import gargoyle.rpycg.fx.FXDialogs;
 import gargoyle.rpycg.fx.FXLoad;
+import gargoyle.rpycg.fx.FXRun;
 import gargoyle.rpycg.util.Check;
-import javafx.application.Platform;
 import javafx.beans.property.Property;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
@@ -27,6 +27,7 @@ import javafx.stage.Stage;
 import javafx.util.Callback;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,9 +63,13 @@ public final class FolderChooser extends Dialog<Path> implements Initializable {
     private static final String ICON_FILE = "icons/text-x-generic";
     private static final String ICON_FOLDER = "icons/folder";
     private static final String ICON_FOLDER_OPEN = "icons/folder-open";
+    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.FolderChooser")
     private static final String LC_CANCEL = "cancel";
+    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.FolderChooser")
     private static final String LC_OK = "ok";
+    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.FolderChooser")
     private static final String LC_ROOT = "root";
+    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.FolderChooser")
     private static final String LC_TITLE = "title";
     @NotNull
     private final FileWatcher fileWatcher;
@@ -77,7 +82,7 @@ public final class FolderChooser extends Dialog<Path> implements Initializable {
     public FolderChooser() {
         fileWatcher = new FileWatcher();
         initialDirectory = new SimpleObjectProperty<>(null);
-        FXLoad.loadDialog(FXContextFactory.currentContext(), this)
+        FXLoad.loadDialog(this)
                 .orElseThrow(() -> new AppUserException(AppUserException.LC_ERROR_NO_VIEW, getClass().getName()));
     }
 
@@ -94,15 +99,15 @@ public final class FolderChooser extends Dialog<Path> implements Initializable {
     @Override
     public void initialize(@NotNull URL location, @Nullable ResourceBundle resources) {
         Check.requireNonNull(resources, AppUserException.LC_ERROR_NO_RESOURCES, location.toExternalForm());
-        FXDialogs.decorateDialog(FXContextFactory.currentContext(), this, param ->
-                param.getButtonData().isCancelButton() ? null :
+        FXDialogs.decorateDialog(this, buttonType ->
+                buttonType.getButtonData().isCancelButton() ? null :
                         fileTree.getSelectionModel().getSelectedItem().getValue(), Map.of(
                 ButtonBar.ButtonData.OK_DONE, resources.getString(LC_OK),
                 ButtonBar.ButtonData.CANCEL_CLOSE, resources.getString(LC_CANCEL)
         ), resources.getString(LC_TITLE));
         setResizable(true);
         rootLabel = resources.getString(LC_ROOT);
-        fileTree.setCellFactory(param -> new FileTreeCell(FXContextFactory.currentContext(), rootLabel));
+        fileTree.setCellFactory(treeView -> new FileTreeCell(FXContextFactory.currentContext(), rootLabel));
         fileTree.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
         TreeItem<Path> rootNode = new TreeItem<>(null,
                 getPathGraphic(FXContextFactory.currentContext(), null, false).orElse(null));
@@ -114,14 +119,14 @@ public final class FolderChooser extends Dialog<Path> implements Initializable {
                 selectItem(newValue);
             }
         });
-        Platform.runLater(() -> fileTree.requestFocus());
+        FXRun.runLater(() -> fileTree.requestFocus());
     }
 
     @NotNull
     private static Optional<Node> getPathGraphic(@NotNull FXContext context, @Nullable Path path, boolean expanded) {
         @NotNull String name = path == null ? ICON_COMPUTER :
                 Files.isDirectory(path) ? expanded ? ICON_FOLDER_OPEN : ICON_FOLDER : ICON_FILE;
-        return FXLoad.findResource(context, FXLoad.getBaseName(FolderChooser.class, name), FXLoad.IMAGES)
+        return FXLoad.findResource(context, FXLoad.getBaseName(FolderChooser.class, name), FXLoad.EXT_IMAGES)
                 .map(URL::toExternalForm)
                 .map(ImageView::new);
     }

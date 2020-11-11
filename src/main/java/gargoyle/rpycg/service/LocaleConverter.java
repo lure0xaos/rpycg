@@ -25,7 +25,7 @@ public final class LocaleConverter {
     }
 
     public LocaleConverter(FXContext context) {
-        resources = FXLoad.loadResources(context, FXLoad.getBaseName(getClass()))
+        resources = FXLoad.loadResources(context, getClass())
                 .orElseThrow(() -> new AppUserException(AppUserException.LC_ERROR_NO_RESOURCES, getClass().getName()));
     }
 

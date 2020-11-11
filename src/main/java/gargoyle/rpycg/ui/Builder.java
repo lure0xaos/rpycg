@@ -1,10 +1,11 @@
 package gargoyle.rpycg.ui;
 
 import gargoyle.rpycg.ex.AppUserException;
-import gargoyle.rpycg.fx.FXContext;
-import gargoyle.rpycg.fx.FXContextFactory;
+import gargoyle.rpycg.fx.FXComponent;
 import gargoyle.rpycg.fx.FXDialogs;
 import gargoyle.rpycg.fx.FXLoad;
+import gargoyle.rpycg.fx.FXRun;
+import gargoyle.rpycg.fx.FXUtil;
 import gargoyle.rpycg.model.ModelItem;
 import gargoyle.rpycg.model.ModelType;
 import gargoyle.rpycg.service.ModelConverter;
@@ -17,7 +18,6 @@ import gargoyle.rpycg.util.TreeTableViewWalker;
 import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
-import javafx.application.Platform;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -25,6 +25,7 @@ import javafx.css.Styleable;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Orientation;
+import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.ScrollBar;
@@ -55,8 +56,6 @@ import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-import static gargoyle.rpycg.ex.AppUserException.LC_ERROR_NO_RESOURCES;
-
 public final class Builder extends ScrollPane implements Initializable {
     private static final double BOND = 0.3;
     private static final String CLASS_DANGER = "danger";
@@ -71,17 +70,21 @@ public final class Builder extends ScrollPane implements Initializable {
     private static final String ICON_EMPTY = "icons/empty";
     private static final String ICON_MENU = "icons/menu";
     private static final String ICON_VARIABLE = "icons/var";
-    private static final String LC_ERROR_MALFORMED_SCRIPT = "error.malformed-script";
+    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Builder")
     private static final String LC_REMOVE_CONFIRM = "remove-confirm";
+    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Builder")
+    private static final String LC_REMOVE_CONFIRM_CANCEL = "remove-confirm-cancel";
+    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Builder")
+    private static final String LC_REMOVE_CONFIRM_OK = "remove-confirm-ok";
     private static final MenuItem[] MENU_ITEMS = new MenuItem[0];
     private static final int SCROLL = 20;
     private static final DataFormat SERIALIZED_MIME_TYPE = new DataFormat("application/x-java-serialized-object");
     private final SimpleBooleanProperty changed = new SimpleBooleanProperty(false);
+    private final FXComponent<Builder, ScrollPane> component;
     @NotNull
     private final ModelConverter modelConverter;
     @NotNull
     private final Timeline scrollTimeline = new Timeline();
-    @NotNull
     private ResourceBundle resources;
     private double scrollDirection;
     @FXML
@@ -89,7 +92,7 @@ public final class Builder extends ScrollPane implements Initializable {
 
     public Builder() {
         modelConverter = new ModelConverter();
-        FXLoad.loadComponent(FXContextFactory.currentContext(), FXLoad.getBaseName(getClass()), this, this)
+        component = FXLoad.<Builder, ScrollPane>loadComponent(this)
                 .orElseThrow(() -> new AppUserException(AppUserException.LC_ERROR_NO_VIEW, getClass().getName()));
     }
 
@@ -214,7 +217,7 @@ public final class Builder extends ScrollPane implements Initializable {
     private void addMenu(@Nullable TreeItem<DisplayItem> item) {
         MenuDialog dialog = new MenuDialog();
         dialog.setKnown(getKnownNames(""));
-        dialog.initOwner(getStage());
+        getStage().ifPresent(dialog::initOwner);
         dialog.showAndWait().ifPresent(menu -> addItem(item, menu, true));
     }
 
@@ -235,8 +238,8 @@ public final class Builder extends ScrollPane implements Initializable {
     }
 
     @NotNull
-    private Stage getStage() {
-        return (Stage) tree.getScene().getWindow();
+    private Optional<Stage> getStage() {
+        return FXUtil.findStage(tree);
     }
 
     private void addItem(@Nullable TreeItem<DisplayItem> item, @NotNull DisplayItem displayItem, boolean expanded) {
@@ -247,29 +250,11 @@ public final class Builder extends ScrollPane implements Initializable {
         selectItem(newItem);
     }
 
-    private void initializeTree() {
-        shouldClearRoot();
-        tree.setShowRoot(false);
-        tree.setCellFactory(this::createDisplayItemTreeCell);
-        scrollTimeline.setCycleCount(Animation.INDEFINITE);
-        scrollTimeline.getKeyFrames().add(new KeyFrame(Duration.millis(SCROLL), "Scroll",
-                e -> tree.lookupAll(".scroll-bar").stream()
-                        .filter(ScrollBar.class::isInstance)
-                        .map(ScrollBar.class::cast)
-                        .filter(scrollBar -> Orientation.VERTICAL == scrollBar.getOrientation())
-                        .findAny().ifPresent(scrollBar ->
-                                scrollBar.setValue(Math.max(0.0, Math.min(1.0,
-                                        scrollBar.getValue() + scrollDirection))))));
-        tree.setOnDragExited(event -> {
-            if (event.getY() > 0) {
-                scrollDirection = 1.0 / tree.getExpandedItemCount();
-            } else {
-                scrollDirection = -1.0 / tree.getExpandedItemCount();
-            }
-            scrollTimeline.play();
-        });
-        tree.setOnDragEntered(event -> scrollTimeline.stop());
-        tree.setOnDragDone(event -> scrollTimeline.stop());
+    @SuppressWarnings("ParameterHidesMemberVariable")
+    @Override
+    public void initialize(@NotNull URL location, @Nullable ResourceBundle resources) {
+        this.resources = Check.requireNonNull(resources, AppUserException.LC_ERROR_NO_RESOURCES, location.toExternalForm());
+        initializeTree();
     }
 
     public void addRootVariable() {
@@ -278,7 +263,7 @@ public final class Builder extends ScrollPane implements Initializable {
 
     private void addVariable(@Nullable TreeItem<DisplayItem> item) {
         VariableDialog dialog = new VariableDialog();
-        dialog.initOwner(getStage());
+        getStage().ifPresent(dialog::initOwner);
         dialog.showAndWait().ifPresent(variable -> addItem(item, variable, false));
     }
 
@@ -335,17 +320,16 @@ public final class Builder extends ScrollPane implements Initializable {
             cell.setText(Optional.ofNullable(displayItem)
                     .map(DisplayItem::getLabel).filter(s -> !s.isBlank()).orElseGet(() ->
                             Optional.ofNullable(displayItem).map(DisplayItem::getName).orElse("")));
-            FXLoad.findResource(FXContextFactory.currentContext(), FXLoad.getBaseName(getClass(),
-                    Optional.ofNullable(displayItem).map(DisplayItem::getModelType).map(type -> {
-                        switch (type) {
-                            case MENU:
-                                return ICON_MENU;
-                            case VARIABLE:
-                                return ICON_VARIABLE;
-                            default:
-                                return ICON_EMPTY;
-                        }
-                    }).orElse(ICON_EMPTY)), FXLoad.IMAGES)
+            component.findResource(Optional.ofNullable(displayItem).map(DisplayItem::getModelType).map(type -> {
+                switch (type) {
+                    case MENU:
+                        return ICON_MENU;
+                    case VARIABLE:
+                        return ICON_VARIABLE;
+                    default:
+                        return ICON_EMPTY;
+                }
+            }).orElse(ICON_EMPTY), FXLoad.EXT_IMAGES)
                     .map(URL::toExternalForm).map(ImageView::new)
                     .ifPresent(cell::setGraphic);
             updateCell(cell, cell.getTreeItem(), cell.getIndex());
@@ -370,8 +354,7 @@ public final class Builder extends ScrollPane implements Initializable {
                                     @NotNull TreeItem<DisplayItem> treeItem,
                                     @NotNull Consumer<TreeItem<DisplayItem>> handler) {
         MenuItem item = new MenuItem(resources.getString(key), Optional.ofNullable(graphicName).flatMap(location ->
-                FXLoad.findResource(FXContextFactory.currentContext(),
-                        FXLoad.getBaseName(getClass(), graphicName), FXLoad.IMAGES)
+                component.findResource(graphicName, FXLoad.EXT_IMAGES)
                         .map(URL::toExternalForm).map(ImageView::new))
                 .orElse(null));
         item.setOnAction(event -> handler.accept(treeItem));
@@ -381,7 +364,7 @@ public final class Builder extends ScrollPane implements Initializable {
     private void editMenu(@Nullable TreeItem<DisplayItem> item) {
         MenuDialog dialog = new MenuDialog();
         dialog.setKnown(getKnownNames(item == null || item.getValue() == null ? "" : item.getValue().getName()));
-        dialog.initOwner(getStage());
+        getStage().ifPresent(dialog::initOwner);
         if (item != null) {
             dialog.setDisplayItem(item.getValue());
         }
@@ -390,7 +373,7 @@ public final class Builder extends ScrollPane implements Initializable {
 
     private void editVariable(@NotNull TreeItem<DisplayItem> item) {
         VariableDialog dialog = new VariableDialog();
-        dialog.initOwner(getStage());
+        getStage().ifPresent(dialog::initOwner);
         dialog.setDisplayItem(item.getValue());
         dialog.showAndWait().ifPresent(variable -> replaceItem(item, variable));
     }
@@ -400,18 +383,36 @@ public final class Builder extends ScrollPane implements Initializable {
         return modelConverter.toModel(tree.getRoot());
     }
 
+    private void initializeTree() {
+        shouldClearRoot();
+        tree.setShowRoot(false);
+        tree.setCellFactory(this::createDisplayItemTreeCell);
+        scrollTimeline.setCycleCount(Animation.INDEFINITE);
+        scrollTimeline.getKeyFrames().add(new KeyFrame(Duration.millis(SCROLL), "Scroll",
+                e -> tree.lookupAll(".scroll-bar").stream()
+                        .filter(ScrollBar.class::isInstance)
+                        .map(ScrollBar.class::cast)
+                        .filter(scrollBar -> Orientation.VERTICAL == scrollBar.getOrientation())
+                        .findAny().ifPresent(scrollBar ->
+                                scrollBar.setValue(Math.max(0.0, Math.min(1.0,
+                                        scrollBar.getValue() + scrollDirection))))));
+        tree.setOnDragExited(event -> {
+            if (event.getY() > 0) {
+                scrollDirection = 1.0 / tree.getExpandedItemCount();
+            } else {
+                scrollDirection = -1.0 / tree.getExpandedItemCount();
+            }
+            scrollTimeline.play();
+        });
+        tree.setOnDragEntered(event -> scrollTimeline.stop());
+        tree.setOnDragDone(event -> scrollTimeline.stop());
+    }
+
     private void putAbove(@NotNull TreeItem<DisplayItem> destItem, @NotNull TreeItem<DisplayItem> dragItem) {
         ObservableList<TreeItem<DisplayItem>> destSiblings = destItem.getParent().getChildren();
         dragItem.getParent().getChildren().remove(dragItem);
         destSiblings.add(destSiblings.indexOf(destItem), dragItem);
         selectItem(dragItem);
-    }
-
-    @SuppressWarnings("ParameterHidesMemberVariable")
-    @Override
-    public void initialize(@NotNull URL location, @Nullable ResourceBundle resources) {
-        this.resources = Check.requireNonNull(resources, LC_ERROR_NO_RESOURCES, location.toExternalForm());
-        initializeTree();
     }
 
     private void initializeDnD(@NotNull TreeCell<DisplayItem> cell) {
@@ -539,16 +540,13 @@ public final class Builder extends ScrollPane implements Initializable {
     }
 
     public void setModel(@NotNull ModelItem rootItem) {
-        try {
-            changed.setValue(shouldUpdateTree(modelConverter.toTree(rootItem)));
-        } catch (IllegalArgumentException | IllegalStateException e) {
-            FXContext context = FXContextFactory.currentContext();
-            FXDialogs.error(context, getStage(), resources.getString(LC_ERROR_MALFORMED_SCRIPT), e);
-        }
+        changed.setValue(shouldUpdateTree(modelConverter.toTree(rootItem)));
     }
 
     private void removeItem(@NotNull TreeItem<DisplayItem> treeItem) {
-        if (FXDialogs.confirm(FXContextFactory.currentContext(), getStage(), resources.getString(LC_REMOVE_CONFIRM))) {
+        if (FXDialogs.confirm(getStage().orElse(null), resources.getString(LC_REMOVE_CONFIRM), Map.of(
+                ButtonBar.ButtonData.OK_DONE, resources.getString(LC_REMOVE_CONFIRM_OK),
+                ButtonBar.ButtonData.CANCEL_CLOSE, resources.getString(LC_REMOVE_CONFIRM_CANCEL)))) {
             treeItem.getParent().getChildren().remove(treeItem);
         }
     }
@@ -607,7 +605,7 @@ public final class Builder extends ScrollPane implements Initializable {
     private void updateCell(@NotNull TreeCell<DisplayItem> cell, @Nullable TreeItem<DisplayItem> treeItem,
                             int cellIndex) {
         cell.setContextMenu(createContextMenuForCell(treeItem));
-        Platform.runLater(() -> {
+        FXRun.runLater(() -> {
             setCellZebraDecorations(cell, cell.getTreeItem(), cellIndex);
             setCellSignalDecorations(cell, cell.getTreeItem());
             setCellSplitDecorations(cell, cell.getTreeItem());

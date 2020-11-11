@@ -12,6 +12,7 @@ import freemarker.template.TemplateModel;
 import freemarker.template.TemplateModelException;
 import freemarker.template.TemplateNumberModel;
 import gargoyle.rpycg.ex.AppUserException;
+import gargoyle.rpycg.ex.CodeGenerationException;
 import gargoyle.rpycg.fx.FXContext;
 import gargoyle.rpycg.fx.FXContextFactory;
 import gargoyle.rpycg.fx.FXLoad;
@@ -101,7 +102,7 @@ public final class CodeConverter {
                     PARAM_MODEL, menu), writer);
             return Arrays.asList(writer.toString().split(System.lineSeparator()));
         } catch (TemplateException | MissingResourceException | IOException e) {
-            throw new IllegalStateException(e.getLocalizedMessage(), e);
+            throw new CodeGenerationException(e.getLocalizedMessage(), e);
         }
     }
 
@@ -152,7 +153,8 @@ public final class CodeConverter {
         private final FXContext context;
         private final Settings settings;
 
-        private ResourceBundleMethodModel(@NotNull FXContext context, @NotNull Class<?> aClass, @NotNull Settings settings) {
+        private ResourceBundleMethodModel(@NotNull FXContext context, @NotNull Class<?> aClass,
+                                          @NotNull Settings settings) {
             this.aClass = aClass;
             this.context = context;
             this.settings = settings;
@@ -160,8 +162,8 @@ public final class CodeConverter {
 
         @Override
         public Object exec(List arguments) throws TemplateModelException {
-            ResourceBundle resources = FXLoad.loadResources(FXContextFactory.forLocale(context, settings.getLocaleMenu()),
-                    FXLoad.getBaseName(aClass))
+            ResourceBundle resources = FXLoad.loadResources(
+                    FXContextFactory.forLocale(context, settings.getLocaleMenu()), aClass)
                     .orElseThrow(() -> new AppUserException(AppUserException.LC_ERROR_NO_RESOURCES, aClass.getName()));
             if (arguments.isEmpty()) {
                 throw new TemplateModelException("Wrong number of arguments");

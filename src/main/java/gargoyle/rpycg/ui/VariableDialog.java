@@ -1,15 +1,14 @@
 package gargoyle.rpycg.ui;
 
 import gargoyle.rpycg.ex.AppUserException;
-import gargoyle.rpycg.fx.FXContextFactory;
 import gargoyle.rpycg.fx.FXDialogs;
 import gargoyle.rpycg.fx.FXLoad;
+import gargoyle.rpycg.fx.FXRun;
 import gargoyle.rpycg.model.VarType;
 import gargoyle.rpycg.service.Validator;
 import gargoyle.rpycg.ui.model.DisplayItem;
 import gargoyle.rpycg.util.Check;
 import gargoyle.rpycg.util.Classes;
-import javafx.application.Platform;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.fxml.FXML;
@@ -23,6 +22,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.Tooltip;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
 
 import java.net.URL;
 import java.util.Collection;
@@ -31,12 +31,19 @@ import java.util.ResourceBundle;
 
 public final class VariableDialog extends Dialog<DisplayItem> implements Initializable {
     private static final String CLASS_DANGER = "danger";
+    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.VariableDialog")
     private static final String LC_CANCEL = "cancel";
+    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.VariableDialog")
     private static final String LC_ERROR_EMPTY = "error.empty";
+    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.VariableDialog")
     private static final String LC_ERROR_FORMAT = "error.format";
+    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.VariableDialog")
     private static final String LC_OK_CREATE = "ok_create";
+    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.VariableDialog")
     private static final String LC_OK_EDIT = "ok_edit";
+    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.VariableDialog")
     private static final String LC_TITLE_CREATE = "title_create";
+    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.VariableDialog")
     private static final String LC_TITLE_EDIT = "title_edit";
 
     private final SimpleObjectProperty<DisplayItem> displayItem;
@@ -54,7 +61,7 @@ public final class VariableDialog extends Dialog<DisplayItem> implements Initial
     public VariableDialog() {
         edit = new SimpleBooleanProperty(false);
         displayItem = new SimpleObjectProperty<>(DisplayItem.createVariable(VarType.INT, "", "", "0"));
-        FXLoad.loadDialog(FXContextFactory.currentContext(), this)
+        FXLoad.loadDialog(this)
                 .orElseThrow(() -> new AppUserException(AppUserException.LC_ERROR_NO_VIEW, getClass().getName()));
     }
 
@@ -82,7 +89,7 @@ public final class VariableDialog extends Dialog<DisplayItem> implements Initial
     @Override
     public void initialize(@NotNull URL location, @Nullable ResourceBundle resources) {
         Check.requireNonNull(resources, AppUserException.LC_ERROR_NO_RESOURCES, location.toExternalForm());
-        FXDialogs.decorateDialog(FXContextFactory.currentContext(), this,
+        FXDialogs.decorateDialog(this,
                 buttonType -> buttonType.getButtonData().isCancelButton() ? null :
                         DisplayItem.createVariable(type.getValue(),
                                 label.getText(), name.getText(), value.getText()), Map.of(
@@ -124,7 +131,7 @@ public final class VariableDialog extends Dialog<DisplayItem> implements Initial
                 getDialogPane().getButtonTypes().filtered(buttonType -> buttonType.getButtonData().isDefaultButton())
                         .forEach(buttonType -> getDialogPane().lookupButton(buttonType).setDisable(!newValue)));
         onShownProperty().addListener((observable, oldValue, newValue) -> onShow());
-        Platform.runLater(this::onShow);
+        FXRun.runLater(this::onShow);
     }
 
     public boolean isEdit() {

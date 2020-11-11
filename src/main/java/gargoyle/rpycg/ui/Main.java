@@ -1,11 +1,16 @@
 package gargoyle.rpycg.ui;
 
+import gargoyle.rpycg.RPyCG;
 import gargoyle.rpycg.ex.AppException;
 import gargoyle.rpycg.ex.AppUserException;
-import gargoyle.rpycg.fx.FXContext;
+import gargoyle.rpycg.ex.CodeGenerationException;
+import gargoyle.rpycg.ex.MalformedScriptException;
 import gargoyle.rpycg.fx.FXContextFactory;
 import gargoyle.rpycg.fx.FXDialogs;
+import gargoyle.rpycg.fx.FXLauncher;
 import gargoyle.rpycg.fx.FXLoad;
+import gargoyle.rpycg.fx.FXRun;
+import gargoyle.rpycg.fx.FXUtil;
 import gargoyle.rpycg.model.ModelItem;
 import gargoyle.rpycg.model.ModelTemplate;
 import gargoyle.rpycg.service.CodeConverter;
@@ -13,7 +18,6 @@ import gargoyle.rpycg.service.ScriptConverter;
 import gargoyle.rpycg.service.Storage;
 import gargoyle.rpycg.util.Check;
 import javafx.application.Application;
-import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
 import javafx.beans.value.ObservableObjectValue;
@@ -21,6 +25,7 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonBar;
 import javafx.scene.control.Tab;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
@@ -29,6 +34,7 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
 
 import java.io.File;
 import java.io.IOException;
@@ -37,31 +43,79 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.ResourceBundle;
-
-import static gargoyle.rpycg.ex.AppUserException.LC_ERROR_NO_RESOURCES;
 
 public final class Main extends BorderPane implements Initializable {
     private static final String EXTENSION = "rpycg";
     private static final String INSTALL_NAME = "RenPyCheat.rpy";
     private static final String KEY_DEBUG = "debug";
+    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Main")
     private static final String LC_CLEAR_CONFIRM = "clear-confirm";
+    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Main")
+    private static final String LC_CLEAR_CONFIRM_CANCEL = "clear-confirm-cancel";
+    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Main")
+    private static final String LC_CLEAR_CONFIRM_OK = "clear-confirm-ok";
+    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Main")
+    private static final String LC_CLOSE = "close";
+    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Main")
+    private static final String LC_CLOSE_CONFIRM = "close-confirm";
+    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Main")
+    private static final String LC_CLOSE_CONFIRM_CANCEL = "close-confirm-cancel";
+    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Main")
+    private static final String LC_CLOSE_CONFIRM_OK = "close-confirm-ok";
+    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Main")
     private static final String LC_ERROR_GENERATE = "error.generate";
+    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Main")
     private static final String LC_ERROR_LOAD = "error.load";
+    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Main")
     private static final String LC_ERROR_MALFORMED_SCRIPT = "error.malformed-script";
+    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Main")
     private static final String LC_ERROR_NOT_GAME = "error.not-game";
+    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Main")
     private static final String LC_ERROR_SAVE = "error.save";
+    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Main")
     private static final String LC_ERROR_WRITE = "error.write";
+    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Main")
     private static final String LC_EXTENSION_DESCRIPTION = "extension-description";
+    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Main")
     private static final String LC_LOAD_CONFIRM = "load-confirm";
+    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Main")
+    private static final String LC_LOAD_CONFIRM_CANCEL = "load-confirm-cancel";
+    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Main")
+    private static final String LC_LOAD_CONFIRM_OK = "load-confirm-ok";
+    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Main")
     private static final String LC_RELOAD_CONFIRM = "reload-confirm";
+    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Main")
+    private static final String LC_RELOAD_CONFIRM_CANCEL = "reload-confirm-cancel";
+    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Main")
+    private static final String LC_RELOAD_CONFIRM_OK = "reload-confirm-ok";
+    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Main")
+    private static final String LC_REPORT = "report";
+    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Main")
     private static final String LC_SAVE_AS_CONFIRM = "save-as-confirm";
+    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Main")
+    private static final String LC_SAVE_AS_CONFIRM_CANCEL = "save-as-confirm-cancel";
+    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Main")
+    private static final String LC_SAVE_AS_CONFIRM_OK = "save-as-confirm-ok";
+    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Main")
     private static final String LC_SAVE_CONFIRM = "save-confirm";
+    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Main")
+    private static final String LC_SAVE_CONFIRM_CANCEL = "save-confirm-cancel";
+    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Main")
+    private static final String LC_SAVE_CONFIRM_OK = "save-confirm-ok";
+    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Main")
     private static final String LC_SUCCESS_GENERATE = "success-generate";
+    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Main")
     private static final String LC_SUCCESS_INSTALL = "success-install";
+    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Main")
     private static final String LC_TEMPLATE_CONFIRM = "template-confirm";
+    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Main")
+    private static final String LC_TEMPLATE_CONFIRM_CANCEL = "template-confirm-cancel";
+    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Main")
+    private static final String LC_TEMPLATE_CONFIRM_OK = "template-confirm-ok";
     @FXML
     private Button btnLoad;
     @FXML
@@ -88,14 +142,14 @@ public final class Main extends BorderPane implements Initializable {
     private TabSettings tabSettings;
 
     public Main() {
-        FXLoad.loadComponent(FXContextFactory.currentContext(), FXLoad.getBaseName(getClass()), this, this)
+        FXLoad.loadComponent(this)
                 .orElseThrow(() -> new AppUserException(AppUserException.LC_ERROR_NO_VIEW, getClass().getName()));
     }
 
     @SuppressWarnings("ParameterHidesMemberVariable")
     @Override
     public void initialize(@NotNull URL location, @Nullable ResourceBundle resources) {
-        this.resources = Check.requireNonNull(resources, LC_ERROR_NO_RESOURCES, location.toExternalForm());
+        this.resources = Check.requireNonNull(resources, AppUserException.LC_ERROR_NO_RESOURCES, location.toExternalForm());
         scriptConverter = new ScriptConverter();
         codeConverter = new CodeConverter(FXContextFactory.currentContext(), tabSettings.getSettings(),
                 CodeConverter.SPACES);
@@ -103,7 +157,7 @@ public final class Main extends BorderPane implements Initializable {
         initializeTabs();
         storage = createStorage();
         storageChooser = createStorageChooser(storage.getPath());
-        Platform.runLater(() -> RPyCGApp.requestPrevent(getStage(), stage -> doSaveOnClose(resources, stage)));
+        FXRun.runLater(() -> FXLauncher.requestPrevent(getStage().orElseThrow(), stage -> doSaveOnClose(resources, stage)));
     }
 
     @NotNull
@@ -117,7 +171,7 @@ public final class Main extends BorderPane implements Initializable {
         tabCreator.selectedProperty().addListener((value, oldValue, newValue) -> {
             if (newValue) {
                 updateScript(true);
-                Platform.runLater(() -> creator.onShow());
+                FXRun.runLater(() -> creator.onShow());
             }
         });
         tabBuilder.selectedProperty().addListener((value, oldValue, newValue) -> {
@@ -125,9 +179,9 @@ public final class Main extends BorderPane implements Initializable {
                 try {
                     updateTreeFromScript();
                     creator.decorateError(Collections.emptySet());
-                } catch (IllegalArgumentException | IllegalStateException e) {
+                } catch (IllegalArgumentException | IllegalStateException | MalformedScriptException e) {
                     creator.decorateError(Collections.singleton(e.getLocalizedMessage()));
-                    FXDialogs.error(FXContextFactory.currentContext(), getStage(),
+                    FXDialogs.error(getStage().orElse(null),
                             resources.getString(LC_ERROR_MALFORMED_SCRIPT) + "\n" + e.getLocalizedMessage());
                 }
             }
@@ -145,7 +199,7 @@ public final class Main extends BorderPane implements Initializable {
                     updateTreeFromScript();
                     creator.decorateError(Collections.emptySet());
                     storage.setModified(true);
-                } catch (IllegalArgumentException | IllegalStateException e) {
+                } catch (IllegalArgumentException | IllegalStateException | MalformedScriptException e) {
                     creator.decorateError(Collections.singleton(e.getLocalizedMessage()));
                 }
             }
@@ -177,15 +231,32 @@ public final class Main extends BorderPane implements Initializable {
     }
 
     @NotNull
-    private Stage getStage() {
-        return (Stage) btnLoad.getScene().getWindow();
+    private Optional<Stage> getStage() {
+        return FXUtil.findStage(btnLoad);
     }
 
-    private void doLoad(@NotNull Path path) {
-        storage.setPath(path);
-        updateTree(storage.load(path));
-        updateScript(true);
-        storage.setModified(false);
+    private FXLauncher.FXCloseAction doSaveOnClose(@NotNull ResourceBundle resources, @NotNull Stage stage) {
+        if (!storage.getModified() || builder.isTreeEmpty() ||
+                FXDialogs.confirm(stage, resources.getString(LC_CLOSE_CONFIRM), Map.of(
+                        ButtonBar.ButtonData.OK_DONE, resources.getString(LC_CLOSE_CONFIRM_OK),
+                        ButtonBar.ButtonData.CANCEL_CLOSE, resources.getString(LC_CLOSE_CONFIRM_CANCEL)
+                )))
+            return FXLauncher.FXCloseAction.CLOSE;
+        try {
+            Path storagePath = storage.getPath();
+            if (storagePath != null) {
+                return doSave(stage) ? FXLauncher.FXCloseAction.CLOSE : FXLauncher.FXCloseAction.KEEP;
+            } else {
+                return doSaveAs(stage) ? FXLauncher.FXCloseAction.CLOSE : FXLauncher.FXCloseAction.KEEP;
+            }
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            FXDialogs.error(stage, resources.getString(LC_ERROR_MALFORMED_SCRIPT), e, Map.of(
+                    ButtonBar.ButtonData.OK_DONE, resources.getString(LC_CLOSE),
+                    ButtonBar.ButtonData.OTHER, resources.getString(LC_REPORT)))
+                    .filter(buttonType -> buttonType.getButtonData() == ButtonBar.ButtonData.OTHER)
+                    .ifPresent(buttonType -> RPyCG.mailError(e));
+            return FXLauncher.FXCloseAction.KEEP;
+        }
     }
 
     private void updateScript(boolean forced) {
@@ -203,11 +274,12 @@ public final class Main extends BorderPane implements Initializable {
 
     private boolean doSave(Stage stage) {
         Path storagePath = Objects.requireNonNull(storage.getPath());
-        if (!Files.exists(storagePath) && !FXDialogs.confirm(FXContextFactory.currentContext(), stage,
-                resources.getString(LC_SAVE_CONFIRM))) {
-            return false;
+        if (Files.exists(storagePath) || FXDialogs.confirm(stage, resources.getString(LC_SAVE_CONFIRM), Map.of(
+                ButtonBar.ButtonData.OK_DONE, resources.getString(LC_SAVE_CONFIRM_OK),
+                ButtonBar.ButtonData.CANCEL_CLOSE, resources.getString(LC_SAVE_CONFIRM_CANCEL)))) {
+            return save(stage, storagePath);
         }
-        return save(stage, storagePath);
+        return false;
     }
 
     private boolean doSaveAs(Stage stage) {
@@ -216,8 +288,10 @@ public final class Main extends BorderPane implements Initializable {
             return false;
         }
         Path path = saveFile.toPath();
-        if (!Files.exists(path) || FXDialogs.confirm(FXContextFactory.currentContext(), stage,
-                resources.getString(LC_SAVE_AS_CONFIRM))) {
+        if (!Files.exists(path) || FXDialogs.confirm(stage, resources.getString(LC_SAVE_AS_CONFIRM), Map.of(
+                ButtonBar.ButtonData.OK_DONE, resources.getString(LC_SAVE_AS_CONFIRM_OK),
+                ButtonBar.ButtonData.CANCEL_CLOSE, resources.getString(LC_SAVE_AS_CONFIRM_CANCEL)
+        ))) {
             save(stage, path);
         }
         return true;
@@ -229,48 +303,21 @@ public final class Main extends BorderPane implements Initializable {
             storage.setPath(storagePath);
             return true;
         } catch (AppException e) {
-            FXContext context = FXContextFactory.currentContext();
-            FXDialogs.error(context, stage, resources.getString(LC_ERROR_SAVE), e);
+            FXDialogs.error(stage, resources.getString(LC_ERROR_SAVE), e, Map.of(
+                    ButtonBar.ButtonData.OK_DONE, resources.getString(LC_CLOSE),
+                    ButtonBar.ButtonData.OTHER, resources.getString(LC_REPORT)))
+                    .filter(buttonType -> buttonType.getButtonData() == ButtonBar.ButtonData.OTHER)
+                    .ifPresent(buttonType -> RPyCG.mailError(e));
             return false;
         }
-    }
-
-    private void updateTree(@NotNull ModelItem root) {
-        builder.setModel(root);
-    }
-
-    private RPyCGApp.CloseAction doSaveOnClose(@NotNull ResourceBundle resources, @NotNull Stage stage) {
-        FXContext context = FXContextFactory.currentContext();
-        if (!storage.getModified() ||
-                builder.isTreeEmpty() ||
-                FXDialogs.confirm(context, stage, resources.getString(LC_SAVE_CONFIRM)))
-            return RPyCGApp.CloseAction.CLOSE;
-        try {
-            Path storagePath = storage.getPath();
-            if (storagePath != null) {
-                return doSave(stage) ? RPyCGApp.CloseAction.CLOSE : RPyCGApp.CloseAction.KEEP;
-            } else {
-                return doSaveAs(stage) ? RPyCGApp.CloseAction.CLOSE : RPyCGApp.CloseAction.KEEP;
-            }
-        } catch (IllegalArgumentException | IllegalStateException e) {
-            FXDialogs.error(context, stage, resources.getString(LC_ERROR_MALFORMED_SCRIPT), e);
-            return RPyCGApp.CloseAction.KEEP;
-        }
-    }
-
-    private void doTemplate() {
-        Optional.ofNullable(FXContextFactory.currentContext().getParameters())
-                .map(Application.Parameters::getNamed)
-                .map(map -> map.get(KEY_DEBUG))
-                .ifPresentOrElse((s) -> updateTree(ModelTemplate.getTestTemplateTree()),
-                        () -> updateTree(ModelTemplate.getTemplateTree()));
     }
 
     @FXML
     void onClear(@NotNull ActionEvent actionEvent) {
         if (builder.isTreeEmpty() ||
-                FXDialogs.confirm(FXContextFactory.currentContext(), getStage(),
-                        resources.getString(LC_CLEAR_CONFIRM))) {
+                FXDialogs.confirm(getStage().orElse(null), resources.getString(LC_CLEAR_CONFIRM), Map.of(
+                        ButtonBar.ButtonData.OK_DONE, resources.getString(LC_CLEAR_CONFIRM_OK),
+                        ButtonBar.ButtonData.CANCEL_CLOSE, resources.getString(LC_CLEAR_CONFIRM_CANCEL)))) {
             doClear();
         }
     }
@@ -282,13 +329,18 @@ public final class Main extends BorderPane implements Initializable {
 
     @FXML
     void onGenerate(@NotNull ActionEvent actionEvent) {
-        Stage stage = getStage();
-        FXContext context = FXContextFactory.currentContext();
         try {
             putClipboard(generateCodeString());
-            FXDialogs.alert(context, stage, resources.getString(LC_SUCCESS_GENERATE));
+            FXDialogs.alert(getStage().orElse(null), resources.getString(LC_SUCCESS_GENERATE));
+        } catch (CodeGenerationException e) {
+            FXDialogs.error(getStage().orElse(null),
+                    resources.getString(LC_ERROR_GENERATE) + "\n" + e.getLocalizedMessage());
         } catch (RuntimeException e) {
-            FXDialogs.error(context, stage, resources.getString(LC_ERROR_GENERATE), e);
+            FXDialogs.error(getStage().orElse(null), resources.getString(LC_ERROR_GENERATE), e, Map.of(
+                    ButtonBar.ButtonData.OK_DONE, resources.getString(LC_CLOSE),
+                    ButtonBar.ButtonData.OTHER, resources.getString(LC_REPORT)))
+                    .filter(buttonType -> buttonType.getButtonData() == ButtonBar.ButtonData.OTHER)
+                    .ifPresent(buttonType -> RPyCG.mailError(e));
         }
     }
 
@@ -312,34 +364,20 @@ public final class Main extends BorderPane implements Initializable {
     @FXML
     void onInstall(@NotNull ActionEvent actionEvent) {
         chooseGameDirectory().ifPresent(gamePath -> {
-            Stage stage = getStage();
-            FXContext context = FXContextFactory.currentContext();
             if (isGameDirectory(gamePath)) {
                 try {
                     Files.writeString(gamePath.resolve("game").resolve(INSTALL_NAME), generateCodeString());
-                    FXDialogs.alert(context, stage, resources.getString(LC_SUCCESS_INSTALL));
+                    FXDialogs.alert(getStage().orElse(null), resources.getString(LC_SUCCESS_INSTALL));
                     storeGamePath(gamePath);
-                } catch (IOException e) {
-                    FXDialogs.error(context, stage, resources.getString(LC_ERROR_WRITE), e);
+                } catch (IOException | CodeGenerationException e) {
+                    FXDialogs.error(getStage().orElse(null), resources.getString(LC_ERROR_WRITE), e, Map.of(
+                            ButtonBar.ButtonData.OK_DONE, resources.getString(LC_CLOSE),
+                            ButtonBar.ButtonData.OTHER, resources.getString(LC_REPORT)))
+                            .filter(buttonType -> buttonType.getButtonData() == ButtonBar.ButtonData.OTHER)
+                            .ifPresent(buttonType -> RPyCG.mailError(e));
                 }
             } else {
-                FXDialogs.error(context, stage, resources.getString(LC_ERROR_NOT_GAME));
-            }
-        });
-    }
-
-    @FXML
-    void onLoad(@NotNull ActionEvent actionEvent) {
-        Stage stage = getStage();
-        Optional.ofNullable(storageChooser.showOpenDialog(stage)).map(File::toPath).ifPresent(path -> {
-            FXContext context = FXContextFactory.currentContext();
-            if (builder.isTreeEmpty() ||
-                    FXDialogs.confirm(context, stage, resources.getString(LC_LOAD_CONFIRM))) {
-                try {
-                    doLoad(path);
-                } catch (RuntimeException e) {
-                    FXDialogs.error(context, stage, resources.getString(LC_ERROR_LOAD), e);
-                }
+                FXDialogs.error(getStage().orElse(null), resources.getString(LC_ERROR_NOT_GAME));
             }
         });
     }
@@ -347,9 +385,8 @@ public final class Main extends BorderPane implements Initializable {
     @SuppressWarnings("MethodCallInLoopCondition")
     @NotNull
     private Optional<Path> chooseGameDirectory() {
-        Stage stage = getStage();
         if (gameChooser.getOwner() == null) {
-            gameChooser.initOwner(stage);
+            gameChooser.initOwner(getStage().orElse(null));
         }
         Optional.ofNullable(gameChooser.getInitialDirectory()).ifPresent(directory -> {
             Path initialDirectory = directory;
@@ -358,7 +395,7 @@ public final class Main extends BorderPane implements Initializable {
                 gameChooser.setInitialDirectory(initialDirectory);
             }
         });
-        return Optional.ofNullable(gameChooser.showDialog(stage));
+        return Optional.ofNullable(gameChooser.showDialog(getStage().orElseThrow()));
     }
 
     private static boolean isGameDirectory(@Nullable Path path) {
@@ -369,6 +406,46 @@ public final class Main extends BorderPane implements Initializable {
                 Files.isDirectory(path.resolve("lib"));
     }
 
+    private void storeGamePath(@NotNull Path gamePath) {
+        tabSettings.setGameDirectory((gamePath));
+        gameChooser.setInitialDirectory(gamePath);
+    }
+
+    @FXML
+    void onLoad(@NotNull ActionEvent actionEvent) {
+        Optional.ofNullable(storageChooser.showOpenDialog(getStage().orElse(null))).map(File::toPath)
+                .ifPresent(path -> {
+                    if (builder.isTreeEmpty() || FXDialogs.confirm(getStage().orElse(null),
+                            resources.getString(LC_LOAD_CONFIRM), Map.of(
+                                    ButtonBar.ButtonData.OK_DONE, resources.getString(LC_LOAD_CONFIRM_OK),
+                                    ButtonBar.ButtonData.CANCEL_CLOSE, resources.getString(LC_LOAD_CONFIRM_CANCEL)))) {
+                        try {
+                            doLoad(path);
+                        } catch (MalformedScriptException e) {
+                            FXDialogs.error(getStage().orElse(null),
+                                    resources.getString(LC_ERROR_MALFORMED_SCRIPT) + "\n" + e.getLocalizedMessage());
+                        } catch (RuntimeException e) {
+                            FXDialogs.error(getStage().orElse(null), resources.getString(LC_ERROR_LOAD), e, Map.of(
+                                    ButtonBar.ButtonData.OK_DONE, resources.getString(LC_CLOSE),
+                                    ButtonBar.ButtonData.OTHER, resources.getString(LC_REPORT)))
+                                    .filter(buttonType -> buttonType.getButtonData() == ButtonBar.ButtonData.OTHER)
+                                    .ifPresent(buttonType -> RPyCG.mailError(e));
+                        }
+                    }
+                });
+    }
+
+    private void doLoad(@NotNull Path path) {
+        storage.setPath(path);
+        updateTree(storage.load(path));
+        updateScript(true);
+        storage.setModified(false);
+    }
+
+    private void updateTree(@NotNull ModelItem root) {
+        builder.setModel(root);
+    }
+
     @FXML
     void onMenu(@NotNull ActionEvent actionEvent) {
         builder.addRootMenu();
@@ -377,15 +454,22 @@ public final class Main extends BorderPane implements Initializable {
     @FXML
     void onReload(@NotNull ActionEvent actionEvent) {
         Optional.ofNullable(storage.getPath()).ifPresent(path -> {
-            FXContext context = FXContextFactory.currentContext();
-            Stage stage = getStage();
             if (builder.isTreeEmpty() ||
-                    FXDialogs.confirm(context, stage, resources.getString(LC_RELOAD_CONFIRM))) {
+                    FXDialogs.confirm(getStage().orElse(null), resources.getString(LC_RELOAD_CONFIRM), Map.of(
+                            ButtonBar.ButtonData.OK_DONE, resources.getString(LC_RELOAD_CONFIRM_OK),
+                            ButtonBar.ButtonData.CANCEL_CLOSE, resources.getString(LC_RELOAD_CONFIRM_CANCEL)))) {
                 try {
                     doLoad(path);
+                } catch (MalformedScriptException e) {
+                    FXDialogs.error(getStage().orElse(null),
+                            resources.getString(LC_ERROR_MALFORMED_SCRIPT) + "\n" + e.getLocalizedMessage());
                 } catch (RuntimeException e) {
-                    FXDialogs.error(context, stage,
-                            resources.getString(LC_ERROR_LOAD), e);
+                    FXDialogs.error(getStage().orElse(null),
+                            resources.getString(LC_ERROR_LOAD), e, Map.of(
+                                    ButtonBar.ButtonData.OK_DONE, resources.getString(LC_CLOSE),
+                                    ButtonBar.ButtonData.OTHER, resources.getString(LC_REPORT)))
+                            .filter(buttonType -> buttonType.getButtonData() == ButtonBar.ButtonData.OTHER)
+                            .ifPresent(buttonType -> RPyCG.mailError(e));
                 }
             }
         });
@@ -393,32 +477,59 @@ public final class Main extends BorderPane implements Initializable {
 
     @FXML
     void onSave(@NotNull ActionEvent actionEvent) {
-        Optional.ofNullable(storage.getPath()).ifPresent(path -> doSave(getStage()));
+        Optional.ofNullable(storage.getPath()).ifPresent(path -> {
+            try {
+                doSave(getStage().orElse(null));
+            } catch (RuntimeException e) {
+                FXDialogs.error(getStage().orElse(null),
+                        resources.getString(LC_ERROR_SAVE), e, Map.of(
+                                ButtonBar.ButtonData.OK_DONE, resources.getString(LC_CLOSE),
+                                ButtonBar.ButtonData.OTHER, resources.getString(LC_REPORT)))
+                        .filter(buttonType -> buttonType.getButtonData() == ButtonBar.ButtonData.OTHER)
+                        .ifPresent(buttonType -> RPyCG.mailError(e));
+            }
+        });
     }
 
     @FXML
     void onSaveAs(@NotNull ActionEvent actionEvent) {
-        doSaveAs(getStage());
+        try {
+            doSaveAs(getStage().orElse(null));
+        } catch (RuntimeException e) {
+            FXDialogs.error(getStage().orElse(null),
+                    resources.getString(LC_ERROR_SAVE), e, Map.of(
+                            ButtonBar.ButtonData.OK_DONE, resources.getString(LC_CLOSE),
+                            ButtonBar.ButtonData.OTHER, resources.getString(LC_REPORT)))
+                    .filter(buttonType -> buttonType.getButtonData() == ButtonBar.ButtonData.OTHER)
+                    .ifPresent(buttonType -> RPyCG.mailError(e));
+        }
     }
 
     @FXML
     void onTemplate(@NotNull ActionEvent actionEvent) {
-        FXContext context = FXContextFactory.currentContext();
-        Stage stage = getStage();
-        if (builder.isTreeEmpty() ||
-                FXDialogs.confirm(context, stage, resources.getString(LC_TEMPLATE_CONFIRM))) {
+        if (builder.isTreeEmpty() || FXDialogs.confirm(getStage().orElse(null),
+                resources.getString(LC_TEMPLATE_CONFIRM), Map.of(
+                        ButtonBar.ButtonData.OK_DONE, resources.getString(LC_TEMPLATE_CONFIRM_OK),
+                        ButtonBar.ButtonData.CANCEL_CLOSE, resources.getString(LC_TEMPLATE_CONFIRM_CANCEL)))) {
             try {
                 doTemplate();
-            } catch (IllegalArgumentException | IllegalStateException e) {
-                FXDialogs.error(context, stage, resources.getString(LC_ERROR_MALFORMED_SCRIPT), e);
+            } catch (RuntimeException e) {
+                FXDialogs.error(getStage().orElse(null), resources.getString(LC_ERROR_MALFORMED_SCRIPT), e, Map.of(
+                        ButtonBar.ButtonData.OK_DONE, resources.getString(LC_CLOSE),
+                        ButtonBar.ButtonData.OTHER, resources.getString(LC_REPORT)))
+                        .filter(buttonType -> buttonType.getButtonData() == ButtonBar.ButtonData.OTHER)
+                        .ifPresent(buttonType -> RPyCG.mailError(e));
             }
             updateScript(true);
         }
     }
 
-    private void storeGamePath(@NotNull Path gamePath) {
-        tabSettings.setGameDirectory((gamePath));
-        gameChooser.setInitialDirectory(gamePath);
+    private void doTemplate() {
+        Optional.ofNullable(FXContextFactory.currentContext().getParameters())
+                .map(Application.Parameters::getNamed)
+                .map(map -> map.get(KEY_DEBUG))
+                .ifPresentOrElse((s) -> updateTree(ModelTemplate.getTestTemplateTree()),
+                        () -> updateTree(ModelTemplate.getTemplateTree()));
     }
 
     @FXML

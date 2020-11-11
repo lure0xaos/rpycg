@@ -6,6 +6,7 @@ import org.jetbrains.annotations.NotNull;
 
 public final class Classes {
     private Classes() {
+        throw new IllegalStateException(getClass().getName());
     }
 
     public static void classAddRemove(@NotNull Styleable cell,

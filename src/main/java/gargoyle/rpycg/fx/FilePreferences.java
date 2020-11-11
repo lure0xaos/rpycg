@@ -1,9 +1,8 @@
 package gargoyle.rpycg.fx;
 
-import gargoyle.rpycg.ex.AppException;
-import gargoyle.rpycg.ex.AppUserException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -25,12 +24,16 @@ final class FilePreferences extends AbstractPreferences {
     public static final Path SYSTEM_ROOT_PATH = Paths.get(System.getProperty("user.home"));
     @SuppressWarnings("AccessOfSystemProperties")
     public static final Path USER_ROOT_PATH = Paths.get(System.getProperty("user.home"));
+    @PropertyKey(resourceBundle = "gargoyle.rpycg.fx.FilePreferences")
     private static final String LC_ERROR_LOAD = "error.load";
+    @PropertyKey(resourceBundle = "gargoyle.rpycg.fx.FilePreferences")
     private static final String LC_ERROR_SAVE = "error.save";
     private static final String[] STRINGS = new String[0];
     private static final String SUFFIX = ".prefs";
-    private static Preferences systemRoot;
-    private static Preferences userRoot;
+    private static final FXHolder<Preferences> systemRoot = new FXHolder<>(() ->
+            new FilePreferences(false, null, ""));
+    private static final FXHolder<Preferences> userRoot = new FXHolder<>(() ->
+            new FilePreferences(true, null, ""));
     private final boolean isUserRoot;
     @NotNull
     private final Map<String, String> properties;
@@ -39,56 +42,14 @@ final class FilePreferences extends AbstractPreferences {
 
     private FilePreferences(boolean isUserRoot, @Nullable AbstractPreferences parent, @NotNull String name) {
         super(parent, name);
-        resources = FXLoad.loadResources(FXContextFactory.currentContext(), FXLoad.getBaseName(getClass()))
-                .orElseThrow(() -> new AppUserException(AppUserException.LC_ERROR_NO_RESOURCES, getClass().getName()));
+        resources = FXLoad.loadResources(getClass())
+                .orElseThrow(() -> new FXUserException(FXUserException.LC_ERROR_NO_RESOURCES, getClass().getName()));
         this.isUserRoot = isUserRoot;
         properties = Collections.synchronizedSortedMap(new TreeMap<>(String::compareToIgnoreCase));
         try {
             syncSpi();
         } catch (BackingStoreException e) {
-            throw new AppException(MessageFormat.format(resources.getString(LC_ERROR_LOAD),
-                    FilePreferences.class.getName()), e);
-        }
-    }
-
-    @Override
-    protected String getSpi(String key) {
-        return properties.get(key);
-    }
-
-    @Override
-    protected void removeNodeSpi() throws BackingStoreException {
-        try {
-            Files.delete(getFilePath());
-        } catch (IOException e) {
-            throw new BackingStoreException(new AppException(MessageFormat.format(resources.getString(LC_ERROR_SAVE),
-                    FilePreferences.class.getName()), e));
-        }
-    }
-
-    @NotNull
-    static synchronized Preferences getSystemRoot() {
-        if (systemRoot == null) {
-            systemRoot = new FilePreferences(false, null, "");
-        }
-        return systemRoot;
-    }
-
-    @NotNull
-    static synchronized Preferences getUserRoot() {
-        if (userRoot == null) {
-            userRoot = new FilePreferences(true, null, "");
-        }
-        return userRoot;
-    }
-
-    @Override
-    protected void putSpi(String key, String value) {
-        properties.put(key, value);
-        try {
-            flush();
-        } catch (BackingStoreException e) {
-            throw new AppException(MessageFormat.format(resources.getString(LC_ERROR_SAVE),
+            throw new FXException(MessageFormat.format(resources.getString(LC_ERROR_LOAD),
                     FilePreferences.class.getName()), e);
         }
     }
@@ -99,20 +60,56 @@ final class FilePreferences extends AbstractPreferences {
                 getRootPath().resolve((parent().absolutePath() + '/' + name()).replace('/', '.') + SUFFIX);
     }
 
+    @NotNull
+    private Path getRootPath() {
+        return isUserRoot ? USER_ROOT_PATH : SYSTEM_ROOT_PATH;
+    }
+
+    @NotNull
+    static Preferences getSystemRoot() {
+        return systemRoot.get();
+    }
+
+    @NotNull
+    static Preferences getUserRoot() {
+        return userRoot.get();
+    }
+
+    @Override
+    protected void putSpi(String key, String value) {
+        properties.put(key, value);
+        try {
+            flush();
+        } catch (BackingStoreException e) {
+            throw new FXException(MessageFormat.format(resources.getString(LC_ERROR_SAVE),
+                    FilePreferences.class.getName()), e);
+        }
+    }
+
+    @Override
+    protected String getSpi(String key) {
+        return properties.get(key);
+    }
+
     @Override
     protected void removeSpi(String key) {
         properties.remove(key);
         try {
             flush();
         } catch (BackingStoreException e) {
-            throw new AppException(MessageFormat.format(resources.getString(LC_ERROR_SAVE),
+            throw new FXException(MessageFormat.format(resources.getString(LC_ERROR_SAVE),
                     FilePreferences.class.getName()), e);
         }
     }
 
-    @NotNull
-    private Path getRootPath() {
-        return isUserRoot ? USER_ROOT_PATH : SYSTEM_ROOT_PATH;
+    @Override
+    protected void removeNodeSpi() throws BackingStoreException {
+        try {
+            Files.delete(getFilePath());
+        } catch (IOException e) {
+            throw new BackingStoreException(new FXException(MessageFormat.format(resources.getString(LC_ERROR_SAVE),
+                    FilePreferences.class.getName()), e));
+        }
     }
 
     @Override
@@ -129,8 +126,8 @@ final class FilePreferences extends AbstractPreferences {
                 return fileName.substring(0, fileName.length() - SUFFIX.length());
             }).toArray(String[]::new);
         } catch (IOException e) {
-            throw new AppException(MessageFormat.format(resources.getString(LC_ERROR_LOAD),
-                    FilePreferences.class.getName()), e);
+            throw new BackingStoreException(new FXException(MessageFormat.format(resources.getString(LC_ERROR_LOAD),
+                    FilePreferences.class.getName()), e));
         }
     }
 
@@ -145,7 +142,7 @@ final class FilePreferences extends AbstractPreferences {
         try {
             FilePreferencesStore.load(filePath, properties);
         } catch (IOException e) {
-            throw new BackingStoreException(new AppException(MessageFormat.format(resources.getString(LC_ERROR_LOAD),
+            throw new BackingStoreException(new FXException(MessageFormat.format(resources.getString(LC_ERROR_LOAD),
                     FilePreferences.class.getName()), e));
         }
     }
@@ -155,7 +152,7 @@ final class FilePreferences extends AbstractPreferences {
         try {
             FilePreferencesStore.save(getFilePath(), properties, absolutePath());
         } catch (IOException e) {
-            throw new BackingStoreException(new AppException(MessageFormat.format(resources.getString(LC_ERROR_LOAD),
+            throw new BackingStoreException(new FXException(MessageFormat.format(resources.getString(LC_ERROR_LOAD),
                     FilePreferences.class.getName()), e));
         }
     }

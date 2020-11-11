@@ -1,6 +1,5 @@
 package gargoyle.rpycg.ex;
 
-import gargoyle.rpycg.fx.FXContextFactory;
 import gargoyle.rpycg.fx.FXLoad;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
@@ -12,19 +11,15 @@ import java.util.Optional;
 import java.util.ResourceBundle;
 
 public final class AppUserException extends AppException {
-    public static final String EX_APP_USER_EXCEPTION = "gargoyle.rpycg.ex.AppUserException";
-    @PropertyKey(resourceBundle = EX_APP_USER_EXCEPTION)
-    public static final String LC_ERROR_INITIALIZATION = "error.initialization";
-    @PropertyKey(resourceBundle = EX_APP_USER_EXCEPTION)
+    @PropertyKey(resourceBundle = "gargoyle.rpycg.ex.AppUserException")
     public static final String LC_ERROR_NO_RESOURCES = "error.no-resources";
-    @PropertyKey(resourceBundle = EX_APP_USER_EXCEPTION)
+    @PropertyKey(resourceBundle = "gargoyle.rpycg.ex.AppUserException")
     public static final String LC_ERROR_NO_VIEW = "error.no-view";
     private static final String MSG_NO_STRING = "{} not found in resources of {}";
     private static final Logger log = LoggerFactory.getLogger(AppUserException.class);
-    private static final ResourceBundle resources = FXLoad.loadResources(FXContextFactory.currentContext(),
-            FXLoad.getBaseName(AppUserException.class))
+    private static final ResourceBundle resources = FXLoad.loadResources(AppUserException.class)
             .orElseThrow(() -> new AppException(MessageFormat.format(LC_ERROR_NO_RESOURCES,
-                    EX_APP_USER_EXCEPTION)));
+                    "gargoyle.rpycg.ex.AppUserException")));
     private static final long serialVersionUID = 8392680771655936441L;
 
     public AppUserException(@NotNull String code, @NotNull String... args) {
@@ -32,7 +27,7 @@ public final class AppUserException extends AppException {
     }
 
     @NotNull
-    private static String message(@NotNull @PropertyKey(resourceBundle = EX_APP_USER_EXCEPTION)
+    private static String message(@NotNull @PropertyKey(resourceBundle = "gargoyle.rpycg.ex.AppUserException")
                                           String code,
                                   @NotNull String... args) {
         return Optional.ofNullable(resources)
