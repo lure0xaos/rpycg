@@ -24,8 +24,9 @@ import javafx.beans.value.ObservableObjectValue;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBar;
+import javafx.scene.control.MenuButton;
+import javafx.scene.control.MenuItem;
 import javafx.scene.control.Tab;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
@@ -117,13 +118,17 @@ public final class Main extends BorderPane implements Initializable {
     @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Main")
     private static final String LC_TEMPLATE_CONFIRM_OK = "template-confirm-ok";
     @FXML
-    private Button btnLoad;
+    private MenuItem btnLoad;
     @FXML
-    private Button btnReload;
+    private MenuButton btnLoadReload;
     @FXML
-    private Button btnSave;
+    private MenuItem btnReload;
     @FXML
-    private Button btnSaveAs;
+    private MenuItem btnSave;
+    @FXML
+    private MenuItem btnSaveAs;
+    @FXML
+    private MenuButton btnSaveSaveAs;
     @FXML
     private Builder builder;
     private CodeConverter codeConverter;
@@ -232,7 +237,7 @@ public final class Main extends BorderPane implements Initializable {
 
     @NotNull
     private Optional<Stage> getStage() {
-        return FXUtil.findStage(btnLoad);
+        return FXUtil.findStage(btnLoadReload);
     }
 
     private FXLauncher.FXCloseAction doSaveOnClose(@NotNull ResourceBundle resources, @NotNull Stage stage) {

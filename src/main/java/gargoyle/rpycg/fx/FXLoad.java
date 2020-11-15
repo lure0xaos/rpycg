@@ -24,7 +24,7 @@ public final class FXLoad {
     public static final String EXT_PNG = "png";
     public static final String EXT_IMAGES = String.join(",", EXT_PNG, EXT_GIF, EXT_JPG);
     public static final String MSG_ERROR_LOADING_COMPONENT = "Error loading component {}";
-    public static final String MSG_ERROR_NO_RESOURCE = "Can''t find resources for {}{}";
+    public static final String MSG_ERROR_NO_RESOURCE = "Can''t find resources for {}[{}]";
     public static final String MSG_ERROR_NO_RESOURCES = "Can''t find resources for {}";
     private static final String EXT_FXML = "fxml";
     private static final Logger log = LoggerFactory.getLogger(FXLoad.class);

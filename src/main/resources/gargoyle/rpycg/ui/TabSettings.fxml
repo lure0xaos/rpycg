@@ -6,6 +6,7 @@
 <?import javafx.scene.control.CheckBox?>
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.MenuButton?>
 <?import javafx.scene.control.TitledPane?>
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
@@ -17,7 +18,8 @@
 <fx:root xmlns:fx="http://javafx.com/fxml"
          xmlns="http://javafx.com/javafx" type="TabSettings">
     <HBox GridPane.columnIndex="0" GridPane.rowIndex="0" GridPane.columnSpan="2" alignment="CENTER">
-        <ComboBox fx:id="cmbLocaleUi"/>
+        <Label text="%locale-ui-description"/>
+        <MenuButton fx:id="cmbLocaleUi"/>
     </HBox>
     <TitledPane text="%pane-shortcuts" GridPane.columnIndex="0" GridPane.rowIndex="1"
                 GridPane.fillHeight="true" GridPane.valignment="TOP" collapsible="false">
@@ -96,17 +98,30 @@
     <TitledPane text="%pane-features" GridPane.columnIndex="1" GridPane.rowIndex="1"
                 GridPane.fillHeight="true" GridPane.valignment="TOP" collapsible="false">
         <VBox>
-            <CheckBox text="%enable-cheat" fx:id="chkEnableCheat" selected="true"/>
-            <Label text="%enable-cheat-description"/>
-            <CheckBox text="%enable-console" fx:id="chkEnableConsole" selected="true"/>
-            <Label text="%enable-console-description"/>
-            <CheckBox text="%enable-developer" fx:id="chkEnableDeveloper" selected="true"/>
-            <Label text="%enable-developer-description"/>
-            <CheckBox text="%enable-write" fx:id="chkEnableWrite" selected="true"/>
-            <Label wrapText="true" text="%enable-write-description"/>
-            <CheckBox text="%enable-rollback" fx:id="chkEnableRollback" selected="true"/>
-            <Label wrapText="true" text="%enable-rollback-description"/>
-            <ComboBox fx:id="cmbLocaleMenu"/>
+            <VBox styleClass="option-bordered">
+                <CheckBox text="%enable-cheat" fx:id="chkEnableCheat" selected="true"/>
+                <Label wrapText="true" text="%enable-cheat-description"/>
+            </VBox>
+            <VBox styleClass="option-bordered">
+                <CheckBox text="%enable-console" fx:id="chkEnableConsole" selected="true"/>
+                <Label wrapText="true" text="%enable-console-description"/>
+            </VBox>
+            <VBox styleClass="option-bordered">
+                <CheckBox text="%enable-developer" fx:id="chkEnableDeveloper" selected="true"/>
+                <Label wrapText="true" text="%enable-developer-description"/>
+            </VBox>
+            <VBox styleClass="option-bordered">
+                <CheckBox text="%enable-write" fx:id="chkEnableWrite" selected="true"/>
+                <Label wrapText="true" text="%enable-write-description"/>
+            </VBox>
+            <VBox styleClass="option-bordered">
+                <CheckBox text="%enable-rollback" fx:id="chkEnableRollback" selected="true"/>
+                <Label wrapText="true" text="%enable-rollback-description"/>
+            </VBox>
+            <VBox styleClass="option-bordered">
+                <ComboBox fx:id="cmbLocaleMenu"/>
+                <Label wrapText="true" text="%locale-description"/>
+            </VBox>
         </VBox>
     </TitledPane>
     <columnConstraints>

@@ -13,11 +13,15 @@ import javafx.beans.binding.Bindings;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.Node;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
+import javafx.scene.control.MenuButton;
+import javafx.scene.control.MenuItem;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
 import javafx.stage.Stage;
 import javafx.util.Callback;
@@ -28,6 +32,7 @@ import org.jetbrains.annotations.PropertyKey;
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.MessageFormat;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
@@ -35,6 +40,7 @@ import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.function.BiConsumer;
 import java.util.prefs.Preferences;
+import java.util.stream.Collectors;
 
 public final class TabSettings extends GridPane implements Initializable {
 
@@ -63,7 +69,7 @@ public final class TabSettings extends GridPane implements Initializable {
     @FXML
     private ComboBox<Locale> cmbLocaleMenu;
     @FXML
-    private ComboBox<Locale> cmbLocaleUi;
+    private MenuButton cmbLocaleUi;
     @FXML
     private KeyText keyCheat;
     @FXML
@@ -144,7 +150,8 @@ public final class TabSettings extends GridPane implements Initializable {
                 cell.setGraphic(null);
                 cell.setText("");
             } else {
-                cell.setGraphic(null);
+                FXLoad.findResource(FXLoad.getBaseName(TabSettings.class, "flags/" + item.getLanguage()), FXLoad.EXT_IMAGES)
+                        .map(URL::toExternalForm).map(ImageView::new).ifPresent(cell::setGraphic);
                 cell.setText(localeConverter.toDisplayString(item));
             }
         });
@@ -157,19 +164,32 @@ public final class TabSettings extends GridPane implements Initializable {
     }
 
     private void initializeLocaleUi(@NotNull ResourceBundle resources) {
-        initializeLocaleComboBox(cmbLocaleUi, settings.getLocaleMenu());
-        cmbLocaleUi.getSelectionModel().select(FXContextFactory.currentContext().getLocale());
-        cmbLocaleUi.valueProperty().bind(cmbLocaleUi.getSelectionModel().selectedItemProperty());
-        cmbLocaleUi.valueProperty().addListener((observable, oldValue, newValue) -> {
-            if (!Objects.equals(oldValue, newValue)) {
-                FXContextFactory.changeLocale(newValue);
+        cmbLocaleUi.getItems().setAll(localeConverter.getLocales().stream().filter(Objects::nonNull).map(locale -> {
+            MenuItem menuItem = new MenuItem(localeConverter.toDisplayString(locale), getFlag(locale));
+            menuItem.setOnAction(event -> {
+                FXContextFactory.changeLocale(locale);
                 if (FXDialogs.confirm(getStage().orElse(null), resources.getString(LC_NEED_RESTART), Map.of(
                         ButtonBar.ButtonData.OK_DONE, resources.getString(LC_NEED_RESTART_OK),
                         ButtonBar.ButtonData.CANCEL_CLOSE, resources.getString(LC_NEED_RESTART_CANCEL)))) {
                     FXLauncher.requestRestart(getStage().orElseThrow());
                 }
-            }
+            });
+            return menuItem;
+        }).collect(Collectors.toList()));
+        settings.localeMenuProperty().addListener((observable, oldValue, newValue) -> {
+            cmbLocaleUi.setText(localeConverter.toDisplayString(newValue));
+            cmbLocaleUi.setGraphic(getFlag(newValue));
         });
+        Locale currentLocale = localeConverter.getSimilarLocale(localeConverter.getLocales(),
+                FXContextFactory.currentContext().getLocale());
+        cmbLocaleUi.setText(localeConverter.toDisplayString(currentLocale));
+        cmbLocaleUi.setGraphic(getFlag(currentLocale));
+    }
+
+    private Node getFlag(Locale locale) {
+        return FXLoad.findResource(FXLoad.getBaseName(TabSettings.class,
+                MessageFormat.format("flags/{0}", locale.getLanguage())), FXLoad.EXT_IMAGES)
+                .map(URL::toExternalForm).map(ImageView::new).orElse(null);
     }
 
     @NotNull

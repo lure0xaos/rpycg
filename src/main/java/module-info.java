@@ -15,6 +15,7 @@ module RenPyCheatGenerator {
     opens gargoyle.rpycg.model to javafx.base;
     opens gargoyle.rpycg.service;
     opens gargoyle.rpycg.ui.icons;
+    opens gargoyle.rpycg.ui.flags;
     opens gargoyle.rpycg.ui.model to javafx.base;
     opens gargoyle.rpycg.ui;
 }

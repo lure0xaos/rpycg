@@ -8,6 +8,8 @@
 <?import gargoyle.rpycg.ui.TabSettings?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.ButtonBar?>
+<?import javafx.scene.control.MenuButton?>
+<?import javafx.scene.control.MenuItem?>
 <?import javafx.scene.control.Tab?>
 <?import javafx.scene.control.TabPane?>
 <?import javafx.scene.control.Tooltip?>
@@ -100,48 +102,43 @@
     <bottom>
         <ButtonBar>
             <buttons>
-                <Button text="%load" ButtonBar.buttonData="LEFT" onAction="#onLoad" fx:id="btnLoad">
-                    <tooltip>
-                        <Tooltip text="%load-tooltip"/>
-                    </tooltip>
-                    <graphic>
-                        <ImageView>
-                            <Image url="@icons/load.png"/>
-                        </ImageView>
-                    </graphic>
-                </Button>
-                <Button text="%reload" ButtonBar.buttonData="LEFT" onAction="#onReload" disable="true"
-                        fx:id="btnReload">
-                    <tooltip>
-                        <Tooltip text="%reload-tooltip"/>
-                    </tooltip>
-                    <graphic>
-                        <ImageView>
-                            <Image url="@icons/reload.png"/>
-                        </ImageView>
-                    </graphic>
-                </Button>
-                <Button text="%save" ButtonBar.buttonData="LEFT" onAction="#onSave" disable="true" fx:id="btnSave">
-                    <tooltip>
-                        <Tooltip text="%save-tooltip"/>
-                    </tooltip>
-                    <graphic>
-                        <ImageView>
-                            <Image url="@icons/save.png"/>
-                        </ImageView>
-                    </graphic>
-                </Button>
-                <Button text="%save-as" ButtonBar.buttonData="LEFT" onAction="#onSaveAs" fx:id="btnSaveAs">
-                    <tooltip>
-                        <Tooltip text="%save-as-tooltip"/>
-                    </tooltip>
-                    <graphic>
-                        <ImageView>
-                            <Image url="@icons/save-as.png"/>
-                        </ImageView>
-                    </graphic>
-                </Button>
-                <Button text="%clear" ButtonBar.buttonData="LEFT" onAction="#onClear">
+                <MenuButton text="%load-menu" ButtonBar.buttonData="LEFT" fx:id="btnLoadReload">
+                    <items>
+                        <MenuItem text="%load" onAction="#onLoad" fx:id="btnLoad">
+                            <graphic>
+                                <ImageView>
+                                    <Image url="@icons/load.png"/>
+                                </ImageView>
+                            </graphic>
+                        </MenuItem>
+                        <MenuItem text="%reload" onAction="#onReload" fx:id="btnReload">
+                            <graphic>
+                                <ImageView>
+                                    <Image url="@icons/reload.png"/>
+                                </ImageView>
+                            </graphic>
+                        </MenuItem>
+                    </items>
+                </MenuButton>
+                <MenuButton text="%save" ButtonBar.buttonData="LEFT" fx:id="btnSaveSaveAs">
+                    <items>
+                        <MenuItem text="%save" onAction="#onSave" disable="true" fx:id="btnSave">
+                            <graphic>
+                                <ImageView>
+                                    <Image url="@icons/save.png"/>
+                                </ImageView>
+                            </graphic>
+                        </MenuItem>
+                        <MenuItem text="%save-as" onAction="#onSaveAs" fx:id="btnSaveAs">
+                            <graphic>
+                                <ImageView>
+                                    <Image url="@icons/save-as.png"/>
+                                </ImageView>
+                            </graphic>
+                        </MenuItem>
+                    </items>
+                </MenuButton>
+                <Button text="%clear" ButtonBar.buttonData="APPLY" onAction="#onClear">
                     <tooltip>
                         <Tooltip text="%clear-tooltip"/>
                     </tooltip>
@@ -151,7 +148,7 @@
                         </ImageView>
                     </graphic>
                 </Button>
-                <Button text="%template" ButtonBar.buttonData="RIGHT" onAction="#onTemplate">
+                <Button text="%template" ButtonBar.buttonData="APPLY" onAction="#onTemplate">
                     <tooltip>
                         <Tooltip text="%template-tooltip"/>
                     </tooltip>
@@ -161,26 +158,24 @@
                         </ImageView>
                     </graphic>
                 </Button>
-                <Button text="%generate" ButtonBar.buttonData="RIGHT" onAction="#onGenerate">
-                    <tooltip>
-                        <Tooltip text="%generate-tooltip"/>
-                    </tooltip>
-                    <graphic>
-                        <ImageView>
-                            <Image url="@icons/generate.png"/>
-                        </ImageView>
-                    </graphic>
-                </Button>
-                <Button text="%install" ButtonBar.buttonData="RIGHT" onAction="#onInstall">
-                    <tooltip>
-                        <Tooltip text="%install-tooltip"/>
-                    </tooltip>
-                    <graphic>
-                        <ImageView>
-                            <Image url="@icons/save.png"/>
-                        </ImageView>
-                    </graphic>
-                </Button>
+                <MenuButton text="%generate-menu" ButtonBar.buttonData="RIGHT">
+                    <items>
+                        <MenuItem text="%generate" onAction="#onGenerate">
+                            <graphic>
+                                <ImageView>
+                                    <Image url="@icons/generate.png"/>
+                                </ImageView>
+                            </graphic>
+                        </MenuItem>
+                        <MenuItem text="%install" onAction="#onInstall">
+                            <graphic>
+                                <ImageView>
+                                    <Image url="@icons/save.png"/>
+                                </ImageView>
+                            </graphic>
+                        </MenuItem>
+                    </items>
+                </MenuButton>
             </buttons>
         </ButtonBar>
     </bottom>
