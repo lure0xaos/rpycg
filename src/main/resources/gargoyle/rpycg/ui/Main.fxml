@@ -138,23 +138,13 @@
                         </MenuItem>
                     </items>
                 </MenuButton>
-                <Button text="%clear" ButtonBar.buttonData="APPLY" onAction="#onClear">
+                <Button text="%clear" ButtonBar.buttonData="RIGHT" onAction="#onClear">
                     <tooltip>
                         <Tooltip text="%clear-tooltip"/>
                     </tooltip>
                     <graphic>
                         <ImageView>
                             <Image url="@icons/clear.png"/>
-                        </ImageView>
-                    </graphic>
-                </Button>
-                <Button text="%template" ButtonBar.buttonData="APPLY" onAction="#onTemplate">
-                    <tooltip>
-                        <Tooltip text="%template-tooltip"/>
-                    </tooltip>
-                    <graphic>
-                        <ImageView>
-                            <Image url="@icons/template.png"/>
                         </ImageView>
                     </graphic>
                 </Button>

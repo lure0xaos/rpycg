@@ -12,12 +12,10 @@ import gargoyle.rpycg.fx.FXLoad;
 import gargoyle.rpycg.fx.FXRun;
 import gargoyle.rpycg.fx.FXUtil;
 import gargoyle.rpycg.model.ModelItem;
-import gargoyle.rpycg.model.ModelTemplate;
 import gargoyle.rpycg.service.CodeConverter;
 import gargoyle.rpycg.service.ScriptConverter;
 import gargoyle.rpycg.service.Storage;
 import gargoyle.rpycg.util.Check;
-import javafx.application.Application;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
 import javafx.beans.value.ObservableObjectValue;
@@ -52,7 +50,6 @@ import java.util.ResourceBundle;
 public final class Main extends BorderPane implements Initializable {
     private static final String EXTENSION = "rpycg";
     private static final String INSTALL_NAME = "RenPyCheat.rpy";
-    private static final String KEY_DEBUG = "debug";
     @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Main")
     private static final String LC_CLEAR_CONFIRM = "clear-confirm";
     @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Main")
@@ -111,12 +108,6 @@ public final class Main extends BorderPane implements Initializable {
     private static final String LC_SUCCESS_GENERATE = "success-generate";
     @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Main")
     private static final String LC_SUCCESS_INSTALL = "success-install";
-    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Main")
-    private static final String LC_TEMPLATE_CONFIRM = "template-confirm";
-    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Main")
-    private static final String LC_TEMPLATE_CONFIRM_CANCEL = "template-confirm-cancel";
-    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Main")
-    private static final String LC_TEMPLATE_CONFIRM_OK = "template-confirm-ok";
     @FXML
     private MenuItem btnLoad;
     @FXML
@@ -508,33 +499,6 @@ public final class Main extends BorderPane implements Initializable {
                     .filter(buttonType -> buttonType.getButtonData() == ButtonBar.ButtonData.OTHER)
                     .ifPresent(buttonType -> RPyCG.mailError(e));
         }
-    }
-
-    @FXML
-    void onTemplate(@NotNull ActionEvent actionEvent) {
-        if (builder.isTreeEmpty() || FXDialogs.confirm(getStage().orElse(null),
-                resources.getString(LC_TEMPLATE_CONFIRM), Map.of(
-                        ButtonBar.ButtonData.OK_DONE, resources.getString(LC_TEMPLATE_CONFIRM_OK),
-                        ButtonBar.ButtonData.CANCEL_CLOSE, resources.getString(LC_TEMPLATE_CONFIRM_CANCEL)))) {
-            try {
-                doTemplate();
-            } catch (RuntimeException e) {
-                FXDialogs.error(getStage().orElse(null), resources.getString(LC_ERROR_MALFORMED_SCRIPT), e, Map.of(
-                        ButtonBar.ButtonData.OK_DONE, resources.getString(LC_CLOSE),
-                        ButtonBar.ButtonData.OTHER, resources.getString(LC_REPORT)))
-                        .filter(buttonType -> buttonType.getButtonData() == ButtonBar.ButtonData.OTHER)
-                        .ifPresent(buttonType -> RPyCG.mailError(e));
-            }
-            updateScript(true);
-        }
-    }
-
-    private void doTemplate() {
-        Optional.ofNullable(FXContextFactory.currentContext().getParameters())
-                .map(Application.Parameters::getNamed)
-                .map(map -> map.get(KEY_DEBUG))
-                .ifPresentOrElse((s) -> updateTree(ModelTemplate.getTestTemplateTree()),
-                        () -> updateTree(ModelTemplate.getTemplateTree()));
     }
 
     @FXML

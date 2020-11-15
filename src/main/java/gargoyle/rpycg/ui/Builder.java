@@ -1,12 +1,15 @@
 package gargoyle.rpycg.ui;
 
+import gargoyle.rpycg.RPyCG;
 import gargoyle.rpycg.ex.AppUserException;
 import gargoyle.rpycg.fx.FXComponent;
+import gargoyle.rpycg.fx.FXContextFactory;
 import gargoyle.rpycg.fx.FXDialogs;
 import gargoyle.rpycg.fx.FXLoad;
 import gargoyle.rpycg.fx.FXRun;
 import gargoyle.rpycg.fx.FXUtil;
 import gargoyle.rpycg.model.ModelItem;
+import gargoyle.rpycg.model.ModelTemplate;
 import gargoyle.rpycg.model.ModelType;
 import gargoyle.rpycg.service.ModelConverter;
 import gargoyle.rpycg.ui.model.DROPPING;
@@ -18,27 +21,34 @@ import gargoyle.rpycg.util.TreeTableViewWalker;
 import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
+import javafx.application.Application;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.css.Styleable;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Orientation;
+import javafx.scene.Node;
+import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.ScrollBar;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.SeparatorMenuItem;
+import javafx.scene.control.Tooltip;
 import javafx.scene.control.TreeCell;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
+import javafx.scene.control.skin.TreeViewSkin;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.DataFormat;
 import javafx.scene.input.Dragboard;
 import javafx.scene.input.TransferMode;
+import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 import org.jetbrains.annotations.NotNull;
@@ -55,6 +65,7 @@ import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 public final class Builder extends ScrollPane implements Initializable {
     private static final double BOND = 0.3;
@@ -69,13 +80,31 @@ public final class Builder extends ScrollPane implements Initializable {
     private static final String ICON_DELETE = "icons/clear";
     private static final String ICON_EMPTY = "icons/empty";
     private static final String ICON_MENU = "icons/menu";
+    private static final String ICON_TEMPLATE = "icons/template";
     private static final String ICON_VARIABLE = "icons/var";
+    private static final String KEY_DEBUG = "debug";
+    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Builder")
+    private static final String LC_CLOSE = "close";
+    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Builder")
+    private static final String LC_ERROR_MALFORMED_SCRIPT = "error.malformed-script";
     @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Builder")
     private static final String LC_REMOVE_CONFIRM = "remove-confirm";
     @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Builder")
     private static final String LC_REMOVE_CONFIRM_CANCEL = "remove-confirm-cancel";
     @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Builder")
     private static final String LC_REMOVE_CONFIRM_OK = "remove-confirm-ok";
+    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Builder")
+    private static final String LC_REPORT = "report";
+    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Builder")
+    private static final String LC_TEMPLATE = "template";
+    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Builder")
+    private static final String LC_TEMPLATE_CONFIRM = "template-confirm";
+    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Builder")
+    private static final String LC_TEMPLATE_CONFIRM_CANCEL = "template-confirm-cancel";
+    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Builder")
+    private static final String LC_TEMPLATE_CONFIRM_OK = "template-confirm-ok";
+    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Builder")
+    private static final String LC_TEMPLATE_TOOLTIP = "template-tooltip";
     private static final MenuItem[] MENU_ITEMS = new MenuItem[0];
     private static final int SCROLL = 20;
     private static final DataFormat SERIALIZED_MIME_TYPE = new DataFormat("application/x-java-serialized-object");
@@ -254,7 +283,7 @@ public final class Builder extends ScrollPane implements Initializable {
     @Override
     public void initialize(@NotNull URL location, @Nullable ResourceBundle resources) {
         this.resources = Check.requireNonNull(resources, AppUserException.LC_ERROR_NO_RESOURCES, location.toExternalForm());
-        initializeTree();
+        initializeTree(createPlaceHolder(resources));
     }
 
     public void addRootVariable() {
@@ -361,29 +390,13 @@ public final class Builder extends ScrollPane implements Initializable {
         return item;
     }
 
-    private void editMenu(@Nullable TreeItem<DisplayItem> item) {
-        MenuDialog dialog = new MenuDialog();
-        dialog.setKnown(getKnownNames(item == null || item.getValue() == null ? "" : item.getValue().getName()));
-        getStage().ifPresent(dialog::initOwner);
-        if (item != null) {
-            dialog.setDisplayItem(item.getValue());
-        }
-        dialog.showAndWait().ifPresent(menu -> replaceItem(item, menu));
-    }
-
-    private void editVariable(@NotNull TreeItem<DisplayItem> item) {
-        VariableDialog dialog = new VariableDialog();
-        getStage().ifPresent(dialog::initOwner);
-        dialog.setDisplayItem(item.getValue());
-        dialog.showAndWait().ifPresent(variable -> replaceItem(item, variable));
-    }
-
-    @NotNull
-    public ModelItem getModel() {
-        return modelConverter.toModel(tree.getRoot());
-    }
-
-    private void initializeTree() {
+    private void initializeTree(@NotNull Node placeholder) {
+        tree.setSkin(new TreeViewPlaceholderSkin<>(tree, placeholder,
+                treeView -> Optional.ofNullable(treeView)
+                        .map(TreeView::getRoot)
+                        .map(TreeItem::getChildren)
+                        .map(List::isEmpty)
+                        .orElse(true)));
         shouldClearRoot();
         tree.setShowRoot(false);
         tree.setCellFactory(this::createDisplayItemTreeCell);
@@ -408,11 +421,62 @@ public final class Builder extends ScrollPane implements Initializable {
         tree.setOnDragDone(event -> scrollTimeline.stop());
     }
 
-    private void putAbove(@NotNull TreeItem<DisplayItem> destItem, @NotNull TreeItem<DisplayItem> dragItem) {
-        ObservableList<TreeItem<DisplayItem>> destSiblings = destItem.getParent().getChildren();
-        dragItem.getParent().getChildren().remove(dragItem);
-        destSiblings.add(destSiblings.indexOf(destItem), dragItem);
-        selectItem(dragItem);
+    @NotNull
+    public Node createPlaceHolder(@NotNull ResourceBundle resources) {
+        Button placeholder = new Button(resources.getString(LC_TEMPLATE),
+                FXLoad.findResource(FXLoad.getBaseName(Builder.class, ICON_TEMPLATE), FXLoad.EXT_IMAGES)
+                        .map(URL::toExternalForm).map(ImageView::new).orElse(null));
+        placeholder.setTooltip(new Tooltip(resources.getString(LC_TEMPLATE_TOOLTIP)));
+        placeholder.setOnAction(this::onTemplate);
+        return placeholder;
+    }
+
+    private void editMenu(@Nullable TreeItem<DisplayItem> item) {
+        MenuDialog dialog = new MenuDialog();
+        dialog.setKnown(getKnownNames(item == null || item.getValue() == null ? "" : item.getValue().getName()));
+        getStage().ifPresent(dialog::initOwner);
+        if (item != null) {
+            dialog.setDisplayItem(item.getValue());
+        }
+        dialog.showAndWait().ifPresent(menu -> replaceItem(item, menu));
+    }
+
+    private void editVariable(@NotNull TreeItem<DisplayItem> item) {
+        VariableDialog dialog = new VariableDialog();
+        getStage().ifPresent(dialog::initOwner);
+        dialog.setDisplayItem(item.getValue());
+        dialog.showAndWait().ifPresent(variable -> replaceItem(item, variable));
+    }
+
+    @NotNull
+    public ModelItem getModel() {
+        return modelConverter.toModel(tree.getRoot());
+    }
+
+    private void onTemplate(@NotNull ActionEvent actionEvent) {
+        if (isTreeEmpty() || FXDialogs.confirm(getStage().orElse(null),
+                resources.getString(LC_TEMPLATE_CONFIRM), Map.of(
+                        ButtonBar.ButtonData.OK_DONE, resources.getString(LC_TEMPLATE_CONFIRM_OK),
+                        ButtonBar.ButtonData.CANCEL_CLOSE, resources.getString(LC_TEMPLATE_CONFIRM_CANCEL)))) {
+            try {
+                doTemplate();
+            } catch (RuntimeException e) {
+                FXDialogs.error(getStage().orElse(null), resources.getString(LC_ERROR_MALFORMED_SCRIPT), e, Map.of(
+                        ButtonBar.ButtonData.OK_DONE, resources.getString(LC_CLOSE),
+                        ButtonBar.ButtonData.OTHER, resources.getString(LC_REPORT)))
+                        .filter(buttonType -> buttonType.getButtonData() == ButtonBar.ButtonData.OTHER)
+                        .ifPresent(buttonType -> RPyCG.mailError(e));
+            }
+//            updateScript(true);
+        }
+    }
+
+    private void doTemplate() {
+        Optional.ofNullable(FXContextFactory.currentContext().getParameters())
+                .map(Application.Parameters::getNamed)
+                .map(map -> map.get(KEY_DEBUG))
+                .ifPresentOrElse((s) -> updateTree(ModelTemplate.getTestTemplateTree()),
+                        () -> updateTree(ModelTemplate.getTemplateTree()));
     }
 
     private void initializeDnD(@NotNull TreeCell<DisplayItem> cell) {
@@ -478,30 +542,16 @@ public final class Builder extends ScrollPane implements Initializable {
         });
     }
 
-    private void selectItem(@NotNull TreeItem<DisplayItem> item) {
-        TreeItem<DisplayItem> treeItem = item;
-        while (treeItem != null) {
-            treeItem.setExpanded(treeItem.getValue() != null && treeItem.getValue().getModelType() == ModelType.MENU);
-            treeItem = treeItem.getParent();
-        }
-        tree.getSelectionModel().select(item);
-        tree.scrollTo(tree.getRow(item));
+    private void updateTree(@NotNull ModelItem root) {
+        setModel(root);
     }
 
     public boolean isChanged() {
         return changed.getValue();
     }
 
-    private void putBelow(@NotNull TreeItem<DisplayItem> destItem, @NotNull TreeItem<DisplayItem> dragItem) {
-        ObservableList<TreeItem<DisplayItem>> destSiblings = destItem.getParent().getChildren();
-        int index = destSiblings.indexOf(destItem);
-        dragItem.getParent().getChildren().remove(dragItem);
-        if (index < destSiblings.size() - 1) {
-            destSiblings.add(index + 1, dragItem);
-        } else {
-            destSiblings.add(dragItem);
-        }
-        selectItem(dragItem);
+    public void setModel(@NotNull ModelItem rootItem) {
+        changed.setValue(shouldUpdateTree(modelConverter.toTree(rootItem)));
     }
 
     private boolean isDifferentTrees(@Nullable TreeItem<DisplayItem> oldRoot, @NotNull TreeItem<DisplayItem> newRoot) {
@@ -535,12 +585,33 @@ public final class Builder extends ScrollPane implements Initializable {
         return tree.getRoot().getChildren().isEmpty();
     }
 
-    public void setChanged(boolean changed) {
-        this.changed.setValue(changed);
+    private void putAbove(@NotNull TreeItem<DisplayItem> destItem, @NotNull TreeItem<DisplayItem> dragItem) {
+        ObservableList<TreeItem<DisplayItem>> destSiblings = destItem.getParent().getChildren();
+        dragItem.getParent().getChildren().remove(dragItem);
+        destSiblings.add(destSiblings.indexOf(destItem), dragItem);
+        selectItem(dragItem);
     }
 
-    public void setModel(@NotNull ModelItem rootItem) {
-        changed.setValue(shouldUpdateTree(modelConverter.toTree(rootItem)));
+    private void selectItem(@NotNull TreeItem<DisplayItem> item) {
+        TreeItem<DisplayItem> treeItem = item;
+        while (treeItem != null) {
+            treeItem.setExpanded(treeItem.getValue() != null && treeItem.getValue().getModelType() == ModelType.MENU);
+            treeItem = treeItem.getParent();
+        }
+        tree.getSelectionModel().select(item);
+        tree.scrollTo(tree.getRow(item));
+    }
+
+    private void putBelow(@NotNull TreeItem<DisplayItem> destItem, @NotNull TreeItem<DisplayItem> dragItem) {
+        ObservableList<TreeItem<DisplayItem>> destSiblings = destItem.getParent().getChildren();
+        int index = destSiblings.indexOf(destItem);
+        dragItem.getParent().getChildren().remove(dragItem);
+        if (index < destSiblings.size() - 1) {
+            destSiblings.add(index + 1, dragItem);
+        } else {
+            destSiblings.add(dragItem);
+        }
+        selectItem(dragItem);
     }
 
     private void removeItem(@NotNull TreeItem<DisplayItem> treeItem) {
@@ -612,6 +683,10 @@ public final class Builder extends ScrollPane implements Initializable {
         });
     }
 
+    public void setChanged(boolean changed) {
+        this.changed.setValue(changed);
+    }
+
     private static final class DisplayItemTreeCell extends TreeCell<DisplayItem> {
         @NotNull
         private final BiConsumer<TreeCell<DisplayItem>, DisplayItem> decorator;
@@ -624,6 +699,55 @@ public final class Builder extends ScrollPane implements Initializable {
         protected void updateItem(DisplayItem item, boolean empty) {
             super.updateItem(item, empty);
             decorator.accept(this, empty ? null : item);
+        }
+    }
+
+    private static class TreeViewPlaceholderSkin<T> extends TreeViewSkin<T> {
+        private static final String CLASS_PLACEHOLDER = "placeholder";
+        @NotNull
+        private final Predicate<TreeView<?>> emptyPredicate;
+        @NotNull
+        private final Node placeholder;
+        private StackPane placeholderRegion;
+
+        public TreeViewPlaceholderSkin(@NotNull TreeView<T> treeView,
+                                       @NotNull Node placeholder, @NotNull Predicate<TreeView<?>> emptyPredicate) {
+            super(treeView);
+            this.placeholder = placeholder;
+            this.emptyPredicate = emptyPredicate;
+            installPlaceholderSupport();
+        }
+
+        private void installPlaceholderSupport() {
+            registerChangeListener(getSkinnable().rootProperty(), e -> updatePlaceholderSupport());
+            updatePlaceholderSupport();
+        }
+
+        private void updatePlaceholderSupport() {
+            if (isTreeEmpty()) {
+                if (placeholderRegion == null) {
+                    placeholderRegion = new StackPane();
+                    placeholderRegion.getStyleClass().setAll(CLASS_PLACEHOLDER);
+                    getChildren().add(placeholderRegion);
+                    placeholderRegion.getChildren().setAll(placeholder);
+                }
+            }
+            getVirtualFlow().setVisible(!isTreeEmpty());
+            if (placeholderRegion != null) {
+                placeholderRegion.setVisible(isTreeEmpty());
+            }
+        }
+
+        private boolean isTreeEmpty() {
+            return emptyPredicate.test(getSkinnable());
+        }
+
+        @Override
+        protected void layoutChildren(double x, double y, double w, double h) {
+            super.layoutChildren(x, y, w, h);
+            if (placeholderRegion != null && placeholderRegion.isVisible()) {
+                placeholderRegion.resizeRelocate(x, y, w, h);
+            }
         }
     }
 }
