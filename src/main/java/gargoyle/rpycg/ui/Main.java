@@ -26,6 +26,7 @@ import javafx.scene.control.ButtonBar;
 import javafx.scene.control.MenuButton;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.Tab;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.layout.BorderPane;
@@ -49,6 +50,8 @@ import java.util.ResourceBundle;
 
 public final class Main extends BorderPane implements Initializable {
     private static final String EXTENSION = "rpycg";
+    private static final String ICON_GAME_FOLDER = "icons/game-folder";
+    private static final String ICON_GAME_FOLDER_OPEN = "icons/game-folder-open";
     private static final String INSTALL_NAME = "RenPyCheat.rpy";
     @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Main")
     private static final String LC_CLEAR_CONFIRM = "clear-confirm";
@@ -78,6 +81,8 @@ public final class Main extends BorderPane implements Initializable {
     private static final String LC_ERROR_WRITE = "error.write";
     @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Main")
     private static final String LC_EXTENSION_DESCRIPTION = "extension-description";
+    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Main")
+    private static final String LC_GAME_CHOOSER_TITLE = "game-chooser-title";
     @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Main")
     private static final String LC_LOAD_CONFIRM = "load-confirm";
     @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Main")
@@ -149,7 +154,7 @@ public final class Main extends BorderPane implements Initializable {
         scriptConverter = new ScriptConverter();
         codeConverter = new CodeConverter(FXContextFactory.currentContext(), tabSettings.getSettings(),
                 CodeConverter.SPACES);
-        gameChooser = createGameChooser(tabSettings.getGameDirectory());
+        gameChooser = createGameChooser(resources, tabSettings.getGameDirectory());
         initializeTabs();
         storage = createStorage();
         storageChooser = createStorageChooser(storage.getPath());
@@ -157,9 +162,22 @@ public final class Main extends BorderPane implements Initializable {
     }
 
     @NotNull
-    private static FolderChooser createGameChooser(@NotNull Path gameDirectory) {
+    private static FolderChooser createGameChooser(@Nullable ResourceBundle resources, @NotNull Path gameDirectory) {
         FolderChooser directoryChooser = new FolderChooser();
+        Optional.ofNullable(resources).ifPresent(bundle ->
+                directoryChooser.setTitle(bundle.getString(LC_GAME_CHOOSER_TITLE)));
         directoryChooser.setInitialDirectory(gameDirectory);
+        directoryChooser.setSelectionFilter(Main::isGameDirectory);
+        directoryChooser.setAdditionalIconProvider((path, expanded) -> {
+            if (isGameDirectory(path)) {
+                return FXLoad.findResource(FXContextFactory.currentContext(),
+                        FXLoad.getBaseName(Main.class, expanded ? ICON_GAME_FOLDER_OPEN : ICON_GAME_FOLDER),
+                        FXLoad.EXT_IMAGES)
+                        .map(URL::toExternalForm)
+                        .map(ImageView::new);
+            }
+            return Optional.empty();
+        });
         return directoryChooser;
     }
 
@@ -253,6 +271,14 @@ public final class Main extends BorderPane implements Initializable {
                     .ifPresent(buttonType -> RPyCG.mailError(e));
             return FXLauncher.FXCloseAction.KEEP;
         }
+    }
+
+    private static boolean isGameDirectory(@Nullable Path path) {
+        return path != null &&
+                Files.isDirectory(path) &&
+                Files.isDirectory(path.resolve("renpy")) &&
+                Files.isDirectory(path.resolve("game")) &&
+                Files.isDirectory(path.resolve("lib"));
     }
 
     private void updateScript(boolean forced) {
@@ -392,14 +418,6 @@ public final class Main extends BorderPane implements Initializable {
             }
         });
         return Optional.ofNullable(gameChooser.showDialog(getStage().orElseThrow()));
-    }
-
-    private static boolean isGameDirectory(@Nullable Path path) {
-        return path != null &&
-                Files.isDirectory(path) &&
-                Files.isDirectory(path.resolve("renpy")) &&
-                Files.isDirectory(path.resolve("game")) &&
-                Files.isDirectory(path.resolve("lib"));
     }
 
     private void storeGamePath(@NotNull Path gamePath) {
