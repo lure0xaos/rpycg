@@ -23,6 +23,7 @@ import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Application;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.css.Styleable;
@@ -391,7 +392,7 @@ public final class Builder extends ScrollPane implements Initializable {
     }
 
     private void initializeTree(@NotNull Node placeholder) {
-        tree.setSkin(new TreeViewPlaceholderSkin<>(tree, placeholder,
+        tree.setSkin(new TreeViewPlaceholderSkin<>(tree, changed, placeholder,
                 treeView -> Optional.ofNullable(treeView)
                         .map(TreeView::getRoot)
                         .map(TreeItem::getChildren)
@@ -707,19 +708,23 @@ public final class Builder extends ScrollPane implements Initializable {
         @NotNull
         private final Predicate<TreeView<?>> emptyPredicate;
         @NotNull
+        private final ObservableValue<?> watch;
+        @NotNull
         private final Node placeholder;
         private StackPane placeholderRegion;
 
-        public TreeViewPlaceholderSkin(@NotNull TreeView<T> treeView,
+        public TreeViewPlaceholderSkin(@NotNull TreeView<T> treeView, @NotNull ObservableValue<?> watch,
                                        @NotNull Node placeholder, @NotNull Predicate<TreeView<?>> emptyPredicate) {
             super(treeView);
+            this.watch = watch;
             this.placeholder = placeholder;
             this.emptyPredicate = emptyPredicate;
             installPlaceholderSupport();
         }
 
         private void installPlaceholderSupport() {
-            registerChangeListener(getSkinnable().rootProperty(), e -> updatePlaceholderSupport());
+            registerChangeListener(watch, observable -> updatePlaceholderSupport());
+            watch.addListener((observable, oldValue, newValue) -> updatePlaceholderSupport());
             updatePlaceholderSupport();
         }
 

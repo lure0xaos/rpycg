@@ -5,6 +5,7 @@ import gargoyle.rpycg.fx.FXContext;
 import gargoyle.rpycg.fx.FXContextFactory;
 import gargoyle.rpycg.fx.FXLoad;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.PropertyKey;
 
 import java.text.MessageFormat;
 import java.util.Arrays;
@@ -17,6 +18,8 @@ import java.util.stream.Collectors;
 
 public final class LocaleConverter {
 
+    @PropertyKey(resourceBundle = "gargoyle.rpycg.service.LocaleConverter")
+    private static final String KEY_SUPPORTED_LOCALES = "supported_locales";
     @NotNull
     private final ResourceBundle resources;
 
@@ -31,23 +34,21 @@ public final class LocaleConverter {
 
     @NotNull
     public Set<Locale> getLocales() {
-        return Arrays.stream(resources.getString("supported_locales").split(","))
+        return Arrays.stream(resources.getString(KEY_SUPPORTED_LOCALES).split(","))
                 .map(this::toLocale).collect(Collectors.toSet());
     }
 
     @NotNull
     public Locale toLocale(@NotNull String loc) {
-        String[] split = loc.split("_");
-        int length = split.length;
-        switch (length) {
-            case 0:
-                return new Locale(loc);
-            case 1:
-                return new Locale(split[0]);
-            case 2:
-                return new Locale(split[0], split[1]);
+        String[] parts = loc.split("_");
+        switch (parts.length) {
             case 3:
-                return new Locale(split[0], split[1], split[2]);
+                return new Locale(parts[0], parts[1], parts[2]);
+            case 2:
+                return new Locale(parts[0], parts[1]);
+            case 1:
+                return new Locale(parts[0]);
+            case 0:
             default:
                 return new Locale(loc);
         }
@@ -72,9 +73,8 @@ public final class LocaleConverter {
         boolean hasScript = !locale.getScript().isEmpty();
         boolean hasCountry = !locale.getCountry().isEmpty();
         boolean hasVariant = !locale.getVariant().isEmpty();
-        boolean hasExtension = false;
         StringBuilder result = new StringBuilder(locale.getLanguage());
-        if (hasCountry || (haLanguage && (hasVariant || hasScript || hasExtension))) {
+        if (hasCountry || haLanguage && (hasVariant || hasScript)) {
             result.append('_').append(locale.getCountry());
         }
         if (hasVariant && (haLanguage || hasCountry)) {

@@ -72,6 +72,7 @@ based on [this f95 thread](https://f95zone.to/threads/renpy-cheat-generator.1410
 - 20.10.2020 21:00 - Русский перевод.
 - 26.10.2020 16:00 - "Split menu" function (via context menu).
 - 13.11.2020 16:00 - Custom dialogs buttons for better user experience.
+- 17.11.2020 22:00 - Ui improvements.
 
 ### List of tested games
 - Corruption
