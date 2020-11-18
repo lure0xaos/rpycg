@@ -384,7 +384,7 @@ public final class Builder extends ScrollPane implements Initializable {
                                     @NotNull TreeItem<DisplayItem> treeItem,
                                     @NotNull Consumer<TreeItem<DisplayItem>> handler) {
         MenuItem item = new MenuItem(resources.getString(key), Optional.ofNullable(graphicName).flatMap(location ->
-                component.findResource(graphicName, FXLoad.EXT_IMAGES)
+                component.findResource(location, FXLoad.EXT_IMAGES)
                         .map(URL::toExternalForm).map(ImageView::new))
                 .orElse(null));
         item.setOnAction(event -> handler.accept(treeItem));
@@ -552,7 +552,7 @@ public final class Builder extends ScrollPane implements Initializable {
     }
 
     public void setModel(@NotNull ModelItem rootItem) {
-        changed.setValue(shouldUpdateTree(modelConverter.toTree(rootItem)));
+        FXRun.runLater(() -> changed.setValue(shouldUpdateTree(modelConverter.toTree(rootItem))));
     }
 
     private boolean isDifferentTrees(@Nullable TreeItem<DisplayItem> oldRoot, @NotNull TreeItem<DisplayItem> newRoot) {

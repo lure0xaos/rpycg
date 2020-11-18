@@ -11,7 +11,7 @@
         $${item.name} = ${item.value}
 </#if><#lt><#rt>
 <#else><#lt><#rt>
-    "${item.label} \[[${item.name}]\]" if hasattr(store, '${item.name}') :
+    "${item.label} \[[${item.name}]\]" :
         $${item.name} = ${item.type.keyword}(renpy.input("${msg("message-prompt", item.label, "["+item.name+"]")}").strip() or ${item.name})
 </#if><#lt><#rt>
         jump ${parentLabel}

@@ -12,8 +12,10 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.awt.Component;
 import java.awt.Window;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 
@@ -161,6 +163,8 @@ public final class FXLauncher extends Application {
         } catch (Exception e) {
             splashStop("");
             throw new FXUserException(FXUserException.LC_ERROR_INITIALIZATION, appClassName);
+        } finally {
+            Arrays.stream(Window.getWindows()).filter(Component::isDisplayable).forEach(Window::dispose);
         }
     }
 
