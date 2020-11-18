@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.Set;
 
 public final class KeyConverter {
@@ -53,9 +54,9 @@ public final class KeyConverter {
     }
 
     @NotNull
-    public KeyCodeCombination toCombination(@NotNull String keys, @NotNull KeyCodeCombination keyDefault) {
+    public Optional<KeyCodeCombination> toCombination(@NotNull String keys) {
         try {
-            KeyCode keyCode = keyDefault.getCode();
+            KeyCode keyCode = KeyCode.UNDEFINED;
             Set<KeyCombination.Modifier> modifiers = new HashSet<>(4);
             for (String name : keys.split(UNDERSCORE)) {
                 KeyCode value = KeyCode.valueOf(name);
@@ -76,9 +77,9 @@ public final class KeyConverter {
                         keyCode = value;
                 }
             }
-            return new KeyCodeCombination(keyCode, modifiers.toArray(MODIFIERS));
+            return Optional.of(new KeyCodeCombination(keyCode, modifiers.toArray(MODIFIERS)));
         } catch (IllegalArgumentException e) {
-            return keyDefault;
+            return Optional.empty();
         }
     }
 

@@ -63,13 +63,13 @@ public final class Settings {
         this.enableDeveloper.setValue(preferences.getBoolean(PREF_DEVELOPER, enableDeveloper));
         this.enableWrite.setValue(preferences.getBoolean(PREF_WRITE, enableWrite));
         this.keyCheat.setValue(converter.toCombination(preferences.get(PREF_KEY_CHEAT,
-                converter.toString(keyCheat)), keyCheat));
+                converter.toString(keyCheat))).orElse(keyCheat));
         this.keyConsole.setValue(converter.toCombination(preferences.get(PREF_KEY_CONSOLE,
-                converter.toString(keyConsole)), keyConsole));
+                converter.toString(keyConsole))).orElse(keyConsole));
         this.keyDeveloper.setValue(converter.toCombination(preferences.get(PREF_KEY_DEVELOPER,
-                converter.toString(keyDeveloper)), keyDeveloper));
+                converter.toString(keyDeveloper))).orElse(keyDeveloper));
         this.keyWrite.setValue(converter.toCombination(preferences.get(PREF_KEY_WRITE,
-                converter.toString(keyWrite)), keyWrite));
+                converter.toString(keyWrite))).orElse(keyWrite));
 
         this.localeMenu.addListener((observable, oldValue, newValue) -> {
             if (newValue != null) {
