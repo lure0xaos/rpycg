@@ -6,7 +6,7 @@ import java.text.MessageFormat;
 
 public final class FXReflection {
     private FXReflection() {
-        throw new IllegalStateException(getClass().getName());
+        throw new IllegalStateException(FXReflection.class.getName());
     }
 
     @NotNull
@@ -19,7 +19,7 @@ public final class FXReflection {
         try {
             return type.getConstructor().newInstance();
         } catch (ReflectiveOperationException e) {
-            throw new FXException(MessageFormat.format(FXLoad.MSG_ERROR_LOADING_COMPONENT, type), e);
+            throw new FXException(MessageFormat.format(FXConstants.MSG_ERROR_LOADING_COMPONENT, type), e);
         }
     }
 
@@ -29,7 +29,7 @@ public final class FXReflection {
         try {
             return (Class<T>) Class.forName(className);
         } catch (ReflectiveOperationException e) {
-            throw new FXException(MessageFormat.format(FXLoad.MSG_ERROR_LOADING_COMPONENT, className), e);
+            throw new FXException(MessageFormat.format(FXConstants.MSG_ERROR_LOADING_COMPONENT, className), e);
         }
     }
 }

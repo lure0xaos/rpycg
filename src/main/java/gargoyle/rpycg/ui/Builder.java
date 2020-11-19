@@ -3,10 +3,12 @@ package gargoyle.rpycg.ui;
 import gargoyle.rpycg.RPyCG;
 import gargoyle.rpycg.ex.AppUserException;
 import gargoyle.rpycg.fx.FXComponent;
+import gargoyle.rpycg.fx.FXConstants;
+import gargoyle.rpycg.fx.FXContext;
 import gargoyle.rpycg.fx.FXContextFactory;
 import gargoyle.rpycg.fx.FXDialogs;
-import gargoyle.rpycg.fx.FXLoad;
 import gargoyle.rpycg.fx.FXRun;
+import gargoyle.rpycg.fx.FXUserException;
 import gargoyle.rpycg.fx.FXUtil;
 import gargoyle.rpycg.model.ModelItem;
 import gargoyle.rpycg.model.ModelTemplate;
@@ -15,7 +17,6 @@ import gargoyle.rpycg.service.ModelConverter;
 import gargoyle.rpycg.ui.model.DROPPING;
 import gargoyle.rpycg.ui.model.DisplayItem;
 import gargoyle.rpycg.ui.model.FULLNESS;
-import gargoyle.rpycg.util.Check;
 import gargoyle.rpycg.util.Classes;
 import gargoyle.rpycg.util.TreeTableViewWalker;
 import javafx.animation.Animation;
@@ -122,8 +123,8 @@ public final class Builder extends ScrollPane implements Initializable {
 
     public Builder() {
         modelConverter = new ModelConverter();
-        component = FXLoad.<Builder, ScrollPane>loadComponent(this)
-                .orElseThrow(() -> new AppUserException(AppUserException.LC_ERROR_NO_VIEW, getClass().getName()));
+        component = FXContextFactory.currentContext().<Builder, ScrollPane>loadComponent(this)
+                .orElseThrow(() -> new AppUserException(AppUserException.LC_ERROR_NO_VIEW, Builder.class.getName()));
     }
 
     private static boolean canBeChildOfParent(@NotNull DisplayItem child, @NotNull DisplayItem parent) {
@@ -280,11 +281,14 @@ public final class Builder extends ScrollPane implements Initializable {
         selectItem(newItem);
     }
 
-    @SuppressWarnings("ParameterHidesMemberVariable")
-    @Override
-    public void initialize(@NotNull URL location, @Nullable ResourceBundle resources) {
-        this.resources = Check.requireNonNull(resources, AppUserException.LC_ERROR_NO_RESOURCES, location.toExternalForm());
-        initializeTree(createPlaceHolder(resources));
+    private void selectItem(@NotNull TreeItem<DisplayItem> item) {
+        TreeItem<DisplayItem> treeItem = item;
+        while (treeItem != null) {
+            treeItem.setExpanded(treeItem.getValue() != null && treeItem.getValue().getModelType() == ModelType.MENU);
+            treeItem = treeItem.getParent();
+        }
+        tree.getSelectionModel().select(item);
+        tree.scrollTo(tree.getRow(item));
     }
 
     public void addRootVariable() {
@@ -359,7 +363,7 @@ public final class Builder extends ScrollPane implements Initializable {
                     default:
                         return ICON_EMPTY;
                 }
-            }).orElse(ICON_EMPTY), FXLoad.EXT_IMAGES)
+            }).orElse(ICON_EMPTY), FXConstants.EXT_IMAGES)
                     .map(URL::toExternalForm).map(ImageView::new)
                     .ifPresent(cell::setGraphic);
             updateCell(cell, cell.getTreeItem(), cell.getIndex());
@@ -384,52 +388,30 @@ public final class Builder extends ScrollPane implements Initializable {
                                     @NotNull TreeItem<DisplayItem> treeItem,
                                     @NotNull Consumer<TreeItem<DisplayItem>> handler) {
         MenuItem item = new MenuItem(resources.getString(key), Optional.ofNullable(graphicName).flatMap(location ->
-                component.findResource(location, FXLoad.EXT_IMAGES)
+                component.findResource(location, FXConstants.EXT_IMAGES)
                         .map(URL::toExternalForm).map(ImageView::new))
                 .orElse(null));
         item.setOnAction(event -> handler.accept(treeItem));
         return item;
     }
 
-    private void initializeTree(@NotNull Node placeholder) {
-        tree.setSkin(new TreeViewPlaceholderSkin<>(tree, changed, placeholder,
-                treeView -> Optional.ofNullable(treeView)
-                        .map(TreeView::getRoot)
-                        .map(TreeItem::getChildren)
-                        .map(List::isEmpty)
-                        .orElse(true)));
-        shouldClearRoot();
-        tree.setShowRoot(false);
-        tree.setCellFactory(this::createDisplayItemTreeCell);
-        scrollTimeline.setCycleCount(Animation.INDEFINITE);
-        scrollTimeline.getKeyFrames().add(new KeyFrame(Duration.millis(SCROLL), "Scroll",
-                e -> tree.lookupAll(".scroll-bar").stream()
-                        .filter(ScrollBar.class::isInstance)
-                        .map(ScrollBar.class::cast)
-                        .filter(scrollBar -> Orientation.VERTICAL == scrollBar.getOrientation())
-                        .findAny().ifPresent(scrollBar ->
-                                scrollBar.setValue(Math.max(0.0, Math.min(1.0,
-                                        scrollBar.getValue() + scrollDirection))))));
-        tree.setOnDragExited(event -> {
-            if (event.getY() > 0) {
-                scrollDirection = 1.0 / tree.getExpandedItemCount();
-            } else {
-                scrollDirection = -1.0 / tree.getExpandedItemCount();
-            }
-            scrollTimeline.play();
-        });
-        tree.setOnDragEntered(event -> scrollTimeline.stop());
-        tree.setOnDragDone(event -> scrollTimeline.stop());
-    }
-
     @NotNull
     public Node createPlaceHolder(@NotNull ResourceBundle resources) {
+        FXContext context = FXContextFactory.currentContext();
         Button placeholder = new Button(resources.getString(LC_TEMPLATE),
-                FXLoad.findResource(FXLoad.getBaseName(Builder.class, ICON_TEMPLATE), FXLoad.EXT_IMAGES)
+                context.findResource(context.getBaseName(Builder.class, ICON_TEMPLATE), FXConstants.EXT_IMAGES)
                         .map(URL::toExternalForm).map(ImageView::new).orElse(null));
         placeholder.setTooltip(new Tooltip(resources.getString(LC_TEMPLATE_TOOLTIP)));
         placeholder.setOnAction(this::onTemplate);
         return placeholder;
+    }
+
+    private void doTemplate() {
+        Optional.ofNullable(FXContextFactory.currentContext().getParameters())
+                .map(Application.Parameters::getNamed)
+                .map(map -> map.get(KEY_DEBUG))
+                .ifPresentOrElse((s) -> updateTree(ModelTemplate.getTestTemplateTree()),
+                        () -> updateTree(ModelTemplate.getTemplateTree()));
     }
 
     private void editMenu(@Nullable TreeItem<DisplayItem> item) {
@@ -454,30 +436,16 @@ public final class Builder extends ScrollPane implements Initializable {
         return modelConverter.toModel(tree.getRoot());
     }
 
-    private void onTemplate(@NotNull ActionEvent actionEvent) {
-        if (isTreeEmpty() || FXDialogs.confirm(getStage().orElse(null),
-                resources.getString(LC_TEMPLATE_CONFIRM), Map.of(
-                        ButtonBar.ButtonData.OK_DONE, resources.getString(LC_TEMPLATE_CONFIRM_OK),
-                        ButtonBar.ButtonData.CANCEL_CLOSE, resources.getString(LC_TEMPLATE_CONFIRM_CANCEL)))) {
-            try {
-                doTemplate();
-            } catch (RuntimeException e) {
-                FXDialogs.error(getStage().orElse(null), resources.getString(LC_ERROR_MALFORMED_SCRIPT), e, Map.of(
-                        ButtonBar.ButtonData.OK_DONE, resources.getString(LC_CLOSE),
-                        ButtonBar.ButtonData.OTHER, resources.getString(LC_REPORT)))
-                        .filter(buttonType -> buttonType.getButtonData() == ButtonBar.ButtonData.OTHER)
-                        .ifPresent(buttonType -> RPyCG.mailError(e));
-            }
-//            updateScript(true);
-        }
+    public void setModel(@NotNull ModelItem rootItem) {
+        FXRun.runLater(() -> changed.setValue(shouldUpdateTree(modelConverter.toTree(rootItem))));
     }
 
-    private void doTemplate() {
-        Optional.ofNullable(FXContextFactory.currentContext().getParameters())
-                .map(Application.Parameters::getNamed)
-                .map(map -> map.get(KEY_DEBUG))
-                .ifPresentOrElse((s) -> updateTree(ModelTemplate.getTestTemplateTree()),
-                        () -> updateTree(ModelTemplate.getTemplateTree()));
+    @SuppressWarnings("ParameterHidesMemberVariable")
+    @Override
+    public void initialize(@NotNull URL location, @Nullable ResourceBundle resources) {
+        this.resources = FXUtil.requireNonNull(resources, FXUserException.LC_ERROR_NO_RESOURCES,
+                location.toExternalForm());
+        initializeTree(createPlaceHolder(resources));
     }
 
     private void initializeDnD(@NotNull TreeCell<DisplayItem> cell) {
@@ -543,16 +511,43 @@ public final class Builder extends ScrollPane implements Initializable {
         });
     }
 
-    private void updateTree(@NotNull ModelItem root) {
-        setModel(root);
+    private void initializeTree(@NotNull Node placeholder) {
+        tree.setSkin(new TreeViewPlaceholderSkin<>(tree, changed, placeholder,
+                treeView -> Optional.ofNullable(treeView)
+                        .map(TreeView::getRoot)
+                        .map(TreeItem::getChildren)
+                        .map(List::isEmpty)
+                        .orElse(true)));
+        shouldClearRoot();
+        tree.setShowRoot(false);
+        tree.setCellFactory(this::createDisplayItemTreeCell);
+        scrollTimeline.setCycleCount(Animation.INDEFINITE);
+        scrollTimeline.getKeyFrames().add(new KeyFrame(Duration.millis(SCROLL), "Scroll",
+                e -> tree.lookupAll(".scroll-bar").stream()
+                        .filter(ScrollBar.class::isInstance)
+                        .map(ScrollBar.class::cast)
+                        .filter(scrollBar -> Orientation.VERTICAL == scrollBar.getOrientation())
+                        .findAny().ifPresent(scrollBar ->
+                                scrollBar.setValue(Math.max(0.0, Math.min(1.0,
+                                        scrollBar.getValue() + scrollDirection))))));
+        tree.setOnDragExited(event -> {
+            if (event.getY() > 0) {
+                scrollDirection = 1.0 / tree.getExpandedItemCount();
+            } else {
+                scrollDirection = -1.0 / tree.getExpandedItemCount();
+            }
+            scrollTimeline.play();
+        });
+        tree.setOnDragEntered(event -> scrollTimeline.stop());
+        tree.setOnDragDone(event -> scrollTimeline.stop());
     }
 
     public boolean isChanged() {
         return changed.getValue();
     }
 
-    public void setModel(@NotNull ModelItem rootItem) {
-        FXRun.runLater(() -> changed.setValue(shouldUpdateTree(modelConverter.toTree(rootItem))));
+    public void setChanged(boolean changed) {
+        this.changed.setValue(changed);
     }
 
     private boolean isDifferentTrees(@Nullable TreeItem<DisplayItem> oldRoot, @NotNull TreeItem<DisplayItem> newRoot) {
@@ -586,21 +581,29 @@ public final class Builder extends ScrollPane implements Initializable {
         return tree.getRoot().getChildren().isEmpty();
     }
 
+    private void onTemplate(@NotNull ActionEvent actionEvent) {
+        if (isTreeEmpty() || FXDialogs.confirm(getStage().orElse(null),
+                resources.getString(LC_TEMPLATE_CONFIRM), Map.of(
+                        ButtonBar.ButtonData.OK_DONE, resources.getString(LC_TEMPLATE_CONFIRM_OK),
+                        ButtonBar.ButtonData.CANCEL_CLOSE, resources.getString(LC_TEMPLATE_CONFIRM_CANCEL)))) {
+            try {
+                doTemplate();
+            } catch (RuntimeException e) {
+                FXDialogs.error(getStage().orElse(null), resources.getString(LC_ERROR_MALFORMED_SCRIPT), e, Map.of(
+                        ButtonBar.ButtonData.OK_DONE, resources.getString(LC_CLOSE),
+                        ButtonBar.ButtonData.OTHER, resources.getString(LC_REPORT)))
+                        .filter(buttonType -> buttonType.getButtonData() == ButtonBar.ButtonData.OTHER)
+                        .ifPresent(buttonType -> RPyCG.mailError(e));
+            }
+//            updateScript(true);
+        }
+    }
+
     private void putAbove(@NotNull TreeItem<DisplayItem> destItem, @NotNull TreeItem<DisplayItem> dragItem) {
         ObservableList<TreeItem<DisplayItem>> destSiblings = destItem.getParent().getChildren();
         dragItem.getParent().getChildren().remove(dragItem);
         destSiblings.add(destSiblings.indexOf(destItem), dragItem);
         selectItem(dragItem);
-    }
-
-    private void selectItem(@NotNull TreeItem<DisplayItem> item) {
-        TreeItem<DisplayItem> treeItem = item;
-        while (treeItem != null) {
-            treeItem.setExpanded(treeItem.getValue() != null && treeItem.getValue().getModelType() == ModelType.MENU);
-            treeItem = treeItem.getParent();
-        }
-        tree.getSelectionModel().select(item);
-        tree.scrollTo(tree.getRow(item));
     }
 
     private void putBelow(@NotNull TreeItem<DisplayItem> destItem, @NotNull TreeItem<DisplayItem> dragItem) {
@@ -684,8 +687,8 @@ public final class Builder extends ScrollPane implements Initializable {
         });
     }
 
-    public void setChanged(boolean changed) {
-        this.changed.setValue(changed);
+    private void updateTree(@NotNull ModelItem root) {
+        setModel(root);
     }
 
     private static final class DisplayItemTreeCell extends TreeCell<DisplayItem> {
@@ -708,9 +711,9 @@ public final class Builder extends ScrollPane implements Initializable {
         @NotNull
         private final Predicate<TreeView<?>> emptyPredicate;
         @NotNull
-        private final ObservableValue<?> watch;
-        @NotNull
         private final Node placeholder;
+        @NotNull
+        private final ObservableValue<?> watch;
         private StackPane placeholderRegion;
 
         public TreeViewPlaceholderSkin(@NotNull TreeView<T> treeView, @NotNull ObservableValue<?> watch,

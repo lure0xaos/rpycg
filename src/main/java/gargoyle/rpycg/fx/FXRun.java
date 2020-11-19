@@ -15,7 +15,7 @@ public final class FXRun {
     private static final Logger log = LoggerFactory.getLogger(FXRun.class);
 
     public FXRun() {
-        throw new IllegalStateException(getClass().getName());
+        throw new IllegalStateException(FXRun.class.getName());
     }
 
     @Nullable

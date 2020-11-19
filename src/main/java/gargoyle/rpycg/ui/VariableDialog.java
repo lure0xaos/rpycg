@@ -1,9 +1,11 @@
 package gargoyle.rpycg.ui;
 
 import gargoyle.rpycg.ex.AppUserException;
+import gargoyle.rpycg.fx.FXContextFactory;
 import gargoyle.rpycg.fx.FXDialogs;
-import gargoyle.rpycg.fx.FXLoad;
 import gargoyle.rpycg.fx.FXRun;
+import gargoyle.rpycg.fx.FXUserException;
+import gargoyle.rpycg.fx.FXUtil;
 import gargoyle.rpycg.model.VarType;
 import gargoyle.rpycg.service.Validator;
 import gargoyle.rpycg.ui.model.DisplayItem;
@@ -61,8 +63,9 @@ public final class VariableDialog extends Dialog<DisplayItem> implements Initial
     public VariableDialog() {
         edit = new SimpleBooleanProperty(false);
         displayItem = new SimpleObjectProperty<>(DisplayItem.createVariable(VarType.INT, "", "", "0"));
-        FXLoad.loadDialog(this)
-                .orElseThrow(() -> new AppUserException(AppUserException.LC_ERROR_NO_VIEW, getClass().getName()));
+        FXContextFactory.currentContext().loadDialog(this)
+                .orElseThrow(() ->
+                        new AppUserException(AppUserException.LC_ERROR_NO_VIEW, VariableDialog.class.getName()));
     }
 
     @NotNull
@@ -80,15 +83,14 @@ public final class VariableDialog extends Dialog<DisplayItem> implements Initial
         return displayItem.getValue();
     }
 
-    @NotNull
-    private static String createOk(@NotNull ResourceBundle resources, @NotNull Boolean newValue) {
-        return resources.getString(newValue ? LC_OK_EDIT : LC_OK_CREATE);
+    public void setDisplayItem(@NotNull DisplayItem displayItem) {
+        this.displayItem.setValue(displayItem);
     }
 
     @SuppressWarnings("ReturnOfNull")
     @Override
     public void initialize(@NotNull URL location, @Nullable ResourceBundle resources) {
-        Check.requireNonNull(resources, AppUserException.LC_ERROR_NO_RESOURCES, location.toExternalForm());
+        FXUtil.requireNonNull(resources, FXUserException.LC_ERROR_NO_RESOURCES, location.toExternalForm());
         FXDialogs.decorateDialog(this,
                 buttonType -> buttonType.getButtonData().isCancelButton() ? null :
                         DisplayItem.createVariable(type.getValue(),
@@ -134,8 +136,9 @@ public final class VariableDialog extends Dialog<DisplayItem> implements Initial
         FXRun.runLater(this::onShow);
     }
 
-    public boolean isEdit() {
-        return edit.getValue();
+    @NotNull
+    private static String createOk(@NotNull ResourceBundle resources, @NotNull Boolean newValue) {
+        return resources.getString(newValue ? LC_OK_EDIT : LC_OK_CREATE);
     }
 
     @NotNull
@@ -143,8 +146,9 @@ public final class VariableDialog extends Dialog<DisplayItem> implements Initial
         return resources.getString(value ? LC_TITLE_EDIT : LC_TITLE_CREATE);
     }
 
-    public void setEdit(boolean edit) {
-        this.edit.setValue(edit);
+    private void onShow() {
+        validator.validate();
+        name.requestFocus();
     }
 
     private static void decorateError(@NotNull Control cell, @NotNull Collection<String> errors) {
@@ -173,12 +177,11 @@ public final class VariableDialog extends Dialog<DisplayItem> implements Initial
         return false;
     }
 
-    private void onShow() {
-        validator.validate();
-        name.requestFocus();
+    public boolean isEdit() {
+        return edit.getValue();
     }
 
-    public void setDisplayItem(@NotNull DisplayItem displayItem) {
-        this.displayItem.setValue(displayItem);
+    public void setEdit(boolean edit) {
+        this.edit.setValue(edit);
     }
 }

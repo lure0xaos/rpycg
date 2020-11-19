@@ -24,7 +24,7 @@ final class FilePreferencesStore {
     private static final Charset CHARSET = StandardCharsets.UTF_8;
 
     private FilePreferencesStore() {
-        throw new IllegalStateException(getClass().getName());
+        throw new IllegalStateException(FilePreferencesStore.class.getName());
     }
 
     public static synchronized void load(@NotNull Path path, @NotNull Map<String, String> map) throws IOException {

@@ -115,7 +115,7 @@ public final class DisplayItem {
         if (this == obj) {
             return true;
         }
-        if (obj == null || getClass() != obj.getClass()) {
+        if (obj == null || DisplayItem.class != obj.getClass()) {
             return false;
         }
         DisplayItem item = (DisplayItem) obj;
@@ -125,7 +125,7 @@ public final class DisplayItem {
     @Override
     public String toString() {
         return MessageFormat.format("{0}[{1}]'{'type={2}, label={3}, name={4}, value={5}'}'",
-                getClass().getSimpleName(),
+                DisplayItem.class.getSimpleName(),
                 modelType.getValue(), type.getValue(), label.getValue(),
                 name.getValue(), value.getValue());
     }

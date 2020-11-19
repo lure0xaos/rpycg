@@ -44,41 +44,46 @@ public final class FXComponent<C, V> {
 
     @NotNull
     public Optional<URL> findResource(@NotNull String baseName, @NotNull String suffix) {
-        return FXLoad.findResource(context.getValue(), FXLoad.getBaseName(this.baseName.getValue(), baseName), suffix);
-    }
-
-    @NotNull
-    public Optional<URL> findResource(@NotNull String suffix) {
-        return FXLoad.findResource(context.getValue(), this, suffix);
-    }
-
-    public String getBaseName() {
-        return baseName.getValue();
+        return getContext().findResource(getContext().getBaseName(this.baseName.getValue(), baseName), suffix);
     }
 
     public FXContext getContext() {
         return context.getValue();
     }
 
+    @NotNull
+    public Optional<URL> findResource(@NotNull String suffix) {
+        return getContext().findResource(this, suffix);
+    }
+
+    @NotNull
+    public String getBaseName() {
+        return baseName.getValue();
+    }
+
+    @NotNull
     public C getController() {
         return controller.getValue();
     }
 
+    @NotNull
     public URL getLocation() {
         return location.getValue();
     }
 
+    @NotNull
     public V getView() {
         return view.getValue();
     }
 
+    @NotNull
     public <R, V2 extends Parent> Optional<FXComponent<Dialog<R>, V2>> loadDialog(@NotNull Dialog<R> dialog) {
-        return FXLoad.loadDialog(context.getValue(), dialog);
+        return getContext().loadDialog(dialog);
     }
 
     @NotNull
     public Optional<ResourceBundle> loadResources() {
-        return FXLoad.loadResources(context.getValue(), baseName.getValue());
+        return getContext().loadResources(baseName.getValue());
     }
 
     @NotNull

@@ -1,6 +1,6 @@
 package gargoyle.rpycg.ui;
 
-import gargoyle.rpycg.fx.FXLoad;
+import gargoyle.rpycg.fx.FXContextFactory;
 import javafx.beans.DefaultProperty;
 import javafx.beans.property.Property;
 import javafx.beans.property.ReadOnlyProperty;
@@ -35,7 +35,7 @@ public final class KeyText extends TextField {
         defaultCombination = new SimpleObjectProperty<>(null);
         combination = new SimpleObjectProperty<>(null);
         activated = new SimpleBooleanProperty(false);
-        Optional<ResourceBundle> optional = FXLoad.loadResources(getClass());
+        Optional<ResourceBundle> optional = FXContextFactory.currentContext().loadResources(KeyText.class);
         String tooltip = optional.map(resources -> resources.getString(LC_DEFAULT)).orElse(LC_DEFAULT);
         String pressKey = optional.map(resources -> resources.getString(LC_PRESS_ANY_KEY)).orElse(LC_PRESS_ANY_KEY);
         defaultCombination.addListener((observable, oldValue, newValue) -> {

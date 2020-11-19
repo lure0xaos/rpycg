@@ -63,7 +63,7 @@ public final class FXDialogs {
     private static final Logger log = LoggerFactory.getLogger(FXDialogs.class);
 
     private FXDialogs() {
-        throw new IllegalStateException(getClass().getName());
+        throw new IllegalStateException(FXDialogs.class.getName());
     }
 
     @NotNull
@@ -79,17 +79,29 @@ public final class FXDialogs {
                 () -> getString(context, LC_INFORMATION, LC_INFORMATION), asMap(buttons));
     }
 
-    @SuppressWarnings("BooleanMethodNameMustStartWithQuestion")
-    public static boolean confirm(@NotNull FXContext context, @Nullable Stage owner, @NotNull String message) {
-        return confirm(context, owner, message, ButtonType.OK, ButtonType.CANCEL)
-                .map(buttonType -> buttonType == ButtonType.OK).orElse(Boolean.FALSE);
+    @NotNull
+    public static Optional<ButtonType> dialog(@NotNull FXContext context,
+                                              @Nullable Stage owner,
+                                              @NotNull AlertType type,
+                                              @NotNull String message,
+                                              @NotNull Supplier<String> titleProvider,
+                                              @Nullable Map<ButtonBar.ButtonData, String> buttons) {
+        Alert dialog = buttons == null || buttons.isEmpty() ?
+                new Alert(type, message) :
+                new Alert(type, message, asButtonTypeArray(buttons));
+        decorateDialogAs(context, owner, dialog, buttons);
+        dialog.setTitle(getTitle(owner, titleProvider));
+        dialog.setHeaderText(null);
+        dialog.setContentText(message);
+        setModal(owner, dialog);
+        return dialog.showAndWait();
     }
 
     @NotNull
     private static String getString(@NotNull FXContext context,
                                     @NotNull @PropertyKey(resourceBundle = "gargoyle.rpycg.fx.FXDialogs") String key,
                                     @NotNull String defaultTitle) {
-        return FXLoad.loadResources(context, FXDialogs.class)
+        return context.loadResources(FXDialogs.class)
                 .map(resources -> {
                     try {
                         return resources.getString(key);
@@ -106,31 +118,26 @@ public final class FXDialogs {
         return Arrays.stream(buttons).collect(Collectors.toMap(ButtonType::getButtonData, ButtonType::getText));
     }
 
-    public static <R> void decorateDialog(@NotNull FXContext context, Dialog<R> dialog,
-                                          @NotNull Callback<ButtonType, R> resultConverter,
-                                          @Nullable Map<ButtonBar.ButtonData, String> buttons,
-                                          @NotNull String title,
-                                          @NotNull BiConsumer<Boolean, Hyperlink> detailsButtonDecorator) {
-        dialog.setTitle(title);
-        dialog.setDialogPane(new DecoratedDialogPane((buttonData, button) ->
-                FXLoad.findResource(context, FXLoad.getBaseName(dialog.getClass(), getIconPath(buttonData)),
-                        FXLoad.EXT_IMAGES)
-                        .map(URL::toExternalForm).map(ImageView::new)
-                        .ifPresent(button::setGraphic),
-                detailsButtonDecorator));
-        if (buttons == null || buttons.isEmpty()) {
-            dialog.getDialogPane().getButtonTypes().setAll(ButtonType.OK, ButtonType.CANCEL);
-        } else {
-            dialog.getDialogPane().getButtonTypes().setAll(asButtonTypeCollection(buttons));
-        }
-        dialog.setResultConverter(resultConverter);
-    }
-
     @NotNull
-    public static List<ButtonType> asButtonTypeCollection(@NotNull Map<ButtonBar.ButtonData, String> buttons) {
+    public static ButtonType[] asButtonTypeArray(@NotNull Map<ButtonBar.ButtonData, String> buttons) {
         return buttons.entrySet().stream()
                 .map(entry -> new ButtonType(entry.getValue(), entry.getKey()))
-                .collect(Collectors.toList());
+                .toArray(ButtonType[]::new);
+    }
+
+    public static void decorateDialogAs(@NotNull FXContext context, @Nullable Stage owner, Alert dialog,
+                                        @Nullable Map<ButtonBar.ButtonData, String> buttons) {
+        decorateDialogAs(owner, dialog, (buttonData, button) -> {
+                    context.findResource(
+                            context.getBaseName(FXDialogs.class, getIconPath(buttonData)), FXConstants.EXT_IMAGES)
+                            .map(URL::toExternalForm).map(ImageView::new)
+                            .ifPresent(button::setGraphic);
+                    if (buttons == null || buttons.isEmpty() || !buttons.containsKey(buttonData)) {
+                        button.setText(translateButton(context, buttonData, button.getText()));
+                    }
+                },
+                (isExpanded, detailsButton) -> detailsButton.setText(isExpanded ?
+                        getString(context, LC_LESS, LC_LESS) : getString(context, LC_MORE, LC_MORE)));
     }
 
     @NotNull
@@ -170,21 +177,22 @@ public final class FXDialogs {
     }
 
     @NotNull
-    public static Optional<ButtonType> dialog(@NotNull FXContext context,
-                                              @Nullable Stage owner,
-                                              @NotNull AlertType type,
-                                              @NotNull String message,
-                                              @NotNull Supplier<String> titleProvider,
-                                              @Nullable Map<ButtonBar.ButtonData, String> buttons) {
-        Alert dialog = buttons == null || buttons.isEmpty() ?
-                new Alert(type, message) :
-                new Alert(type, message, asButtonTypeArray(buttons));
-        decorateDialogAs(context, owner, dialog, buttons);
-        dialog.setTitle(getTitle(owner, titleProvider));
-        dialog.setHeaderText(null);
-        dialog.setContentText(message);
-        setModal(owner, dialog);
-        return dialog.showAndWait();
+    private static String translateButton(@NotNull FXContext context,
+                                          @NotNull ButtonBar.ButtonData buttonData, @NotNull String defaultText) {
+        switch (buttonData) {
+            case OK_DONE:
+                return getString(context, LC_OK, LC_OK);
+            case CANCEL_CLOSE:
+                return getString(context, LC_CANCEL, LC_CANCEL);
+            case YES:
+                return getString(context, LC_YES, LC_YES);
+            case NO:
+                return getString(context, LC_NO, LC_NO);
+            case APPLY:
+                return getString(context, LC_APPLY, LC_APPLY);
+            default:
+                return defaultText;
+        }
     }
 
     private static void decorateDialogButtons(@Nullable Dialog<?> dialog,
@@ -197,11 +205,9 @@ public final class FXDialogs {
         });
     }
 
-    @NotNull
-    public static ButtonType[] asButtonTypeArray(@NotNull Map<ButtonBar.ButtonData, String> buttons) {
-        return buttons.entrySet().stream()
-                .map(entry -> new ButtonType(entry.getValue(), entry.getKey()))
-                .toArray(ButtonType[]::new);
+    private static void doDecorateStageAs(@NotNull Stage primaryStage, @NotNull Stage window) {
+        window.setTitle(primaryStage.getTitle());
+        window.getIcons().setAll(primaryStage.getIcons());
     }
 
     @NotNull
@@ -240,19 +246,10 @@ public final class FXDialogs {
         return confirm(FXContextFactory.currentContext(), owner, message);
     }
 
-    public static void decorateDialogAs(@NotNull FXContext context, @Nullable Stage owner, Alert dialog,
-                                        @Nullable Map<ButtonBar.ButtonData, String> buttons) {
-        decorateDialogAs(owner, dialog, (buttonData, button) -> {
-                    FXLoad.findResource(context,
-                            FXLoad.getBaseName(FXDialogs.class, getIconPath(buttonData)), FXLoad.EXT_IMAGES)
-                            .map(URL::toExternalForm).map(ImageView::new)
-                            .ifPresent(button::setGraphic);
-                    if (buttons == null || buttons.isEmpty() || !buttons.containsKey(buttonData)) {
-                        button.setText(translateButton(context, buttonData, button.getText()));
-                    }
-                },
-                (isExpanded, detailsButton) -> detailsButton.setText(isExpanded ?
-                        getString(context, LC_LESS, LC_LESS) : getString(context, LC_MORE, LC_MORE)));
+    @SuppressWarnings("BooleanMethodNameMustStartWithQuestion")
+    public static boolean confirm(@NotNull FXContext context, @Nullable Stage owner, @NotNull String message) {
+        return confirm(context, owner, message, ButtonType.OK, ButtonType.CANCEL)
+                .map(buttonType -> buttonType == ButtonType.OK).orElse(Boolean.FALSE);
     }
 
     @SuppressWarnings("BooleanMethodNameMustStartWithQuestion")
@@ -292,31 +289,35 @@ public final class FXDialogs {
                                           @Nullable Map<ButtonBar.ButtonData, String> buttons,
                                           @NotNull String title,
                                           @NotNull BiConsumer<Boolean, Hyperlink> detailsButtonDecorator) {
-        decorateDialog(FXContextFactory.currentContext(), dialog, resultConverter, buttons, title, detailsButtonDecorator);
+        decorateDialog(FXContextFactory.currentContext(),
+                dialog, resultConverter, buttons, title, detailsButtonDecorator);
+    }
+
+    public static <R> void decorateDialog(@NotNull FXContext context, Dialog<R> dialog,
+                                          @NotNull Callback<ButtonType, R> resultConverter,
+                                          @Nullable Map<ButtonBar.ButtonData, String> buttons,
+                                          @NotNull String title,
+                                          @NotNull BiConsumer<Boolean, Hyperlink> detailsButtonDecorator) {
+        dialog.setTitle(title);
+        dialog.setDialogPane(new DecoratedDialogPane((buttonData, button) ->
+                context.findResource(context.getBaseName(dialog.getClass(), getIconPath(buttonData)),
+                        FXConstants.EXT_IMAGES)
+                        .map(URL::toExternalForm).map(ImageView::new)
+                        .ifPresent(button::setGraphic),
+                detailsButtonDecorator));
+        if (buttons == null || buttons.isEmpty()) {
+            dialog.getDialogPane().getButtonTypes().setAll(ButtonType.OK, ButtonType.CANCEL);
+        } else {
+            dialog.getDialogPane().getButtonTypes().setAll(asButtonTypeCollection(buttons));
+        }
+        dialog.setResultConverter(resultConverter);
     }
 
     @NotNull
-    private static String translateButton(@NotNull FXContext context,
-                                          @NotNull ButtonBar.ButtonData buttonData, @NotNull String defaultText) {
-        switch (buttonData) {
-            case OK_DONE:
-                return getString(context, LC_OK, LC_OK);
-            case CANCEL_CLOSE:
-                return getString(context, LC_CANCEL, LC_CANCEL);
-            case YES:
-                return getString(context, LC_YES, LC_YES);
-            case NO:
-                return getString(context, LC_NO, LC_NO);
-            case APPLY:
-                return getString(context, LC_APPLY, LC_APPLY);
-            default:
-                return defaultText;
-        }
-    }
-
-    private static void doDecorateStageAs(@NotNull Stage primaryStage, @NotNull Stage window) {
-        window.setTitle(primaryStage.getTitle());
-        window.getIcons().setAll(primaryStage.getIcons());
+    public static List<ButtonType> asButtonTypeCollection(@NotNull Map<ButtonBar.ButtonData, String> buttons) {
+        return buttons.entrySet().stream()
+                .map(entry -> new ButtonType(entry.getValue(), entry.getKey()))
+                .collect(Collectors.toList());
     }
 
     @NotNull
@@ -430,8 +431,8 @@ public final class FXDialogs {
                                  @Nullable Stage owner, @NotNull String message, @NotNull String defaultValue) {
         TextInputDialog dialog = new TextInputDialog(defaultValue);
         decorateDialogAs(owner, dialog, (buttonData, button) -> {
-                    FXLoad.findResource(context,
-                            FXLoad.getBaseName(FXDialogs.class, getIconPath(buttonData)), FXLoad.EXT_IMAGES)
+                    context.findResource(
+                            context.getBaseName(FXDialogs.class, getIconPath(buttonData)), FXConstants.EXT_IMAGES)
                             .map(URL::toExternalForm).map(ImageView::new)
                             .ifPresent(button::setGraphic);
                     button.setText(translateButton(context, buttonData, button.getText()));
@@ -473,7 +474,8 @@ public final class FXDialogs {
 
             InvalidationListener expandedListener = o -> {
                 final boolean isExpanded = isExpanded();
-                detailsButton.getStyleClass().setAll("details-button", isExpanded ? "less" : "more"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                detailsButton.getStyleClass().setAll("details-button", isExpanded ? "less" : "more");
+                //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                 detailsButton.setText(isExpanded ? lessText : moreText);
                 detailsButtonDecorator.accept(isExpanded, detailsButton);
             };

@@ -52,9 +52,10 @@ public final class FXLauncher extends Application {
     }
 
     private void restart(@NotNull Stage primaryStage) throws Exception {
-        String baseName = FXLoad.getBaseName(appClass);
-        FXLoad.loadResources(baseName).ifPresent(resources -> primaryStage.setTitle(resources.getString(LC_TITLE)));
-        FXLoad.findResource(baseName, FXLoad.EXT_IMAGES)
+        FXContext context = FXContextFactory.currentContext();
+        String baseName = context.getBaseName(appClass);
+        context.loadResources(baseName).ifPresent(resources -> primaryStage.setTitle(resources.getString(LC_TITLE)));
+        context.findResource(baseName, FXConstants.EXT_IMAGES)
                 .map(URL::toExternalForm).map(Image::new)
                 .ifPresent(url -> primaryStage.getIcons().add(url));
         primaryStage.setScene(new Scene(application.doStart().getView()));
@@ -85,7 +86,7 @@ public final class FXLauncher extends Application {
         splash = FXReflection.instantiate(splashClass);
         ResourceBundle resources = null;
         try {
-            resources = ResourceBundle.getBundle(FXLoad.getBaseName(splashClass));
+            resources = ResourceBundle.getBundle(FXContextFactory.currentContext().getBaseName(splashClass));
         } catch (MissingResourceException e) {
             log.warn(new FXUserException(FXUserException.LC_ERROR_NO_RESOURCES, splashClassName).getMessage());
         }
@@ -99,7 +100,8 @@ public final class FXLauncher extends Application {
         notifySplash(FXSplash.FXSplashNotification.Type.PRE_INIT, 0, "");
     }
 
-    private static void notifySplash(@NotNull FXSplash.FXSplashNotification.Type type, double progress, @NotNull String details) {
+    private static void notifySplash(@NotNull FXSplash.FXSplashNotification.Type type,
+                                     double progress, @NotNull String details) {
         notifySplash(new FXSplashNotificationImpl(type, progress, details));
     }
 
@@ -115,7 +117,7 @@ public final class FXLauncher extends Application {
         try {
             appClassName = getParameters().getRaw().get(0);
             appClass = (Class<? extends FXApplication>) Class.forName(appClassName);
-            application = FXReflection.instantiate(appClass);
+            application = FXContextFactory.currentContext().getBean(appClass);
             FXContextFactory.initializeContext(this, appClass);
             notifySplash(FXSplash.FXSplashNotification.Type.INIT, 0, "");
             application.doInit();
@@ -146,16 +148,6 @@ public final class FXLauncher extends Application {
         }
     }
 
-    private void splashStop(@NotNull String details) {
-        if (splash != null) {
-            if (splashWindow.isVisible()) {
-                notifySplash(FXSplash.FXSplashNotification.Type.STOP, 1, details);
-                splashWindow.dispose();
-                splash.close();
-            }
-        }
-    }
-
     @Override
     public void stop() {
         try {
@@ -165,6 +157,16 @@ public final class FXLauncher extends Application {
             throw new FXUserException(FXUserException.LC_ERROR_INITIALIZATION, appClassName);
         } finally {
             Arrays.stream(Window.getWindows()).filter(Component::isDisplayable).forEach(Window::dispose);
+        }
+    }
+
+    private void splashStop(@NotNull String details) {
+        if (splash != null) {
+            if (splashWindow.isVisible()) {
+                notifySplash(FXSplash.FXSplashNotification.Type.STOP, 1, details);
+                splashWindow.dispose();
+                splash.close();
+            }
         }
     }
 
@@ -181,7 +183,8 @@ public final class FXLauncher extends Application {
         private FXCloseAction doIf(@NotNull Stage primaryStage) {
             ObservableMap<Object, Object> primaryStageProperties = primaryStage.getProperties();
             if (primaryStageProperties.containsKey(this)) {
-                Callback<Stage, FXCloseAction> callback = (Callback<Stage, FXCloseAction>) primaryStageProperties.get(this);
+                Callback<Stage, FXCloseAction> callback = (Callback<Stage, FXCloseAction>)
+                        primaryStageProperties.get(this);
                 primaryStageProperties.remove(this);
                 return callback.call(primaryStage);
             }

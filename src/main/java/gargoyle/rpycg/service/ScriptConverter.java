@@ -2,7 +2,7 @@ package gargoyle.rpycg.service;
 
 import gargoyle.rpycg.ex.AppUserException;
 import gargoyle.rpycg.ex.MalformedScriptException;
-import gargoyle.rpycg.fx.FXLoad;
+import gargoyle.rpycg.fx.FXContextFactory;
 import gargoyle.rpycg.model.ModelItem;
 import gargoyle.rpycg.model.ModelType;
 import gargoyle.rpycg.model.VarType;
@@ -31,8 +31,9 @@ public final class ScriptConverter {
     private final ResourceBundle resources;
 
     public ScriptConverter() {
-        resources = FXLoad.loadResources(getClass())
-                .orElseThrow(() -> new AppUserException(AppUserException.LC_ERROR_NO_RESOURCES, getClass().getName()));
+        resources = FXContextFactory.currentContext().loadResources(ScriptConverter.class)
+                .orElseThrow(() ->
+                        new AppUserException(AppUserException.LC_ERROR_NO_RESOURCES, ScriptConverter.class.getName()));
     }
 
     @NotNull
@@ -85,8 +86,9 @@ public final class ScriptConverter {
                     try {
                         type = VarType.valueOf(typeValue.toUpperCase(Locale.ENGLISH));
                     } catch (IllegalArgumentException e) {
-                        throw new MalformedScriptException(MessageFormat.format(resources.getString(LC_ERROR_WRONG_TYPE),
-                                typeValue, Arrays.toString(VarType.values())), e);
+                        throw new MalformedScriptException(
+                                MessageFormat.format(resources.getString(LC_ERROR_WRONG_TYPE),
+                                        typeValue, Arrays.toString(VarType.values())), e);
                     }
                     expr = expr.substring(0, open).trim();
                 }

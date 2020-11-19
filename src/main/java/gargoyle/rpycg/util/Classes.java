@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 
 public final class Classes {
     private Classes() {
-        throw new IllegalStateException(getClass().getName());
+        throw new IllegalStateException(Classes.class.getName());
     }
 
     public static void classAddRemove(@NotNull Styleable cell,
@@ -15,11 +15,11 @@ public final class Classes {
         classRemove(cell, classNameRemove);
     }
 
-    @SuppressWarnings("SameParameterValue")
-    public static void classAddRemoveAll(@NotNull Styleable cell,
-                                         @NotNull String classNameAdd, @NotNull String... classNameRemove) {
-        classAdd(cell, classNameAdd);
-        classRemoveAll(cell, classNameRemove);
+    public static void classAdd(@NotNull Styleable cell, @NotNull String className) {
+        ObservableList<String> styleClass = cell.getStyleClass();
+        if (!styleClass.contains(className)) {
+            styleClass.add(className);
+        }
     }
 
     @SuppressWarnings("MethodCallInLoopCondition")
@@ -30,11 +30,11 @@ public final class Classes {
         }
     }
 
-    public static void classAdd(@NotNull Styleable cell, @NotNull String className) {
-        ObservableList<String> styleClass = cell.getStyleClass();
-        if (!styleClass.contains(className)) {
-            styleClass.add(className);
-        }
+    @SuppressWarnings("SameParameterValue")
+    public static void classAddRemoveAll(@NotNull Styleable cell,
+                                         @NotNull String classNameAdd, @NotNull String... classNameRemove) {
+        classAdd(cell, classNameAdd);
+        classRemoveAll(cell, classNameRemove);
     }
 
     public static void classRemoveAll(@NotNull Styleable cell, @NotNull String... classNames) {

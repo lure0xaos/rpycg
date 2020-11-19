@@ -1,14 +1,15 @@
 package gargoyle.rpycg.ui;
 
 import gargoyle.rpycg.ex.AppUserException;
+import gargoyle.rpycg.fx.FXConstants;
+import gargoyle.rpycg.fx.FXContext;
 import gargoyle.rpycg.fx.FXContextFactory;
 import gargoyle.rpycg.fx.FXDialogs;
 import gargoyle.rpycg.fx.FXLauncher;
-import gargoyle.rpycg.fx.FXLoad;
+import gargoyle.rpycg.fx.FXUserException;
 import gargoyle.rpycg.fx.FXUtil;
 import gargoyle.rpycg.model.Settings;
 import gargoyle.rpycg.service.LocaleConverter;
-import gargoyle.rpycg.util.Check;
 import javafx.beans.binding.Bindings;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -82,8 +83,8 @@ public final class TabSettings extends GridPane implements Initializable {
 
     public TabSettings() {
         preferences = Objects.requireNonNull(FXContextFactory.currentContext().getPreferences());
-        FXLoad.loadComponent(this)
-                .orElseThrow(() -> new AppUserException(AppUserException.LC_ERROR_NO_VIEW, getClass().getName()));
+        FXContextFactory.currentContext().loadComponent(this)
+                .orElseThrow(() -> new AppUserException(AppUserException.LC_ERROR_NO_VIEW, TabSettings.class.getName()));
     }
 
     @SuppressWarnings("AccessOfSystemProperties")
@@ -110,7 +111,8 @@ public final class TabSettings extends GridPane implements Initializable {
                 keyDeveloper.getDefaultCombination(), keyWrite.getDefaultCombination(),
                 Locale.ENGLISH));
         initializeLocaleComboBox(cmbLocaleMenu, settings.getLocaleMenu());
-        initializeLocaleUi(Check.requireNonNull(resources, AppUserException.LC_ERROR_NO_RESOURCES, location.toExternalForm()));
+        initializeLocaleUi(FXUtil.requireNonNull(resources, FXUserException.LC_ERROR_NO_RESOURCES,
+                location.toExternalForm()));
     }
 
     @NotNull
@@ -150,7 +152,9 @@ public final class TabSettings extends GridPane implements Initializable {
                 cell.setGraphic(null);
                 cell.setText("");
             } else {
-                FXLoad.findResource(FXLoad.getBaseName(TabSettings.class, "flags/" + item.getLanguage()), FXLoad.EXT_IMAGES)
+                FXContext context = FXContextFactory.currentContext();
+                context.findResource(context.getBaseName(TabSettings.class,
+                        "flags/" + item.getLanguage()), FXConstants.EXT_IMAGES)
                         .map(URL::toExternalForm).map(ImageView::new).ifPresent(cell::setGraphic);
                 cell.setText(localeConverter.toDisplayString(item));
             }
@@ -187,8 +191,9 @@ public final class TabSettings extends GridPane implements Initializable {
     }
 
     private Node getFlag(Locale locale) {
-        return FXLoad.findResource(FXLoad.getBaseName(TabSettings.class,
-                MessageFormat.format("flags/{0}", locale.getLanguage())), FXLoad.EXT_IMAGES)
+        FXContext context = FXContextFactory.currentContext();
+        return context.findResource(context.getBaseName(TabSettings.class,
+                MessageFormat.format("flags/{0}", locale.getLanguage())), FXConstants.EXT_IMAGES)
                 .map(URL::toExternalForm).map(ImageView::new).orElse(null);
     }
 

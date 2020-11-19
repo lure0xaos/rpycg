@@ -5,17 +5,18 @@ import gargoyle.rpycg.ex.AppException;
 import gargoyle.rpycg.ex.AppUserException;
 import gargoyle.rpycg.ex.CodeGenerationException;
 import gargoyle.rpycg.ex.MalformedScriptException;
+import gargoyle.rpycg.fx.FXConstants;
+import gargoyle.rpycg.fx.FXContext;
 import gargoyle.rpycg.fx.FXContextFactory;
 import gargoyle.rpycg.fx.FXDialogs;
 import gargoyle.rpycg.fx.FXLauncher;
-import gargoyle.rpycg.fx.FXLoad;
 import gargoyle.rpycg.fx.FXRun;
+import gargoyle.rpycg.fx.FXUserException;
 import gargoyle.rpycg.fx.FXUtil;
 import gargoyle.rpycg.model.ModelItem;
 import gargoyle.rpycg.service.CodeConverter;
 import gargoyle.rpycg.service.ScriptConverter;
 import gargoyle.rpycg.service.Storage;
-import gargoyle.rpycg.util.Check;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
 import javafx.beans.value.ObservableObjectValue;
@@ -143,14 +144,15 @@ public final class Main extends BorderPane implements Initializable {
     private TabSettings tabSettings;
 
     public Main() {
-        FXLoad.loadComponent(this)
-                .orElseThrow(() -> new AppUserException(AppUserException.LC_ERROR_NO_VIEW, getClass().getName()));
+        FXContextFactory.currentContext().loadComponent(this)
+                .orElseThrow(() -> new AppUserException(AppUserException.LC_ERROR_NO_VIEW, Main.class.getName()));
     }
 
     @SuppressWarnings("ParameterHidesMemberVariable")
     @Override
     public void initialize(@NotNull URL location, @Nullable ResourceBundle resources) {
-        this.resources = Check.requireNonNull(resources, AppUserException.LC_ERROR_NO_RESOURCES, location.toExternalForm());
+        this.resources = FXUtil.requireNonNull(resources, FXUserException.LC_ERROR_NO_RESOURCES,
+                location.toExternalForm());
         scriptConverter = new ScriptConverter();
         codeConverter = new CodeConverter(FXContextFactory.currentContext(), tabSettings.getSettings(),
                 CodeConverter.SPACES);
@@ -158,7 +160,8 @@ public final class Main extends BorderPane implements Initializable {
         initializeTabs();
         storage = createStorage();
         storageChooser = createStorageChooser(storage.getPath());
-        FXRun.runLater(() -> FXLauncher.requestPrevent(getStage().orElseThrow(), stage -> doSaveOnClose(resources, stage)));
+        FXRun.runLater(() -> FXLauncher.requestPrevent(getStage().orElseThrow(),
+                stage -> doSaveOnClose(resources, stage)));
     }
 
     @NotNull
@@ -170,9 +173,10 @@ public final class Main extends BorderPane implements Initializable {
         directoryChooser.setSelectionFilter(Main::isGameDirectory);
         directoryChooser.setAdditionalIconProvider((path, expanded) -> {
             if (isGameDirectory(path)) {
-                return FXLoad.findResource(FXContextFactory.currentContext(),
-                        FXLoad.getBaseName(Main.class, expanded ? ICON_GAME_FOLDER_OPEN : ICON_GAME_FOLDER),
-                        FXLoad.EXT_IMAGES)
+                FXContext context = FXContextFactory.currentContext();
+                return context.findResource(
+                        context.getBaseName(Main.class, expanded ? ICON_GAME_FOLDER_OPEN : ICON_GAME_FOLDER),
+                        FXConstants.EXT_IMAGES)
                         .map(URL::toExternalForm)
                         .map(ImageView::new);
             }

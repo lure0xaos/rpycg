@@ -18,7 +18,8 @@ public final class FXUserException extends FXException {
     public static final String LC_ERROR_NO_VIEW = "error.no-view";
     private static final String MSG_NO_STRING = "{} not found in resources of {}";
     private static final Logger log = LoggerFactory.getLogger(FXUserException.class);
-    private static final ResourceBundle resources = FXLoad.loadResources(FXUserException.class)
+    private static final ResourceBundle resources = FXContextFactory.currentContext()
+            .loadResources(FXUserException.class)
             .orElseThrow(() -> new FXException(MessageFormat.format(LC_ERROR_NO_RESOURCES,
                     "gargoyle.rpycg.fx.FXUserException")));
     private static final long serialVersionUID = -4527495138860925941L;

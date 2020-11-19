@@ -1,6 +1,6 @@
 package gargoyle.rpycg.ex;
 
-import gargoyle.rpycg.fx.FXLoad;
+import gargoyle.rpycg.fx.FXContextFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 import org.slf4j.Logger;
@@ -17,7 +17,8 @@ public final class AppUserException extends AppException {
     public static final String LC_ERROR_NO_VIEW = "error.no-view";
     private static final String MSG_NO_STRING = "{} not found in resources of {}";
     private static final Logger log = LoggerFactory.getLogger(AppUserException.class);
-    private static final ResourceBundle resources = FXLoad.loadResources(AppUserException.class)
+    private static final ResourceBundle resources = FXContextFactory.currentContext()
+            .loadResources(AppUserException.class)
             .orElseThrow(() -> new AppException(MessageFormat.format(LC_ERROR_NO_RESOURCES,
                     "gargoyle.rpycg.ex.AppUserException")));
     private static final long serialVersionUID = 8392680771655936441L;

@@ -15,7 +15,7 @@ public final class SendMail {
     private static final Logger log = LoggerFactory.getLogger(SendMail.class);
 
     private SendMail() {
-        throw new IllegalStateException(getClass().getName());
+        throw new IllegalStateException(SendMail.class.getName());
     }
 
     public static void mail(@NotNull String email, @NotNull String subject, @NotNull String body) {

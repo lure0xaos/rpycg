@@ -1,6 +1,5 @@
 package gargoyle.rpycg.fx;
 
-import gargoyle.rpycg.util.Check;
 import javafx.application.Application;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
@@ -20,7 +19,7 @@ public final class FXContextFactory {
                     Thread.currentThread().getContextClassLoader()));
 
     private FXContextFactory() {
-        throw new IllegalStateException(getClass().getName());
+        throw new IllegalStateException(FXContextFactory.class.getName());
     }
 
     public static void changeLocale(Locale locale) {
@@ -48,16 +47,16 @@ public final class FXContextFactory {
     private static FXContextImpl copy(@NotNull FXContext original) {
         FXContextImpl fxContext = new FXContextImpl(original.getCharset(), original.getLocale(),
                 original.getClassLoader());
-        fxContext.setHostServices(Check.requireNonNull(original.getHostServices(), () ->
-                FXLoad.loadResources(fxContext, FXContextFactory.class)
+        fxContext.setHostServices(FXUtil.requireNonNull(original.getHostServices(), () ->
+                fxContext.loadResources(FXContextFactory.class)
                         .map(resourceBundle -> resourceBundle.getString(LC_ERROR_NO_HOST_SERVICES))
                         .orElse("")));
-        fxContext.setPreferences(Check.requireNonNull(original.getPreferences(), () ->
-                FXLoad.loadResources(fxContext, FXContextFactory.class)
+        fxContext.setPreferences(FXUtil.requireNonNull(original.getPreferences(), () ->
+                fxContext.loadResources(FXContextFactory.class)
                         .map(resourceBundle -> resourceBundle.getString(LC_ERROR_NO_PREFERENCES))
                         .orElse("")));
-        fxContext.setParameters(Check.requireNonNull(original.getParameters(), () ->
-                FXLoad.loadResources(fxContext, FXContextFactory.class)
+        fxContext.setParameters(FXUtil.requireNonNull(original.getParameters(), () ->
+                fxContext.loadResources(FXContextFactory.class)
                         .map(resourceBundle -> resourceBundle.getString(LC_ERROR_NO_PARAMETERS))
                         .orElse("")));
         fxContext.setSkin(original.getSkin());
@@ -71,8 +70,8 @@ public final class FXContextFactory {
         fxContext.setHostServices(application.getHostServices());
         fxContext.setParameters(application.getParameters());
         fxContext.initializePreferences(appClass);
-        fxContext.initializeSkin(Check.requireNonNull(fxContext.getPreferences(), () ->
-                FXLoad.loadResources(fxContext, FXContextFactory.class)
+        fxContext.initializeSkin(FXUtil.requireNonNull(fxContext.getPreferences(), () ->
+                fxContext.loadResources(FXContextFactory.class)
                         .map(resources -> resources.getString(LC_ERROR_NO_PARAMETERS))
                         .orElse("")), application.getParameters());
         fxContext.initializeLocale();

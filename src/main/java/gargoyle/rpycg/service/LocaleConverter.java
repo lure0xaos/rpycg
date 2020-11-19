@@ -3,7 +3,6 @@ package gargoyle.rpycg.service;
 import gargoyle.rpycg.ex.AppUserException;
 import gargoyle.rpycg.fx.FXContext;
 import gargoyle.rpycg.fx.FXContextFactory;
-import gargoyle.rpycg.fx.FXLoad;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
@@ -28,8 +27,9 @@ public final class LocaleConverter {
     }
 
     public LocaleConverter(FXContext context) {
-        resources = FXLoad.loadResources(context, getClass())
-                .orElseThrow(() -> new AppUserException(AppUserException.LC_ERROR_NO_RESOURCES, getClass().getName()));
+        resources = context.loadResources(LocaleConverter.class)
+                .orElseThrow(() ->
+                        new AppUserException(AppUserException.LC_ERROR_NO_RESOURCES, LocaleConverter.class.getName()));
     }
 
     @NotNull

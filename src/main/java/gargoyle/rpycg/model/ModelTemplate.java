@@ -7,7 +7,7 @@ import java.text.MessageFormat;
 
 public final class ModelTemplate {
     private ModelTemplate() {
-        throw new IllegalStateException(getClass().getName());
+        throw new IllegalStateException(ModelTemplate.class.getName());
     }
 
     @NotNull

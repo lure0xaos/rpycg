@@ -15,7 +15,6 @@ import gargoyle.rpycg.ex.AppUserException;
 import gargoyle.rpycg.ex.CodeGenerationException;
 import gargoyle.rpycg.fx.FXContext;
 import gargoyle.rpycg.fx.FXContextFactory;
-import gargoyle.rpycg.fx.FXLoad;
 import gargoyle.rpycg.model.ModelItem;
 import gargoyle.rpycg.model.Settings;
 import org.jetbrains.annotations.NotNull;
@@ -68,8 +67,8 @@ public final class CodeConverter {
         keyConverter = new KeyConverter();
         fileVariables = GAME_VARIABLES;
         configuration = new Configuration(Configuration.DEFAULT_INCOMPATIBLE_IMPROVEMENTS);
-        configuration.setClassLoaderForTemplateLoading(getClass().getClassLoader(),
-                getClass().getPackage().getName().replace('.', '/'));
+        configuration.setClassLoaderForTemplateLoading(CodeConverter.class.getClassLoader(),
+                CodeConverter.class.getPackage().getName().replace('.', '/'));
         configuration.setLocale(settings.getLocaleMenu());
         configuration.setEncoding(context.getLocale(), context.getCharset().name());
         configuration.setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER);
@@ -79,7 +78,7 @@ public final class CodeConverter {
         configuration.setWhitespaceStripping(false);
         configuration.setBooleanFormat(BOOLEAN_FORMAT);
         configuration.setSharedVariable(IndentDirective.DIRECTIVE_NAME, new IndentDirective(spaces));
-        resourceBundleMethodModel = new ResourceBundleMethodModel(context, getClass(), settings);
+        resourceBundleMethodModel = new ResourceBundleMethodModel(context, CodeConverter.class, settings);
     }
 
     @NotNull
@@ -162,8 +161,8 @@ public final class CodeConverter {
 
         @Override
         public Object exec(List arguments) throws TemplateModelException {
-            ResourceBundle resources = FXLoad.loadResources(
-                    FXContextFactory.forLocale(context, settings.getLocaleMenu()), aClass)
+            ResourceBundle resources = FXContextFactory.forLocale(context, settings.getLocaleMenu())
+                    .loadResources(aClass)
                     .orElseThrow(() -> new AppUserException(AppUserException.LC_ERROR_NO_RESOURCES, aClass.getName()));
             if (arguments.isEmpty()) {
                 throw new TemplateModelException("Wrong number of arguments");
@@ -176,7 +175,8 @@ public final class CodeConverter {
                 key = String.valueOf(argument);
             }
             if (key == null || key.isBlank()) {
-                throw new TemplateModelException(MessageFormat.format(MSG_INVALID_CODE_VALUE, key, context.getLocale()));
+                throw new TemplateModelException(MessageFormat.format(MSG_INVALID_CODE_VALUE, key,
+                        context.getLocale()));
             }
             if (resources.containsKey(key)) {
                 return MessageFormat.format(resources.getString(key).trim(),

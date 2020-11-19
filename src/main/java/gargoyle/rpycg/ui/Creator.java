@@ -1,7 +1,7 @@
 package gargoyle.rpycg.ui;
 
 import gargoyle.rpycg.ex.AppUserException;
-import gargoyle.rpycg.fx.FXLoad;
+import gargoyle.rpycg.fx.FXContextFactory;
 import gargoyle.rpycg.util.Classes;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -45,9 +45,6 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public final class Creator extends ScrollPane implements Initializable {
-    private static final String CLASS_DANGER = "danger";
-    private static final String MIMETYPE = "text/rpycg";
-    private static final Font FONT = new Font(Font.MONOSPACED, Font.PLAIN, 12);
     public static final Map<Pattern, Color> PATTERN_COLORS = Map.of(
             Pattern.compile("([<>])"), new Color(0x808000),
             Pattern.compile("<([^;]+)"), new Color(0x008000),
@@ -55,17 +52,19 @@ public final class Creator extends ScrollPane implements Initializable {
             Pattern.compile("(\\([a-zA-Z]+\\))"), new Color(0x800080),
             Pattern.compile("=([^(\"]+)"), new Color(0x800000)
     );
-
+    private static final String CLASS_DANGER = "danger";
+    private static final Font FONT = new Font(Font.MONOSPACED, Font.PLAIN, 12);
+    private static final String MIMETYPE = "text/rpycg";
     private final SimpleBooleanProperty changed = new SimpleBooleanProperty(false);
     private final SimpleStringProperty prevText = new SimpleStringProperty("");
     private JTextPane content;
+    private JScrollPane scrollPane;
     @FXML
     private SwingNode source;
-    private JScrollPane scrollPane;
 
     public Creator() {
-        FXLoad.loadComponent(this)
-                .orElseThrow(() -> new AppUserException(AppUserException.LC_ERROR_NO_VIEW, getClass().getName()));
+        FXContextFactory.currentContext().loadComponent(this)
+                .orElseThrow(() -> new AppUserException(AppUserException.LC_ERROR_NO_VIEW, Creator.class.getName()));
     }
 
     public SimpleBooleanProperty changedProperty() {
@@ -134,10 +133,12 @@ public final class Creator extends ScrollPane implements Initializable {
         });
     }
 
-    private void scrollDown() {
-        Creator.this.content.setCaretPosition(Creator.this.content.getDocument().getLength());
-        JScrollBar scrollBar = scrollPane.getVerticalScrollBar();
-        scrollBar.setValue(scrollBar.getMaximum());
+    private String getPrevText() {
+        return prevText.getValue();
+    }
+
+    private void setPrevText(String prevText) {
+        this.prevText.setValue(prevText);
     }
 
     public boolean isChanged() {
@@ -152,22 +153,20 @@ public final class Creator extends ScrollPane implements Initializable {
         source.requestFocus();
     }
 
+    private SimpleStringProperty prevTextProperty() {
+        return prevText;
+    }
+
     public void setScriptUnforced(@NotNull Collection<String> script) {
         if (!source.isFocused()) {
             setScript(script);
         }
     }
 
-    private String getPrevText() {
-        return prevText.getValue();
-    }
-
-    private SimpleStringProperty prevTextProperty() {
-        return prevText;
-    }
-
-    private void setPrevText(String prevText) {
-        this.prevText.setValue(prevText);
+    private void scrollDown() {
+        Creator.this.content.setCaretPosition(Creator.this.content.getDocument().getLength());
+        JScrollBar scrollBar = scrollPane.getVerticalScrollBar();
+        scrollBar.setValue(scrollBar.getMaximum());
     }
 
     private static class RPyCGEditorKit extends StyledEditorKit {
@@ -179,27 +178,13 @@ public final class Creator extends ScrollPane implements Initializable {
         }
 
         @Override
-        public ViewFactory getViewFactory() {
-            return viewFactory;
-        }
-
-        @Override
         public String getContentType() {
             return MIMETYPE;
         }
-    }
-
-    private static class RPyCGViewFactory implements ViewFactory {
-
-        private final Map<Pattern, Color> patternColors;
-
-        private RPyCGViewFactory(Map<Pattern, Color> patternColors) {
-            this.patternColors = patternColors;
-        }
 
         @Override
-        public View create(Element element) {
-            return new RPyCGView(element, patternColors);
+        public ViewFactory getViewFactory() {
+            return viewFactory;
         }
     }
 
@@ -249,6 +234,20 @@ public final class Creator extends ScrollPane implements Initializable {
                 x = Utilities.drawTabbedText(segment, x, y, graphics, this, i);
             }
             return x;
+        }
+    }
+
+    private static class RPyCGViewFactory implements ViewFactory {
+
+        private final Map<Pattern, Color> patternColors;
+
+        private RPyCGViewFactory(Map<Pattern, Color> patternColors) {
+            this.patternColors = patternColors;
+        }
+
+        @Override
+        public View create(Element element) {
+            return new RPyCGView(element, patternColors);
         }
     }
 }

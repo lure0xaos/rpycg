@@ -1,11 +1,11 @@
 package gargoyle.rpycg.convert;
 
 import gargoyle.rpycg.fx.FXContextFactory;
+import gargoyle.rpycg.fx.FXUtil;
 import gargoyle.rpycg.model.ModelItem;
 import gargoyle.rpycg.model.Settings;
 import gargoyle.rpycg.model.VarType;
 import gargoyle.rpycg.service.CodeConverter;
-import gargoyle.rpycg.util.Check;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
@@ -29,7 +29,7 @@ class CodeConverterTest {
 
     @NotNull
     private static URL getResource(@NotNull String name) {
-        return Check.requireNonNull(CodeConverterTest.class.getClassLoader().getResource(name), () ->
+        return FXUtil.requireNonNull(CodeConverterTest.class.getClassLoader().getResource(name), () ->
                 MessageFormat.format("no {0} found", name));
     }
 

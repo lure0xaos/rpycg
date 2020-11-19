@@ -1,9 +1,9 @@
 package gargoyle.rpycg.convert;
 
+import gargoyle.rpycg.fx.FXUtil;
 import gargoyle.rpycg.model.ModelItem;
 import gargoyle.rpycg.model.VarType;
 import gargoyle.rpycg.service.ScriptConverter;
-import gargoyle.rpycg.util.Check;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -36,7 +36,7 @@ class ScriptConverterTest {
 
     @NotNull
     private static URL getResource(String name) {
-        return Check.requireNonNull(ScriptConverterTest.class.getClassLoader().getResource(name),
+        return FXUtil.requireNonNull(ScriptConverterTest.class.getClassLoader().getResource(name),
                 () -> MessageFormat.format("no {0} found", name));
     }
 

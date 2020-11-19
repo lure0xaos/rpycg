@@ -97,7 +97,7 @@ public final class ModelItem {
         if (this == obj) {
             return true;
         }
-        if (obj == null || getClass() != obj.getClass()) {
+        if (obj == null || ModelItem.class != obj.getClass()) {
             return false;
         }
         ModelItem modelItem = (ModelItem) obj;
@@ -107,7 +107,8 @@ public final class ModelItem {
     @Override
     public String toString() {
         return MessageFormat.format("{0}[{1}]'{'type={2}, label={3}, name={4}, value={5},parent={6}'}'",
-                getClass().getSimpleName(),
-                modelType, type, label, name, value, Optional.ofNullable(parent).map(item -> item.label).orElse(""));
+                ModelItem.class.getSimpleName(),
+                modelType, type, label, name, value, Optional.ofNullable(parent).map(item -> item.label)
+                        .orElse(""));
     }
 }

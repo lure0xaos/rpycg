@@ -42,8 +42,9 @@ final class FilePreferences extends AbstractPreferences {
 
     private FilePreferences(boolean isUserRoot, @Nullable AbstractPreferences parent, @NotNull String name) {
         super(parent, name);
-        resources = FXLoad.loadResources(getClass())
-                .orElseThrow(() -> new FXUserException(FXUserException.LC_ERROR_NO_RESOURCES, getClass().getName()));
+        resources = FXContextFactory.currentContext().loadResources(FilePreferences.class)
+                .orElseThrow(() ->
+                        new FXUserException(FXUserException.LC_ERROR_NO_RESOURCES, FilePreferences.class.getName()));
         this.isUserRoot = isUserRoot;
         properties = Collections.synchronizedSortedMap(new TreeMap<>(String::compareToIgnoreCase));
         try {
@@ -57,7 +58,8 @@ final class FilePreferences extends AbstractPreferences {
     @NotNull
     private Path getFilePath() {
         return parent() == null ? getRootPath().resolve(SUFFIX) :
-                getRootPath().resolve((parent().absolutePath() + '/' + name()).replace('/', '.') + SUFFIX);
+                getRootPath().resolve((parent().absolutePath() + '/' + name())
+                        .replace('/', '.') + SUFFIX);
     }
 
     @NotNull

@@ -1,9 +1,11 @@
 package gargoyle.rpycg.ui;
 
 import gargoyle.rpycg.ex.AppUserException;
+import gargoyle.rpycg.fx.FXContextFactory;
 import gargoyle.rpycg.fx.FXDialogs;
-import gargoyle.rpycg.fx.FXLoad;
 import gargoyle.rpycg.fx.FXRun;
+import gargoyle.rpycg.fx.FXUserException;
+import gargoyle.rpycg.fx.FXUtil;
 import gargoyle.rpycg.service.Validator;
 import gargoyle.rpycg.ui.model.DisplayItem;
 import gargoyle.rpycg.util.Check;
@@ -63,8 +65,8 @@ public final class MenuDialog extends Dialog<DisplayItem> implements Initializab
         edit = new SimpleBooleanProperty(false);
         displayItem = new SimpleObjectProperty<>(DisplayItem.createMenu("", ""));
         known = FXCollections.observableArrayList();
-        FXLoad.loadDialog(this)
-                .orElseThrow(() -> new AppUserException(AppUserException.LC_ERROR_NO_VIEW, getClass().getName()));
+        FXContextFactory.currentContext().loadDialog(this)
+                .orElseThrow(() -> new AppUserException(AppUserException.LC_ERROR_NO_VIEW, MenuDialog.class.getName()));
     }
 
     @NotNull
@@ -82,9 +84,8 @@ public final class MenuDialog extends Dialog<DisplayItem> implements Initializab
         return displayItem.getValue();
     }
 
-    @NotNull
-    private static String createOk(@NotNull ResourceBundle resources, @NotNull Boolean newValue) {
-        return resources.getString(newValue ? LC_OK_EDIT : LC_OK_CREATE);
+    public void setDisplayItem(@NotNull DisplayItem displayItem) {
+        this.displayItem.setValue(displayItem);
     }
 
     @NotNull
@@ -99,7 +100,7 @@ public final class MenuDialog extends Dialog<DisplayItem> implements Initializab
     @SuppressWarnings("ReturnOfNull")
     @Override
     public void initialize(@NotNull URL location, @Nullable ResourceBundle resources) {
-        Check.requireNonNull(resources, AppUserException.LC_ERROR_NO_RESOURCES, location.toExternalForm());
+        FXUtil.requireNonNull(resources, FXUserException.LC_ERROR_NO_RESOURCES, location.toExternalForm());
         FXDialogs.decorateDialog(this,
                 buttonType -> buttonType.getButtonData().isCancelButton() ? null :
                         DisplayItem.createMenu(label.getText(), name.getText()), Map.of(
@@ -135,9 +136,9 @@ public final class MenuDialog extends Dialog<DisplayItem> implements Initializab
         FXRun.runLater(this::onShow);
     }
 
-    private void onShow() {
-        validator.validate();
-        name.requestFocus();
+    @NotNull
+    private static String createOk(@NotNull ResourceBundle resources, @NotNull Boolean newValue) {
+        return resources.getString(newValue ? LC_OK_EDIT : LC_OK_CREATE);
     }
 
     @NotNull
@@ -145,8 +146,9 @@ public final class MenuDialog extends Dialog<DisplayItem> implements Initializab
         return resources.getString(value ? LC_TITLE_EDIT : LC_TITLE_CREATE);
     }
 
-    public void setDisplayItem(@NotNull DisplayItem displayItem) {
-        this.displayItem.setValue(displayItem);
+    private void onShow() {
+        validator.validate();
+        name.requestFocus();
     }
 
     private static void decorateError(@NotNull Control cell, @NotNull Collection<String> errors) {
