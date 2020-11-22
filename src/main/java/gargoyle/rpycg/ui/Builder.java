@@ -18,7 +18,7 @@ import gargoyle.rpycg.ui.model.DROPPING;
 import gargoyle.rpycg.ui.model.DisplayItem;
 import gargoyle.rpycg.ui.model.FULLNESS;
 import gargoyle.rpycg.util.Classes;
-import gargoyle.rpycg.util.TreeTableViewWalker;
+import gargoyle.rpycg.util.TreeItemWalker;
 import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
@@ -182,7 +182,6 @@ public final class Builder extends ScrollPane implements Initializable {
     }
 
     private static void setCellSignalDecorations(@NotNull Styleable cell, @Nullable TreeItem<DisplayItem> treeItem) {
-        Classes.classRemoveAll(cell, CLASS_WARN, CLASS_DANGER);
         if (treeItem != null && treeItem.getValue() != null) {
             switch (getFullness(treeItem)) {
                 case NORMAL:
@@ -195,6 +194,8 @@ public final class Builder extends ScrollPane implements Initializable {
                     Classes.classAddRemove(cell, CLASS_DANGER, CLASS_WARN);
                     break;
             }
+        } else {
+            Classes.classRemoveAll(cell, CLASS_WARN, CLASS_DANGER);
         }
     }
 
@@ -259,7 +260,7 @@ public final class Builder extends ScrollPane implements Initializable {
 
     private Set<String> getKnownNames(@NotNull String allow) {
         Set<String> known = new HashSet<>(tree.getChildrenUnmodifiable().size());
-        TreeTableViewWalker.visitItems(tree, displayItem -> {
+        TreeItemWalker.visitItems(tree, displayItem -> {
             String name = displayItem.getName();
             if (!name.equalsIgnoreCase(allow)) {
                 known.add(name);
