@@ -12,6 +12,7 @@ import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
 
 public final class SendMail {
+    private static final String MAILTO_LINK = "mailto:{0}?subject={1}&body={2}";
     private static final Logger log = LoggerFactory.getLogger(SendMail.class);
 
     private SendMail() {
@@ -20,7 +21,7 @@ public final class SendMail {
 
     public static void mail(@NotNull String email, @NotNull String subject, @NotNull String body) {
         try {
-            Desktop.getDesktop().mail(URI.create(MessageFormat.format("mailto:{0}?subject={1}&body={2}",
+            Desktop.getDesktop().mail(URI.create(MessageFormat.format(MAILTO_LINK,
                     encode(email), encode(subject), encode(body))));
         } catch (UnsupportedOperationException | IOException e) {
             log.error(e.getLocalizedMessage(), e);
