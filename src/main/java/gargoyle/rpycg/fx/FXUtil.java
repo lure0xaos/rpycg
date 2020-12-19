@@ -4,9 +4,6 @@ import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.PropertyKey;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -19,44 +16,37 @@ public final class FXUtil {
         throw new IllegalStateException(FXUtil.class.getName());
     }
 
-    @NotNull
-    public static Optional<Scene> findScene(@Nullable Node node) {
+    public static Optional<Scene> findScene(Node node) {
         return Optional.ofNullable(node).map(Node::getScene);
     }
 
-    @NotNull
-    public static Optional<Stage> findStage(@Nullable Node node) {
+    public static Optional<Stage> findStage(Node node) {
         return Optional.ofNullable(node).map(Node::getScene)
                 .map(Scene::getWindow)
                 .filter(Stage.class::isInstance)
                 .map(Stage.class::cast);
     }
 
-    @NotNull
-    public static Scene getOrCreateScene(@NotNull Parent parent) {
+    public static Scene getOrCreateScene(Parent parent) {
         return Optional.of(parent).map(Node::getScene).orElseGet(() -> new Scene(parent));
     }
 
-    @NotNull
-    public static <T> T requireNonNull(@Nullable T obj, @Nullable Supplier<String> messageSupplier) {
+    public static <T> T requireNonNull(T obj, Supplier<String> messageSupplier) {
         if (obj == null) {
             throw new FXException(messageSupplier == null ? "" : messageSupplier.get());
         }
         return obj;
     }
 
-    @NotNull
-    public static <T> T requireNonNull(@Nullable T obj,
-                                       @PropertyKey(resourceBundle = "gargoyle.rpycg.fx.FXUserException")
-                                               String messageKey, @NotNull String... args) {
+    public static <T> T requireNonNull(T obj,
+                                       String messageKey, String... args) {
         if (obj == null) {
             throw new FXUserException(messageKey, args);
         }
         return obj;
     }
 
-    @NotNull
-    public static String stringStackTrace(@NotNull Throwable e) {
+    public static String stringStackTrace(Throwable e) {
         try (StringWriter stringWriter = new StringWriter(); PrintWriter printWriter = new PrintWriter(stringWriter)) {
             e.printStackTrace(printWriter);
             return stringWriter.toString();

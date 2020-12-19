@@ -1,7 +1,5 @@
 package gargoyle.rpycg.fx;
 
-import org.jetbrains.annotations.NotNull;
-
 import java.text.MessageFormat;
 
 public final class FXReflection {
@@ -9,13 +7,11 @@ public final class FXReflection {
         throw new IllegalStateException(FXReflection.class.getName());
     }
 
-    @NotNull
-    public static <T> T instantiate(@NotNull String className) {
+    public static <T> T instantiate(String className) {
         return FXReflection.instantiate(classForName(className));
     }
 
-    @NotNull
-    public static <T> T instantiate(@NotNull Class<? extends T> type) {
+    public static <T> T instantiate(Class<? extends T> type) {
         try {
             return type.getConstructor().newInstance();
         } catch (ReflectiveOperationException e) {
@@ -24,8 +20,7 @@ public final class FXReflection {
     }
 
     @SuppressWarnings("unchecked")
-    @NotNull
-    public static <T> Class<T> classForName(@NotNull String className) {
+    public static <T> Class<T> classForName(String className) {
         try {
             return (Class<T>) Class.forName(className);
         } catch (ReflectiveOperationException e) {

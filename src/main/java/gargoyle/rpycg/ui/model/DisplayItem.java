@@ -7,28 +7,20 @@ import javafx.beans.property.ReadOnlyProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.scene.control.TreeItem;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.text.MessageFormat;
 import java.util.Objects;
 
 public final class DisplayItem {
-
-    @NotNull
     private final Property<String> label;
-    @NotNull
     private final ReadOnlyProperty<ModelType> modelType;
-    @NotNull
     private final Property<String> name;
-    @NotNull
     private final Property<VarType> type;
-    @NotNull
     private final Property<String> value;
 
-    private DisplayItem(@NotNull ModelType modelType,
-                        @NotNull String label, @NotNull String name, @NotNull String value,
-                        @Nullable VarType type) {
+    private DisplayItem(ModelType modelType,
+                        String label, String name, String value,
+                        VarType type) {
         this.modelType = new SimpleObjectProperty<>(modelType);
         this.label = new SimpleStringProperty(label);
         this.name = new SimpleStringProperty(name);
@@ -36,72 +28,62 @@ public final class DisplayItem {
         this.type = new SimpleObjectProperty<>(type);
     }
 
-    @NotNull
     public static DisplayItem createRoot() {
         return createMenu("", "");
     }
 
-    @NotNull
-    public static DisplayItem createMenu(@NotNull String label, @NotNull String name) {
+    public static DisplayItem createMenu(String label, String name) {
         return new DisplayItem(ModelType.MENU, label, name, "", null);
     }
 
-    @NotNull
-    public static DisplayItem createVariable(@NotNull VarType type,
-                                             @NotNull String label, @NotNull String name, @NotNull String value) {
+    public static DisplayItem createVariable(VarType type,
+                                             String label, String name, String value) {
         return new DisplayItem(ModelType.VARIABLE, label, name, value, type);
     }
 
-    @NotNull
-    public static TreeItem<DisplayItem> toTreeItem(@NotNull DisplayItem item, boolean expanded) {
+    public static TreeItem<DisplayItem> toTreeItem(DisplayItem item, boolean expanded) {
         TreeItem<DisplayItem> treeItem = new DisplayTreeItem(item);
         treeItem.setExpanded(expanded);
         return treeItem;
     }
 
-    @NotNull
     public DisplayItem copyOf() {
         return new DisplayItem(getModelType(), getLabel(), getName(), getValue(), getType());
     }
 
-    @NotNull
     public ModelType getModelType() {
         return modelType.getValue();
     }
 
-    @NotNull
     public String getLabel() {
         return label.getValue();
     }
 
-    @NotNull
     public String getName() {
         return name.getValue();
     }
 
-    public void setName(@NotNull String name) {
+    public void setName(String name) {
         this.name.setValue(name);
     }
 
-    @NotNull
     public String getValue() {
         return value.getValue();
     }
 
-    @Nullable
     public VarType getType() {
         return type.getValue();
     }
 
-    public void setType(@Nullable VarType type) {
+    public void setType(VarType type) {
         this.type.setValue(type);
     }
 
-    public void setValue(@NotNull String value) {
+    public void setValue(String value) {
         this.value.setValue(value);
     }
 
-    public void setLabel(@NotNull String label) {
+    public void setLabel(String label) {
         this.label.setValue(label);
     }
 
@@ -130,33 +112,28 @@ public final class DisplayItem {
                 name.getValue(), value.getValue());
     }
 
-    @NotNull
     public Property<String> labelProperty() {
         return label;
     }
 
-    @NotNull
     public ReadOnlyProperty<ModelType> modelTypeProperty() {
         return modelType;
     }
 
-    @NotNull
     public Property<String> nameProperty() {
         return name;
     }
 
-    @NotNull
     public Property<VarType> typeProperty() {
         return type;
     }
 
-    @NotNull
     public Property<String> valueProperty() {
         return value;
     }
 
     private static final class DisplayTreeItem extends TreeItem<DisplayItem> {
-        private DisplayTreeItem(@NotNull DisplayItem item) {
+        private DisplayTreeItem(DisplayItem item) {
             super(item);
         }
 

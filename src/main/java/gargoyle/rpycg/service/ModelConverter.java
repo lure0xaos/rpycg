@@ -5,15 +5,12 @@ import gargoyle.rpycg.model.ModelType;
 import gargoyle.rpycg.model.VarType;
 import gargoyle.rpycg.ui.model.DisplayItem;
 import javafx.scene.control.TreeItem;
-import org.jetbrains.annotations.NotNull;
 
 import java.text.MessageFormat;
 import java.util.Set;
 
 public final class ModelConverter {
-
-    @NotNull
-    public ModelItem toModel(@NotNull TreeItem<DisplayItem> root) {
+    public ModelItem toModel(TreeItem<DisplayItem> root) {
         DisplayItem rootValue = root.getValue();
         ModelItem parent = ModelItem.createMenu(rootValue.getLabel(), rootValue.getName());
         for (TreeItem<DisplayItem> treeItem : root.getChildren()) {
@@ -32,8 +29,7 @@ public final class ModelConverter {
         return parent;
     }
 
-    @NotNull
-    public TreeItem<DisplayItem> toTree(@NotNull ModelItem item) {
+    public TreeItem<DisplayItem> toTree(ModelItem item) {
         ModelType modelType = item.getModelType();
         switch (modelType) {
             case MENU:

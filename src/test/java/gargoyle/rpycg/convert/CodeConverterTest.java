@@ -9,7 +9,6 @@ import gargoyle.rpycg.service.CodeConverter;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -21,14 +20,11 @@ import java.util.List;
 import java.util.Locale;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-
 class CodeConverterTest {
     private static final String TEMPLATE_CODE = "template_code.rpy";
     private CodeConverter codeConverter;
     private ModelItem templateTree;
-
-    @NotNull
-    private static URL getResource(@NotNull String name) {
+    private static URL getResource(String name) {
         return FXUtil.requireNonNull(CodeConverterTest.class.getClassLoader().getResource(name), () ->
                 MessageFormat.format("no {0} found", name));
     }
@@ -43,7 +39,7 @@ class CodeConverterTest {
                         new KeyCodeCombination(KeyCode.D, KeyCombination.SHIFT_DOWN),
                         new KeyCodeCombination(KeyCode.M, KeyCombination.SHIFT_DOWN),
                         Locale.ENGLISH),
-                CodeConverter.SPACES);
+                CodeConverter.SPACES, CodeConverter.GAME_VARIABLES);
         ModelItem rootMenu = ModelItem.createMenu("", "");
         rootMenu.addChild(ModelItem.createVariable(VarType.STR, "custom name", "variable_name1", ""));
         rootMenu.addChild(ModelItem.createVariable(VarType.STR, "variable_name2", "variable_name2", ""));
@@ -56,7 +52,6 @@ class CodeConverterTest {
         rootMenu.addChild(ModelItem.createVariable(VarType.INT, "custom name", "fixed_variable7", "100"));
         templateTree = rootMenu;
     }
-
     @Test
     void toCode() throws Exception {
         List<String> script = codeConverter.toCode(templateTree);

@@ -4,7 +4,6 @@
     -fx-background-repeat: no-repeat;
     -fx-background-position: bottom right;
 }
-
 .tree-view .tree-cell {
     -fx-background-color: null;
 }

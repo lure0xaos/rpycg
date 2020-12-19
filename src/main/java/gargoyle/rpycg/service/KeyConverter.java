@@ -3,7 +3,6 @@ package gargoyle.rpycg.service;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 import java.util.Locale;
@@ -11,13 +10,11 @@ import java.util.Optional;
 import java.util.Set;
 
 public final class KeyConverter {
-
     private static final KeyCombination.Modifier[] MODIFIERS = new KeyCombination.Modifier[0];
     private static final char PLUS = '+';
     private static final String UNDERSCORE = "_";
 
-    @NotNull
-    public String toBinding(@NotNull KeyCodeCombination key) {
+    public String toBinding(KeyCodeCombination key) {
         StringBuilder sb = new StringBuilder(32);
         boolean complex = false;
         if (key.getShift() == KeyCombination.ModifierValue.DOWN) {
@@ -45,7 +42,6 @@ public final class KeyConverter {
             sb.append(KeyCode.META.getName().toLowerCase(Locale.ENGLISH));
             complex = true;
         }
-
         if (complex) {
             sb.append(UNDERSCORE);
         }
@@ -53,8 +49,7 @@ public final class KeyConverter {
         return sb.toString();
     }
 
-    @NotNull
-    public Optional<KeyCodeCombination> toCombination(@NotNull String keys) {
+    public Optional<KeyCodeCombination> toCombination(String keys) {
         try {
             KeyCode keyCode = KeyCode.UNDEFINED;
             Set<KeyCombination.Modifier> modifiers = new HashSet<>(4);
@@ -83,8 +78,7 @@ public final class KeyConverter {
         }
     }
 
-    @NotNull
-    public String toString(@NotNull KeyCodeCombination keyCodeCombination) {
+    public String toString(KeyCodeCombination keyCodeCombination) {
         StringBuilder sb = new StringBuilder(32);
         boolean complex = false;
         if (keyCodeCombination.getShift() == KeyCombination.ModifierValue.DOWN) {
@@ -112,7 +106,6 @@ public final class KeyConverter {
             sb.append(KeyCode.META.getName().toUpperCase(Locale.ENGLISH));
             complex = true;
         }
-
         if (complex) {
             sb.append(PLUS);
         }

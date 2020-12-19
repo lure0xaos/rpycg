@@ -7,8 +7,6 @@ import gargoyle.rpycg.model.ModelItem;
 import gargoyle.rpycg.model.ModelType;
 import gargoyle.rpycg.model.VarType;
 import gargoyle.rpycg.util.Check;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.PropertyKey;
 
 import java.text.MessageFormat;
 import java.util.Arrays;
@@ -19,15 +17,10 @@ import java.util.Locale;
 import java.util.ResourceBundle;
 
 public final class ScriptConverter {
-    @PropertyKey(resourceBundle = "gargoyle.rpycg.service.ScriptConverter")
     private static final String LC_ERROR_FAIL_TYPE = "error.fail-type";
-    @PropertyKey(resourceBundle = "gargoyle.rpycg.service.ScriptConverter")
     private static final String LC_ERROR_VALUE_TYPE = "error.value-type";
-    @PropertyKey(resourceBundle = "gargoyle.rpycg.service.ScriptConverter")
     private static final String LC_ERROR_WRONG_MODEL_TYPE = "error.wrong-model-type";
-    @PropertyKey(resourceBundle = "gargoyle.rpycg.service.ScriptConverter")
     private static final String LC_ERROR_WRONG_TYPE = "error.wrong-type";
-
     private final ResourceBundle resources;
 
     public ScriptConverter() {
@@ -36,8 +29,7 @@ public final class ScriptConverter {
                         new AppUserException(AppUserException.LC_ERROR_NO_RESOURCES, ScriptConverter.class.getName()));
     }
 
-    @NotNull
-    public ModelItem fromScript(@NotNull Iterable<String> lines) {
+    public ModelItem fromScript(Iterable<String> lines) {
         ModelItem root = ModelItem.createMenu("", "");
         ModelItem menu = root;
         for (String raw : lines) {
@@ -144,8 +136,7 @@ public final class ScriptConverter {
         return root;
     }
 
-    @NotNull
-    public List<String> toScript(@NotNull ModelItem item) {
+    public List<String> toScript(ModelItem item) {
         String label = item.getLabel();
         String name = item.getName();
         ModelType modelType = item.getModelType();

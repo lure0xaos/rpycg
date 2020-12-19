@@ -1,190 +1,190 @@
 package gargoyle.rpycg.service;
 
-import freemarker.core.Environment;
-import freemarker.template.Configuration;
-import freemarker.template.SimpleScalar;
-import freemarker.template.TemplateDirectiveBody;
-import freemarker.template.TemplateDirectiveModel;
-import freemarker.template.TemplateException;
-import freemarker.template.TemplateExceptionHandler;
-import freemarker.template.TemplateMethodModelEx;
-import freemarker.template.TemplateModel;
-import freemarker.template.TemplateModelException;
-import freemarker.template.TemplateNumberModel;
-import gargoyle.rpycg.ex.AppUserException;
 import gargoyle.rpycg.ex.CodeGenerationException;
 import gargoyle.rpycg.fx.FXContext;
 import gargoyle.rpycg.fx.FXContextFactory;
 import gargoyle.rpycg.model.ModelItem;
+import gargoyle.rpycg.model.ModelType;
 import gargoyle.rpycg.model.Settings;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.PropertyKey;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import gargoyle.rpycg.model.VarType;
 
+import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.StringWriter;
-import java.io.Writer;
+import java.io.InputStreamReader;
+import java.net.URL;
+import java.nio.charset.Charset;
 import java.text.MessageFormat;
-import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.MissingResourceException;
 import java.util.ResourceBundle;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+
+import static gargoyle.rpycg.ex.AppUserException.LC_ERROR_NO_RESOURCES;
 
 public final class CodeConverter {
+    public static final String GAME_VARIABLES = "Game Variables.txt";
     public static final int SPACES = 4;
-    private static final String BOOLEAN_FORMAT = "True,False";
-    private static final String GAME_VARIABLES = "Game Variables.txt";
-    private static final String PARAM_ENABLE_CHEAT = "enableCheat";
-    private static final String PARAM_ENABLE_CONSOLE = "enableConsole";
-    private static final String PARAM_ENABLE_DEVELOPER = "enableDeveloper";
-    private static final String PARAM_ENABLE_ROLLBACK = "enableRollback";
-    private static final String PARAM_ENABLE_WRITE = "enableWrite";
-    private static final String PARAM_FILE_VARIABLES = "fileVariables";
-    private static final String PARAM_KEY_CHEAT = Settings.PREF_KEY_CHEAT;
-    private static final String PARAM_KEY_CONSOLE = Settings.PREF_KEY_CONSOLE;
-    private static final String PARAM_KEY_DEVELOPER = Settings.PREF_KEY_DEVELOPER;
-    private static final String PARAM_KEY_WRITE = Settings.PREF_KEY_WRITE;
-    private static final String PARAM_MODEL = "model";
-    private static final String PARAM_MSG = "msg";
-    private static final String PARAM_SETTINGS = "settings";
-    private static final String TEMPLATE = "RenPyCheat.ftl";
-    private static final Logger log = LoggerFactory.getLogger(CodeConverter.class);
-    @NotNull
-    private final Configuration configuration;
-    @NotNull
+    private final FXContext context;
     private final String fileVariables;
-    @NotNull
     private final KeyConverter keyConverter;
-    @NotNull
-    private final ResourceBundleMethodModel resourceBundleMethodModel;
-    @NotNull
     private final Settings settings;
+    private final int spaces;
 
-    public CodeConverter(@NotNull FXContext context, @NotNull Settings settings, int spaces) {
-        this.settings = settings;
+    public CodeConverter(FXContext context, Settings settings, int spaces, String fileVariables) {
         keyConverter = new KeyConverter();
-        fileVariables = GAME_VARIABLES;
-        configuration = new Configuration(Configuration.DEFAULT_INCOMPATIBLE_IMPROVEMENTS);
-        configuration.setClassLoaderForTemplateLoading(CodeConverter.class.getClassLoader(),
-                CodeConverter.class.getPackage().getName().replace('.', '/'));
-        configuration.setLocale(settings.getLocaleMenu());
-        configuration.setEncoding(context.getLocale(), context.getCharset().name());
-        configuration.setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER);
-        configuration.setLogTemplateExceptions(true);
-        configuration.setWrapUncheckedExceptions(true);
-        configuration.setFallbackOnNullLoopVariable(false);
-        configuration.setWhitespaceStripping(false);
-        configuration.setBooleanFormat(BOOLEAN_FORMAT);
-        configuration.setSharedVariable(IndentDirective.DIRECTIVE_NAME, new IndentDirective(spaces));
-        resourceBundleMethodModel = new ResourceBundleMethodModel(context, CodeConverter.class, settings);
+        this.context = context;
+        this.settings = settings;
+        this.spaces = spaces;
+        this.fileVariables = fileVariables;
     }
 
-    @NotNull
-    public List<String> toCode(@NotNull ModelItem menu) {
-        try (StringWriter writer = new StringWriter()) {
-            configuration.setLocale(settings.getLocaleMenu());
-            configuration.getTemplate(TEMPLATE).process(Map.of(
-                    PARAM_FILE_VARIABLES, fileVariables,
-                    PARAM_SETTINGS, Map.of(
-                            PARAM_ENABLE_CHEAT, settings.getEnableCheat(),
-                            PARAM_ENABLE_CONSOLE, settings.getEnableConsole(),
-                            PARAM_ENABLE_DEVELOPER, settings.getEnableDeveloper(),
-                            PARAM_ENABLE_WRITE, settings.getEnableWrite(),
-                            PARAM_ENABLE_ROLLBACK, settings.getEnableRollback(),
-                            PARAM_KEY_CHEAT, keyConverter.toBinding(settings.getKeyCheat()),
-                            PARAM_KEY_CONSOLE, keyConverter.toBinding(settings.getKeyConsole()),
-                            PARAM_KEY_DEVELOPER, keyConverter.toBinding(settings.getKeyDeveloper()),
-                            PARAM_KEY_WRITE, keyConverter.toBinding(settings.getKeyWrite())),
-                    PARAM_MSG, resourceBundleMethodModel,
-                    PARAM_MODEL, menu), writer);
-            return Arrays.asList(writer.toString().split(System.lineSeparator()));
-        } catch (TemplateException | MissingResourceException | IOException e) {
-            throw new CodeGenerationException(e.getLocalizedMessage(), e);
-        }
+    private static List<String> format(List<String> format, Map<String, Object> values) {
+        return format.stream().map(s -> format(s, values)).collect(Collectors.toList());
     }
 
-    private static final class IndentDirective implements TemplateDirectiveModel {
-        private static final String DIRECTIVE_NAME = "indent";
-        private static final String MSG_THE_PARAMETER_CANNOT_BE_NEGATIVE = "The \"{0}\" parameter cannot be negative";
-        private static final String MSG_THE_PARAMETER_MUST_BE_A_NUMBER = "The \"{0}\" parameter must be a number";
-        private static final String PARAM_NAME = "count";
-        private final int spaces;
-
-        private IndentDirective(int spaces) {
-            this.spaces = spaces;
-        }
-
-        @Override
-        public void execute(Environment env, Map params, TemplateModel[] loopVars, TemplateDirectiveBody body)
-                throws TemplateException, IOException {
-            Object value = params.get(PARAM_NAME);
-            if (!(value instanceof TemplateNumberModel)) {
-                throw new TemplateModelException(
-                        MessageFormat.format(MSG_THE_PARAMETER_MUST_BE_A_NUMBER, PARAM_NAME));
-            }
-            int count = ((TemplateNumberModel) value).getAsNumber().intValue();
-            if (count < 0) {
-                throw new TemplateModelException(
-                        MessageFormat.format(MSG_THE_PARAMETER_CANNOT_BE_NEGATIVE, PARAM_NAME));
-            }
-            String message;
-            try (StringWriter writer = new StringWriter()) {
-                body.render(writer);
-                message = writer.toString();
-            }
-            Writer out = env.getOut();
-            for (String token : message.split("\n")) {
-                out.write(" ".repeat(spaces * count));
-                out.write(token);
-                out.write(message.contains("\n") ? "\n" : "");
-            }
-        }
+    private static String format(String format, Map<String, Object> values) {
+        return Pattern.compile("\\$\\{(\\w+)}").matcher(format).replaceAll(match -> {
+            Object value = values.get(match.group(1));
+            return value != null ? value.toString() : match.group(0);
+        });
     }
 
-    private static final class ResourceBundleMethodModel implements TemplateMethodModelEx {
-        public static final String MSG_INVALID_CODE_VALUE = "Invalid code value '{0}' ({1})";
-        public static final String MSG_NO_KEY_IN_RESOURCES = "no key {} in resources for {} found";
-        @NotNull
-        private final Class<?> aClass;
-        @NotNull
-        private final FXContext context;
-        private final Settings settings;
+    private List<String> createCheatMenu(ResourceBundle messages, ModelItem root) {
+        List<String> buffer = new LinkedList<>();
+        buffer.add("label show_cheat_menu:");
+        buffer.add("    jump CheatMenu");
+        buffer.add("label CheatMenu:");
+        buffer.add("    menu:");
+        buffer.addAll(createCheatSubmenu(1, messages, root, "CheatMenu"));
+        buffer.add("        # nevermind");
+        buffer.add("        \"~" + messages.getString("nevermind") + "~\":");
+        buffer.add("            return");
+        return buffer;
+    }
 
-        private ResourceBundleMethodModel(@NotNull FXContext context, @NotNull Class<?> aClass,
-                                          @NotNull Settings settings) {
-            this.aClass = aClass;
-            this.context = context;
-            this.settings = settings;
+    private List<String> createCheatSubmenu(int indent, ResourceBundle messages, ModelItem root, String parentLabel) {
+        List<String> buffer = new LinkedList<>();
+        for (ModelItem item : root.getChildren()) {
+            ModelType modelType = item.getModelType();
+            String itemName = item.getName();
+            String itemLabel = item.getLabel();
+            if (modelType == ModelType.VARIABLE) {
+                VarType itemType = item.getType();
+                String itemValue = item.getValue();
+                buffer.add(indent(indent,
+                        "    # variable " + itemName + "=" + itemType + "(" + itemValue + ") " + itemLabel));
+                String itemTypeKeyword = itemType.getKeyword();
+                if (!itemValue.isBlank()) {
+                    buffer.add(indent(indent,
+                            "    \"" + itemLabel + "=" + itemValue + " \\[[" + itemName + "]\\]\" :"));
+                    if (itemType == VarType.STR) {
+                        buffer.add(indent(indent,
+                                "        $" + itemName + " = \"" + itemTypeKeyword + "(\"" + itemValue + "\")\""));
+                    } else {
+                        buffer.add(indent(indent,
+                                "        $" + itemName + " = " + itemValue));
+                    }
+                } else {
+                    buffer.add(indent(indent,
+                            "    \"" + itemLabel + " \\[[" + itemName + "]\\]\" :"));
+                    String prompt = messages.getString("message-prompt");
+                    buffer.add(indent(indent,
+                            "        $" + itemName + " = " + itemTypeKeyword + "(renpy.input(\"" +
+                                    MessageFormat.format(prompt, itemLabel, "[" + itemName + "]")
+                                    + "\").strip() or " + itemName + ")"));
+                }
+                buffer.add(indent(indent, "        jump " + parentLabel));
+            }
+            if (modelType == ModelType.MENU) {
+                buffer.add(indent(indent, "    # menu " + itemLabel));
+                buffer.add(indent(indent, "    \"~" + itemLabel + "~\":"));
+                buffer.add(indent(indent, "        label " + itemName + ":"));
+                buffer.add(indent(indent, "            menu:"));
+                buffer.addAll(createCheatSubmenu(indent + 3, messages, item, itemName));
+                buffer.add(indent(indent, "                # back"));
+                buffer.add(indent(indent, "                \"~" + messages.getString("back") + "~\":"));
+                buffer.add(indent(indent, "                    jump " + parentLabel));
+            }
         }
+        return buffer;
+    }
 
-        @Override
-        public Object exec(List arguments) throws TemplateModelException {
-            ResourceBundle resources = FXContextFactory.forLocale(context, settings.getLocaleMenu())
-                    .loadResources(aClass)
-                    .orElseThrow(() -> new AppUserException(AppUserException.LC_ERROR_NO_RESOURCES, aClass.getName()));
-            if (arguments.isEmpty()) {
-                throw new TemplateModelException("Wrong number of arguments");
+    private List<String> include(Charset charset, URL resource) {
+        List<String> lines = new LinkedList<>();
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(resource.openStream(), charset))) {
+            String line;
+            while (null != (line = reader.readLine())) {
+                lines.add(line);
             }
-            @PropertyKey(resourceBundle = "gargoyle.rpycg.service.CodeConverter") String key;
-            Object argument = arguments.get(0);
-            if (argument instanceof SimpleScalar) {
-                key = ((SimpleScalar) argument).getAsString();
-            } else {
-                key = String.valueOf(argument);
-            }
-            if (key == null || key.isBlank()) {
-                throw new TemplateModelException(MessageFormat.format(MSG_INVALID_CODE_VALUE, key,
-                        context.getLocale()));
-            }
-            if (resources.containsKey(key)) {
-                return MessageFormat.format(resources.getString(key).trim(),
-                        arguments.subList(1, arguments.size()).toArray());
-            }
-            log.warn(MSG_NO_KEY_IN_RESOURCES, key, aClass);
-            return key;
+        } catch (IOException e) {
+            throw new CodeGenerationException(e.getLocalizedMessage());
         }
+        return lines;
+    }
+
+    private String indent(int indent, String line) {
+        StringBuilder result = new StringBuilder(line);
+        for (int i = 0; i < indent; i++) {
+            for (int s = 0; s < spaces; s++) {
+                result.insert(0, " ");
+            }
+        }
+        return result.toString();
+    }
+
+    public List<String> toCode(ModelItem menu) {
+        ResourceBundle messages = FXContextFactory.forLocale(context, settings.getLocaleMenu())
+                .loadResources(CodeConverter.class)
+                .orElseThrow(() -> new CodeGenerationException(MessageFormat.format(LC_ERROR_NO_RESOURCES,
+                        CodeConverter.class.getName())));
+        List<String> buffer = new LinkedList<>();
+        buffer.add("init 999 python:");
+        if (settings.getEnableConsole()) {
+            buffer.add("    # Enable console");
+            buffer.add("    config.console = True");
+            buffer.add("    persistent._console_short = False");
+        }
+        if (settings.getEnableDeveloper()) {
+            buffer.add("    # Enable developer mode");
+            buffer.add("    config.developer = True");
+        }
+        if (settings.getEnableCheat()) {
+            String cheatKey = keyConverter.toBinding(settings.getKeyCheat());
+            buffer.add("    # Define function to open the menu");
+            buffer.add("    def enable_cheat_menu():");
+            buffer.add("        renpy.call_in_new_context(\"show_cheat_menu\")");
+            buffer.add("    config.keymap[\"cheat_menu_bind\"] = [\"" + cheatKey + "\"]");
+        }
+        if (settings.getEnableConsole()) {
+            String consoleKey = keyConverter.toBinding(settings.getKeyConsole());
+            buffer.add("    # Enable fast console");
+            buffer.add("    config.keymap[\"console\"] = [\"" + consoleKey + "\"]");
+        }
+        if (settings.getEnableDeveloper()) {
+            String developerKey = keyConverter.toBinding(settings.getKeyDeveloper());
+            buffer.add("    # Enable developer mode");
+            buffer.add("    config.keymap[\"developer\"] = [\"" + developerKey + "\"]");
+            buffer.add("    config.underlay.append(renpy.Keymap(cheat_menu_bind=enable_cheat_menu))");
+        }
+        if (settings.getEnableRollback()) {
+            buffer.add("    # Enable rollback");
+            buffer.add("    config.rollback_enabled = True");
+        }
+        if (settings.getEnableWrite()) {
+            String messageWritten = messages.getString("message-written");
+            buffer.addAll(context.findResource(
+                    context.getBaseName(CodeConverter.class, "write_variables_to_file"), "rpy")
+                    .map(resource -> format(include(context.getCharset(), resource), Map.of(
+                            "keyWrite", keyConverter.toBinding(settings.getKeyWrite()),
+                            "messageWritten", messageWritten,
+                            "fileVariables", fileVariables
+                    ))).orElse(List.of()));
+        }
+        if (settings.getEnableCheat()) {
+            buffer.addAll(createCheatMenu(messages, menu));
+        }
+        return buffer;
     }
 }
-

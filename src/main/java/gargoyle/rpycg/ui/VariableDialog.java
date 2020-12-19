@@ -22,9 +22,6 @@ import javafx.scene.control.Control;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.TextField;
 import javafx.scene.control.Tooltip;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.PropertyKey;
 
 import java.net.URL;
 import java.util.Collection;
@@ -33,21 +30,13 @@ import java.util.ResourceBundle;
 
 public final class VariableDialog extends Dialog<DisplayItem> implements Initializable {
     private static final String CLASS_DANGER = "danger";
-    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.VariableDialog")
     private static final String LC_CANCEL = "cancel";
-    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.VariableDialog")
     private static final String LC_ERROR_EMPTY = "error.empty";
-    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.VariableDialog")
     private static final String LC_ERROR_FORMAT = "error.format";
-    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.VariableDialog")
     private static final String LC_OK_CREATE = "ok_create";
-    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.VariableDialog")
     private static final String LC_OK_EDIT = "ok_edit";
-    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.VariableDialog")
     private static final String LC_TITLE_CREATE = "title_create";
-    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.VariableDialog")
     private static final String LC_TITLE_EDIT = "title_edit";
-
     private final SimpleObjectProperty<DisplayItem> displayItem;
     private final SimpleBooleanProperty edit;
     @FXML
@@ -68,28 +57,25 @@ public final class VariableDialog extends Dialog<DisplayItem> implements Initial
                         new AppUserException(AppUserException.LC_ERROR_NO_VIEW, VariableDialog.class.getName()));
     }
 
-    @NotNull
     public SimpleObjectProperty<DisplayItem> displayItemProperty() {
         return displayItem;
     }
 
-    @NotNull
     public SimpleBooleanProperty editProperty() {
         return edit;
     }
 
-    @Nullable
     public DisplayItem getDisplayItem() {
         return displayItem.getValue();
     }
 
-    public void setDisplayItem(@NotNull DisplayItem displayItem) {
+    public void setDisplayItem(DisplayItem displayItem) {
         this.displayItem.setValue(displayItem);
     }
 
     @SuppressWarnings("ReturnOfNull")
     @Override
-    public void initialize(@NotNull URL location, @Nullable ResourceBundle resources) {
+    public void initialize(URL location, ResourceBundle resources) {
         FXUtil.requireNonNull(resources, FXUserException.LC_ERROR_NO_RESOURCES, location.toExternalForm());
         FXDialogs.decorateDialog(this,
                 buttonType -> buttonType.getButtonData().isCancelButton() ? null :
@@ -136,13 +122,11 @@ public final class VariableDialog extends Dialog<DisplayItem> implements Initial
         FXRun.runLater(this::onShow);
     }
 
-    @NotNull
-    private static String createOk(@NotNull ResourceBundle resources, @NotNull Boolean newValue) {
+    private static String createOk(ResourceBundle resources, Boolean newValue) {
         return resources.getString(newValue ? LC_OK_EDIT : LC_OK_CREATE);
     }
 
-    @NotNull
-    private static String createTitle(@NotNull ResourceBundle resources, @NotNull Boolean value) {
+    private static String createTitle(ResourceBundle resources, Boolean value) {
         return resources.getString(value ? LC_TITLE_EDIT : LC_TITLE_CREATE);
     }
 
@@ -151,7 +135,7 @@ public final class VariableDialog extends Dialog<DisplayItem> implements Initial
         name.requestFocus();
     }
 
-    private static void decorateError(@NotNull Control cell, @NotNull Collection<String> errors) {
+    private static void decorateError(Control cell, Collection<String> errors) {
         if (errors.isEmpty()) {
             Classes.classRemove(cell, CLASS_DANGER);
             cell.setTooltip(null);
@@ -161,11 +145,11 @@ public final class VariableDialog extends Dialog<DisplayItem> implements Initial
         }
     }
 
-    private boolean isEmpty(@Nullable String val) {
+    private boolean isEmpty(String val) {
         return val == null || val.isEmpty();
     }
 
-    private boolean isMatchFormat(@NotNull String val, @NotNull VarType varType) {
+    private boolean isMatchFormat(String val, VarType varType) {
         switch (varType) {
             case INT:
                 return Check.isInteger(val);

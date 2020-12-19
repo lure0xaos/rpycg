@@ -1,8 +1,7 @@
 package gargoyle.rpycg.service;
 
-import org.jetbrains.annotations.NotNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import gargoyle.rpycg.fx.Logger;
+import gargoyle.rpycg.fx.LoggerFactory;
 
 import java.awt.Desktop;
 import java.io.IOException;
@@ -19,7 +18,7 @@ public final class SendMail {
         throw new IllegalStateException(SendMail.class.getName());
     }
 
-    public static void mail(@NotNull String email, @NotNull String subject, @NotNull String body) {
+    public static void mail(String email, String subject, String body) {
         try {
             Desktop.getDesktop().mail(URI.create(MessageFormat.format(MAILTO_LINK,
                     encode(email), encode(subject), encode(body))));
@@ -28,8 +27,7 @@ public final class SendMail {
         }
     }
 
-    @NotNull
-    private static String encode(@NotNull String s) {
+    private static String encode(String s) {
         return URLEncoder.encode(s, StandardCharsets.UTF_8).replace("+", "%20");
     }
 }

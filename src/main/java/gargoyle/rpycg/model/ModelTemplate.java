@@ -1,7 +1,6 @@
 package gargoyle.rpycg.model;
 
 import gargoyle.rpycg.ui.model.FULLNESS;
-import org.jetbrains.annotations.NotNull;
 
 import java.text.MessageFormat;
 
@@ -10,7 +9,6 @@ public final class ModelTemplate {
         throw new IllegalStateException(ModelTemplate.class.getName());
     }
 
-    @NotNull
     public static ModelItem getTemplateTree() {
         ModelItem rootMenu = ModelItem.createMenu("", "");
         rootMenu.addChild(ModelItem.createVariable(VarType.STR, "custom name", "variable_name1", ""));
@@ -25,7 +23,6 @@ public final class ModelTemplate {
         return rootMenu;
     }
 
-    @NotNull
     public static ModelItem getTestTemplateTree() {
         ModelItem rootMenu = ModelItem.createMenu("", "");
         int v = 1;
@@ -56,13 +53,11 @@ public final class ModelTemplate {
         return rootMenu;
     }
 
-    @NotNull
     private static ModelItem createVariable(int v) {
         return ModelItem.createVariable(VarType.STR,
                 MessageFormat.format("custom name{0}", v), MessageFormat.format("variable_name{0}", v), "");
     }
 
-    @NotNull
     private static ModelItem createMenu(int m) {
         return ModelItem.createMenu(MessageFormat.format("menu_title{0}", m), MessageFormat.format("menu_title{0}", m));
     }

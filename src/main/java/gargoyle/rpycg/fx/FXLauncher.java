@@ -8,9 +8,6 @@ import javafx.scene.image.Image;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import javafx.util.Callback;
-import org.jetbrains.annotations.NotNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.awt.Component;
 import java.awt.Window;
@@ -33,11 +30,11 @@ public final class FXLauncher extends Application {
     private String appClassName;
     private FXApplication application;
 
-    public static void requestPrevent(@NotNull Stage primaryStage, @NotNull Callback<Stage, FXCloseAction> callback) {
+    public static void requestPrevent(Stage primaryStage, Callback<Stage, FXCloseAction> callback) {
         FXCloseFlag.PREVENT.set(primaryStage, callback);
     }
 
-    public static void requestRestart(@NotNull Stage primaryStage) {
+    public static void requestRestart(Stage primaryStage) {
         FXCloseFlag.RESTART.set(primaryStage, stage -> {
             FXCloseAction saved = FXCloseFlag.PREVENT.doIf(stage);
             try {
@@ -51,7 +48,7 @@ public final class FXLauncher extends Application {
         FXLauncher.exit(primaryStage);
     }
 
-    private void restart(@NotNull Stage primaryStage) throws Exception {
+    private void restart(Stage primaryStage) throws Exception {
         FXContext context = FXContextFactory.currentContext();
         String baseName = context.getBaseName(appClass);
         context.loadResources(baseName).ifPresent(resources -> primaryStage.setTitle(resources.getString(LC_TITLE)));
@@ -63,12 +60,12 @@ public final class FXLauncher extends Application {
         primaryStage.show();
     }
 
-    public static void exit(@NotNull Stage primaryStage) {
+    public static void exit(Stage primaryStage) {
         Event.fireEvent(primaryStage, new WindowEvent(primaryStage, WindowEvent.WINDOW_CLOSE_REQUEST));
     }
 
     @SuppressWarnings("StaticMethodOnlyUsedInOneClass")
-    public static void run(@NotNull Class<? extends FXApplication> appClass, @NotNull String[] args) {
+    public static void run(Class<? extends FXApplication> appClass, String[] args) {
         try {
             splashStart(appClass);
         } catch (Exception e) {
@@ -80,7 +77,7 @@ public final class FXLauncher extends Application {
         Application.launch(FXLauncher.class, newArgs);
     }
 
-    public static void splashStart(@NotNull Class<? extends FXApplication> appClass) {
+    public static void splashStart(Class<? extends FXApplication> appClass) {
         String splashClassName = System.getProperty(KEY_SPLASH_CLASS, SPLASH_CLASS_DEFAULT);
         Class<? extends FXSplash> splashClass = FXReflection.classForName(splashClassName);
         splash = FXReflection.instantiate(splashClass);
@@ -100,12 +97,12 @@ public final class FXLauncher extends Application {
         notifySplash(FXSplash.FXSplashNotification.Type.PRE_INIT, 0, "");
     }
 
-    private static void notifySplash(@NotNull FXSplash.FXSplashNotification.Type type,
-                                     double progress, @NotNull String details) {
+    private static void notifySplash(FXSplash.FXSplashNotification.Type type,
+                                     double progress, String details) {
         notifySplash(new FXSplashNotificationImpl(type, progress, details));
     }
 
-    public static void notifySplash(@NotNull FXSplash.FXSplashNotification splashNotification) {
+    public static void notifySplash(FXSplash.FXSplashNotification splashNotification) {
         if (splash != null) {
             splash.handleSplashNotification(splashNotification);
         }
@@ -128,7 +125,7 @@ public final class FXLauncher extends Application {
     }
 
     @Override
-    public void start(@NotNull Stage primaryStage) {
+    public void start(Stage primaryStage) {
         primaryStage.getProperties().put(KEY_APP, this);
         primaryStage.setOnCloseRequest(event -> {
             for (FXCloseFlag closeFlag : FXCloseFlag.values()) {
@@ -160,7 +157,7 @@ public final class FXLauncher extends Application {
         }
     }
 
-    private void splashStop(@NotNull String details) {
+    private void splashStop(String details) {
         if (splash != null) {
             if (splashWindow.isVisible()) {
                 notifySplash(FXSplash.FXSplashNotification.Type.STOP, 1, details);
@@ -179,8 +176,7 @@ public final class FXLauncher extends Application {
         PREVENT;
 
         @SuppressWarnings("unchecked")
-        @NotNull
-        private FXCloseAction doIf(@NotNull Stage primaryStage) {
+        private FXCloseAction doIf(Stage primaryStage) {
             ObservableMap<Object, Object> primaryStageProperties = primaryStage.getProperties();
             if (primaryStageProperties.containsKey(this)) {
                 Callback<Stage, FXCloseAction> callback = (Callback<Stage, FXCloseAction>)
@@ -191,26 +187,23 @@ public final class FXLauncher extends Application {
             return FXCloseAction.CLOSE;
         }
 
-        private void set(@NotNull Stage primaryStage, @NotNull Callback<Stage, FXCloseAction> callback) {
+        private void set(Stage primaryStage, Callback<Stage, FXCloseAction> callback) {
             primaryStage.getProperties().put(this, callback);
         }
     }
 
     private static final class FXSplashNotificationImpl implements FXSplash.FXSplashNotification {
-        @NotNull
         private final String details;
         private final double progress;
-        @NotNull
         private final Type type;
 
-        private FXSplashNotificationImpl(@NotNull Type type, double progress, @NotNull String details) {
+        private FXSplashNotificationImpl(Type type, double progress, String details) {
             this.type = type;
             this.progress = progress;
             this.details = details;
         }
 
         @Override
-        @NotNull
         public String getDetails() {
             return details;
         }
@@ -221,7 +214,6 @@ public final class FXLauncher extends Application {
         }
 
         @Override
-        @NotNull
         public Type getType() {
             return type;
         }

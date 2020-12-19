@@ -1,10 +1,6 @@
 package gargoyle.rpycg.fx;
 
 import javafx.application.Platform;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
@@ -18,8 +14,7 @@ public final class FXRun {
         throw new IllegalStateException(FXRun.class.getName());
     }
 
-    @Nullable
-    public static <V> V callLater(@NotNull Callable<V> runnable) {
+    public static <V> V callLater(Callable<V> runnable) {
         if (Platform.isFxApplicationThread()) {
             try {
                 CompletableFuture<V> future = CompletableFuture.supplyAsync(() -> {
@@ -47,7 +42,7 @@ public final class FXRun {
         }
     }
 
-    public static void runLater(@NotNull Runnable runnable) {
+    public static void runLater(Runnable runnable) {
         if (Platform.isFxApplicationThread()) {
             CompletableFuture.runAsync(() -> Platform.runLater(runnable));
         } else {

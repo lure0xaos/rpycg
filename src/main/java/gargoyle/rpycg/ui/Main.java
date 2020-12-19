@@ -33,9 +33,6 @@ import javafx.scene.input.ClipboardContent;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.PropertyKey;
 
 import java.io.File;
 import java.io.IOException;
@@ -54,65 +51,35 @@ public final class Main extends BorderPane implements Initializable {
     private static final String ICON_GAME_FOLDER = "icons/game-folder";
     private static final String ICON_GAME_FOLDER_OPEN = "icons/game-folder-open";
     private static final String INSTALL_NAME = "RenPyCheat.rpy";
-    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Main")
     private static final String LC_CLEAR_CONFIRM = "clear-confirm";
-    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Main")
     private static final String LC_CLEAR_CONFIRM_CANCEL = "clear-confirm-cancel";
-    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Main")
     private static final String LC_CLEAR_CONFIRM_OK = "clear-confirm-ok";
-    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Main")
     private static final String LC_CLOSE = "close";
-    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Main")
     private static final String LC_CLOSE_CONFIRM = "close-confirm";
-    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Main")
     private static final String LC_CLOSE_CONFIRM_CANCEL = "close-confirm-cancel";
-    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Main")
     private static final String LC_CLOSE_CONFIRM_OK = "close-confirm-ok";
-    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Main")
     private static final String LC_ERROR_GENERATE = "error.generate";
-    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Main")
     private static final String LC_ERROR_LOAD = "error.load";
-    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Main")
     private static final String LC_ERROR_MALFORMED_SCRIPT = "error.malformed-script";
-    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Main")
     private static final String LC_ERROR_NOT_GAME = "error.not-game";
-    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Main")
     private static final String LC_ERROR_SAVE = "error.save";
-    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Main")
     private static final String LC_ERROR_WRITE = "error.write";
-    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Main")
     private static final String LC_EXTENSION_DESCRIPTION = "extension-description";
-    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Main")
     private static final String LC_GAME_CHOOSER_TITLE = "game-chooser-title";
-    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Main")
     private static final String LC_LOAD_CONFIRM = "load-confirm";
-    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Main")
     private static final String LC_LOAD_CONFIRM_CANCEL = "load-confirm-cancel";
-    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Main")
     private static final String LC_LOAD_CONFIRM_OK = "load-confirm-ok";
-    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Main")
     private static final String LC_RELOAD_CONFIRM = "reload-confirm";
-    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Main")
     private static final String LC_RELOAD_CONFIRM_CANCEL = "reload-confirm-cancel";
-    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Main")
     private static final String LC_RELOAD_CONFIRM_OK = "reload-confirm-ok";
-    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Main")
     private static final String LC_REPORT = "report";
-    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Main")
     private static final String LC_SAVE_AS_CONFIRM = "save-as-confirm";
-    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Main")
     private static final String LC_SAVE_AS_CONFIRM_CANCEL = "save-as-confirm-cancel";
-    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Main")
     private static final String LC_SAVE_AS_CONFIRM_OK = "save-as-confirm-ok";
-    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Main")
     private static final String LC_SAVE_CONFIRM = "save-confirm";
-    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Main")
     private static final String LC_SAVE_CONFIRM_CANCEL = "save-confirm-cancel";
-    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Main")
     private static final String LC_SAVE_CONFIRM_OK = "save-confirm-ok";
-    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Main")
     private static final String LC_SUCCESS_GENERATE = "success-generate";
-    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.Main")
     private static final String LC_SUCCESS_INSTALL = "success-install";
     @FXML
     private MenuItem btnLoad;
@@ -150,12 +117,12 @@ public final class Main extends BorderPane implements Initializable {
 
     @SuppressWarnings("ParameterHidesMemberVariable")
     @Override
-    public void initialize(@NotNull URL location, @Nullable ResourceBundle resources) {
+    public void initialize(URL location, ResourceBundle resources) {
         this.resources = FXUtil.requireNonNull(resources, FXUserException.LC_ERROR_NO_RESOURCES,
                 location.toExternalForm());
         scriptConverter = new ScriptConverter();
         codeConverter = new CodeConverter(FXContextFactory.currentContext(), tabSettings.getSettings(),
-                CodeConverter.SPACES);
+                CodeConverter.SPACES, CodeConverter.GAME_VARIABLES);
         gameChooser = createGameChooser(resources, tabSettings.getGameDirectory());
         initializeTabs();
         storage = createStorage();
@@ -164,8 +131,7 @@ public final class Main extends BorderPane implements Initializable {
                 stage -> doSaveOnClose(resources, stage)));
     }
 
-    @NotNull
-    private static FolderChooser createGameChooser(@Nullable ResourceBundle resources, @NotNull Path gameDirectory) {
+    private static FolderChooser createGameChooser(ResourceBundle resources, Path gameDirectory) {
         FolderChooser directoryChooser = new FolderChooser();
         Optional.ofNullable(resources).ifPresent(bundle ->
                 directoryChooser.setTitle(bundle.getString(LC_GAME_CHOOSER_TITLE)));
@@ -225,7 +191,6 @@ public final class Main extends BorderPane implements Initializable {
         });
     }
 
-    @NotNull
     private Storage createStorage() {
         Storage newStorage = new Storage();
         BooleanBinding nullBinding = Bindings.isNull((ObservableObjectValue<?>) newStorage.pathProperty());
@@ -234,8 +199,7 @@ public final class Main extends BorderPane implements Initializable {
         return newStorage;
     }
 
-    @NotNull
-    private FileChooser createStorageChooser(@Nullable Path storagePath) {
+    private FileChooser createStorageChooser(Path storagePath) {
         FileChooser fileChooser = new FileChooser();
         FileChooser.ExtensionFilter filter = new FileChooser.ExtensionFilter(
                 resources.getString(LC_EXTENSION_DESCRIPTION), "*." + EXTENSION);
@@ -248,12 +212,11 @@ public final class Main extends BorderPane implements Initializable {
         return fileChooser;
     }
 
-    @NotNull
     private Optional<Stage> getStage() {
         return FXUtil.findStage(btnLoadReload);
     }
 
-    private FXLauncher.FXCloseAction doSaveOnClose(@NotNull ResourceBundle resources, @NotNull Stage stage) {
+    private FXLauncher.FXCloseAction doSaveOnClose(ResourceBundle resources, Stage stage) {
         if (!storage.getModified() || builder.isTreeEmpty() ||
                 FXDialogs.confirm(stage, resources.getString(LC_CLOSE_CONFIRM), Map.of(
                         ButtonBar.ButtonData.OK_DONE, resources.getString(LC_CLOSE_CONFIRM_OK),
@@ -277,7 +240,7 @@ public final class Main extends BorderPane implements Initializable {
         }
     }
 
-    private static boolean isGameDirectory(@Nullable Path path) {
+    private static boolean isGameDirectory(Path path) {
         return path != null &&
                 Files.isDirectory(path) &&
                 Files.isDirectory(path.resolve("renpy")) &&
@@ -339,7 +302,7 @@ public final class Main extends BorderPane implements Initializable {
     }
 
     @FXML
-    void onClear(@NotNull ActionEvent actionEvent) {
+    void onClear(ActionEvent actionEvent) {
         if (builder.isTreeEmpty() ||
                 FXDialogs.confirm(getStage().orElse(null), resources.getString(LC_CLEAR_CONFIRM), Map.of(
                         ButtonBar.ButtonData.OK_DONE, resources.getString(LC_CLEAR_CONFIRM_OK),
@@ -354,7 +317,7 @@ public final class Main extends BorderPane implements Initializable {
     }
 
     @FXML
-    void onGenerate(@NotNull ActionEvent actionEvent) {
+    void onGenerate(ActionEvent actionEvent) {
         try {
             putClipboard(generateCodeString());
             FXDialogs.alert(getStage().orElse(null), resources.getString(LC_SUCCESS_GENERATE));
@@ -370,25 +333,23 @@ public final class Main extends BorderPane implements Initializable {
         }
     }
 
-    private static void putClipboard(@NotNull String content) {
+    private static void putClipboard(String content) {
         Clipboard clipboard = Clipboard.getSystemClipboard();
         ClipboardContent clipboardContent = new ClipboardContent();
         clipboardContent.putString(content);
         clipboard.setContent(clipboardContent);
     }
 
-    @NotNull
     private String generateCodeString() {
         return String.join(System.lineSeparator(), generateCode());
     }
 
-    @NotNull
     private List<String> generateCode() {
         return codeConverter.toCode(builder.getModel());
     }
 
     @FXML
-    void onInstall(@NotNull ActionEvent actionEvent) {
+    void onInstall(ActionEvent actionEvent) {
         chooseGameDirectory().ifPresent(gamePath -> {
             if (isGameDirectory(gamePath)) {
                 try {
@@ -409,7 +370,6 @@ public final class Main extends BorderPane implements Initializable {
     }
 
     @SuppressWarnings("MethodCallInLoopCondition")
-    @NotNull
     private Optional<Path> chooseGameDirectory() {
         if (gameChooser.getOwner() == null) {
             gameChooser.initOwner(getStage().orElse(null));
@@ -424,13 +384,13 @@ public final class Main extends BorderPane implements Initializable {
         return Optional.ofNullable(gameChooser.showDialog(getStage().orElseThrow()));
     }
 
-    private void storeGamePath(@NotNull Path gamePath) {
+    private void storeGamePath(Path gamePath) {
         tabSettings.setGameDirectory((gamePath));
         gameChooser.setInitialDirectory(gamePath);
     }
 
     @FXML
-    void onLoad(@NotNull ActionEvent actionEvent) {
+    void onLoad(ActionEvent actionEvent) {
         Optional.ofNullable(storageChooser.showOpenDialog(getStage().orElse(null))).map(File::toPath)
                 .ifPresent(path -> {
                     if (builder.isTreeEmpty() || FXDialogs.confirm(getStage().orElse(null),
@@ -453,24 +413,24 @@ public final class Main extends BorderPane implements Initializable {
                 });
     }
 
-    private void doLoad(@NotNull Path path) {
+    private void doLoad(Path path) {
         storage.setPath(path);
         updateTree(storage.load(path));
         updateScript(true);
         storage.setModified(false);
     }
 
-    private void updateTree(@NotNull ModelItem root) {
+    private void updateTree(ModelItem root) {
         builder.setModel(root);
     }
 
     @FXML
-    void onMenu(@NotNull ActionEvent actionEvent) {
+    void onMenu(ActionEvent actionEvent) {
         builder.addRootMenu();
     }
 
     @FXML
-    void onReload(@NotNull ActionEvent actionEvent) {
+    void onReload(ActionEvent actionEvent) {
         Optional.ofNullable(storage.getPath()).ifPresent(path -> {
             if (builder.isTreeEmpty() ||
                     FXDialogs.confirm(getStage().orElse(null), resources.getString(LC_RELOAD_CONFIRM), Map.of(
@@ -494,7 +454,7 @@ public final class Main extends BorderPane implements Initializable {
     }
 
     @FXML
-    void onSave(@NotNull ActionEvent actionEvent) {
+    void onSave(ActionEvent actionEvent) {
         Optional.ofNullable(storage.getPath()).ifPresent(path -> {
             try {
                 doSave(getStage().orElse(null));
@@ -510,7 +470,7 @@ public final class Main extends BorderPane implements Initializable {
     }
 
     @FXML
-    void onSaveAs(@NotNull ActionEvent actionEvent) {
+    void onSaveAs(ActionEvent actionEvent) {
         try {
             doSaveAs(getStage().orElse(null));
         } catch (RuntimeException e) {
@@ -524,7 +484,7 @@ public final class Main extends BorderPane implements Initializable {
     }
 
     @FXML
-    void onVariable(@NotNull ActionEvent actionEvent) {
+    void onVariable(ActionEvent actionEvent) {
         builder.addRootVariable();
     }
 }

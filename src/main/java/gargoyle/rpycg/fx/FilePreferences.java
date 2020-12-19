@@ -1,9 +1,5 @@
 package gargoyle.rpycg.fx;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.PropertyKey;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -19,14 +15,11 @@ import java.util.prefs.Preferences;
 import java.util.stream.Stream;
 
 final class FilePreferences extends AbstractPreferences {
-
     @SuppressWarnings("AccessOfSystemProperties")
     public static final Path SYSTEM_ROOT_PATH = Paths.get(System.getProperty("user.home"));
     @SuppressWarnings("AccessOfSystemProperties")
     public static final Path USER_ROOT_PATH = Paths.get(System.getProperty("user.home"));
-    @PropertyKey(resourceBundle = "gargoyle.rpycg.fx.FilePreferences")
     private static final String LC_ERROR_LOAD = "error.load";
-    @PropertyKey(resourceBundle = "gargoyle.rpycg.fx.FilePreferences")
     private static final String LC_ERROR_SAVE = "error.save";
     private static final String[] STRINGS = new String[0];
     private static final String SUFFIX = ".prefs";
@@ -35,12 +28,10 @@ final class FilePreferences extends AbstractPreferences {
     private static final FXHolder<Preferences> userRoot = new FXHolder<>(() ->
             new FilePreferences(true, null, ""));
     private final boolean isUserRoot;
-    @NotNull
     private final Map<String, String> properties;
-    @NotNull
     private final ResourceBundle resources;
 
-    private FilePreferences(boolean isUserRoot, @Nullable AbstractPreferences parent, @NotNull String name) {
+    private FilePreferences(boolean isUserRoot, AbstractPreferences parent, String name) {
         super(parent, name);
         resources = FXContextFactory.currentContext().loadResources(FilePreferences.class)
                 .orElseThrow(() ->
@@ -55,24 +46,20 @@ final class FilePreferences extends AbstractPreferences {
         }
     }
 
-    @NotNull
     private Path getFilePath() {
         return parent() == null ? getRootPath().resolve(SUFFIX) :
                 getRootPath().resolve((parent().absolutePath() + '/' + name())
                         .replace('/', '.') + SUFFIX);
     }
 
-    @NotNull
     private Path getRootPath() {
         return isUserRoot ? USER_ROOT_PATH : SYSTEM_ROOT_PATH;
     }
 
-    @NotNull
     static Preferences getSystemRoot() {
         return systemRoot.get();
     }
 
-    @NotNull
     static Preferences getUserRoot() {
         return userRoot.get();
     }

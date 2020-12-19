@@ -26,9 +26,6 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
 import javafx.stage.Stage;
 import javafx.util.Callback;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.PropertyKey;
 
 import java.net.URL;
 import java.nio.file.Path;
@@ -44,18 +41,11 @@ import java.util.prefs.Preferences;
 import java.util.stream.Collectors;
 
 public final class TabSettings extends GridPane implements Initializable {
-
-    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.TabSettings")
     private static final String LC_NEED_RESTART = "need-restart";
-    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.TabSettings")
     private static final String LC_NEED_RESTART_CANCEL = "need-restart-cancel";
-    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.TabSettings")
     private static final String LC_NEED_RESTART_OK = "need-restart-ok";
     private static final String PREF_GAME = "game";
-
     private final LocaleConverter localeConverter = new LocaleConverter();
-
-    @NotNull
     private final Preferences preferences;
     @FXML
     private CheckBox chkEnableCheat;
@@ -88,22 +78,20 @@ public final class TabSettings extends GridPane implements Initializable {
     }
 
     @SuppressWarnings("AccessOfSystemProperties")
-    @NotNull
     public Path getGameDirectory() {
         return Paths.get(preferences.get(PREF_GAME, System.getProperty("user.home")));
     }
 
-    public void setGameDirectory(@NotNull Path gameDirectory) {
+    public void setGameDirectory(Path gameDirectory) {
         preferences.put(PREF_GAME, gameDirectory.toFile().getAbsolutePath());
     }
 
-    @NotNull
     public Settings getSettings() {
         return settings;
     }
 
     @Override
-    public void initialize(@NotNull URL location, @Nullable ResourceBundle resources) {
+    public void initialize(URL location, ResourceBundle resources) {
         settings = initializeSettings(new Settings(preferences,
                 chkEnableCheat.isSelected(), chkEnableConsole.isSelected(),
                 chkEnableDeveloper.isSelected(), chkEnableWrite.isSelected(), chkEnableRollback.isSelected(),
@@ -115,8 +103,7 @@ public final class TabSettings extends GridPane implements Initializable {
                 location.toExternalForm()));
     }
 
-    @NotNull
-    private Settings initializeSettings(@NotNull Settings set) {
+    private Settings initializeSettings(Settings set) {
         cmbLocaleMenu.getSelectionModel().select(set.getLocaleMenu());
         chkEnableRollback.selectedProperty().setValue(set.enableRollbackProperty().getValue());
         chkEnableCheat.selectedProperty().setValue(set.enableCheatProperty().getValue());
@@ -127,7 +114,6 @@ public final class TabSettings extends GridPane implements Initializable {
         keyConsole.defaultCombinationProperty().setValue(set.keyConsoleProperty().getValue());
         keyDeveloper.defaultCombinationProperty().setValue(set.keyDeveloperProperty().getValue());
         keyWrite.defaultCombinationProperty().setValue(set.keyWriteProperty().getValue());
-
         set.localeMenuProperty().bind(cmbLocaleMenu.getSelectionModel().selectedItemProperty());
         set.enableRollbackProperty().bind(chkEnableRollback.selectedProperty());
         set.enableCheatProperty().bind(chkEnableCheat.selectedProperty());
@@ -138,7 +124,6 @@ public final class TabSettings extends GridPane implements Initializable {
         set.keyConsoleProperty().bind(keyConsole.combinationProperty());
         set.keyDeveloperProperty().bind(keyDeveloper.combinationProperty());
         set.keyWriteProperty().bind(keyWrite.combinationProperty());
-
         keyCheat.disableProperty().bind(Bindings.not(chkEnableCheat.selectedProperty()));
         keyConsole.disableProperty().bind(Bindings.not(chkEnableConsole.selectedProperty()));
         keyDeveloper.disableProperty().bind(Bindings.not(chkEnableDeveloper.selectedProperty()));
@@ -146,7 +131,7 @@ public final class TabSettings extends GridPane implements Initializable {
         return set;
     }
 
-    private void initializeLocaleComboBox(@NotNull ComboBox<Locale> comboBox, @NotNull Locale locale) {
+    private void initializeLocaleComboBox(ComboBox<Locale> comboBox, Locale locale) {
         Callback<ListView<Locale>, ListCell<Locale>> cellFactory = param -> new DecoratedListCell<>((cell, item) -> {
             if (item == null) {
                 cell.setGraphic(null);
@@ -167,7 +152,7 @@ public final class TabSettings extends GridPane implements Initializable {
         comboBox.getSelectionModel().select(similarLocale);
     }
 
-    private void initializeLocaleUi(@NotNull ResourceBundle resources) {
+    private void initializeLocaleUi(ResourceBundle resources) {
         cmbLocaleUi.getItems().setAll(localeConverter.getLocales().stream().filter(Objects::nonNull).map(locale -> {
             MenuItem menuItem = new MenuItem(localeConverter.toDisplayString(locale), getFlag(locale));
             menuItem.setOnAction(event -> {
@@ -197,7 +182,6 @@ public final class TabSettings extends GridPane implements Initializable {
                 .map(URL::toExternalForm).map(ImageView::new).orElse(null);
     }
 
-    @NotNull
     private Optional<Stage> getStage() {
         return FXUtil.findStage(cmbLocaleMenu);
     }

@@ -1,7 +1,5 @@
 package gargoyle.rpycg.util;
 
-import org.jetbrains.annotations.NotNull;
-
 import java.util.regex.Pattern;
 
 public final class Check {
@@ -12,7 +10,7 @@ public final class Check {
         throw new IllegalStateException(Check.class.getName());
     }
 
-    public static boolean isFloat(@NotNull String val) {
+    public static boolean isFloat(String val) {
         try {
             Float.parseFloat(val);
             return true;
@@ -21,11 +19,11 @@ public final class Check {
         }
     }
 
-    public static boolean isIdentifier(@NotNull CharSequence id) {
+    public static boolean isIdentifier(CharSequence id) {
         return PATTERN_ID.matcher(id).matches();
     }
 
-    public static boolean isInteger(@NotNull String val) {
+    public static boolean isInteger(String val) {
         try {
             Integer.parseInt(val);
             return true;
@@ -34,7 +32,7 @@ public final class Check {
         }
     }
 
-    public static boolean isText(@NotNull CharSequence text) {
+    public static boolean isText(CharSequence text) {
         return PATTERN_TEXT.matcher(text).matches();
     }
 }

@@ -9,8 +9,6 @@ import javafx.embed.swing.SwingNode;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.ScrollPane;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
@@ -71,7 +69,7 @@ public final class Creator extends ScrollPane implements Initializable {
         return changed;
     }
 
-    public void decorateError(@NotNull Collection<String> errors) {
+    public void decorateError(Collection<String> errors) {
         if (errors.isEmpty()) {
             Classes.classRemove(source, CLASS_DANGER);
             content.setToolTipText(null);
@@ -81,7 +79,6 @@ public final class Creator extends ScrollPane implements Initializable {
         }
     }
 
-    @NotNull
     public List<String> getScript() {
         return Arrays.stream(getText().split("\n"))
                 .map(String::trim)
@@ -96,7 +93,7 @@ public final class Creator extends ScrollPane implements Initializable {
         content.setText(text);
     }
 
-    public void setScript(@NotNull Collection<String> script) {
+    public void setScript(Collection<String> script) {
         String text = script.stream().map(String::trim).collect(Collectors.joining("\n"));
         if (!Objects.equals(getText(), text)) {
             setText(text);
@@ -105,7 +102,7 @@ public final class Creator extends ScrollPane implements Initializable {
     }
 
     @Override
-    public void initialize(@NotNull URL location, @Nullable ResourceBundle resources) {
+    public void initialize(URL location, ResourceBundle resources) {
         SwingUtilities.invokeLater(() -> {
             content = new JTextPane();
             content.setFont(FONT);
@@ -157,7 +154,7 @@ public final class Creator extends ScrollPane implements Initializable {
         return prevText;
     }
 
-    public void setScriptUnforced(@NotNull Collection<String> script) {
+    public void setScriptUnforced(Collection<String> script) {
         if (!source.isFocused()) {
             setScript(script);
         }
@@ -238,7 +235,6 @@ public final class Creator extends ScrollPane implements Initializable {
     }
 
     private static class RPyCGViewFactory implements ViewFactory {
-
         private final Map<Pattern, Color> patternColors;
 
         private RPyCGViewFactory(Map<Pattern, Color> patternColors) {

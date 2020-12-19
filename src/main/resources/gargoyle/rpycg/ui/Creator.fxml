@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
 <?import gargoyle.rpycg.ui.Creator?>
 <?import javafx.embed.swing.SwingNode?>
 <fx:root xmlns:fx="http://javafx.com/fxml"

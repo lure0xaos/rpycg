@@ -4,8 +4,6 @@ import javafx.collections.ObservableList;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeTableView;
 import javafx.scene.control.TreeView;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -15,24 +13,22 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 public final class TreeItemWalker<T> {
-
-    @NotNull
     private final Deque<TreeItemTuple<T>> stack = new ArrayDeque<>(2);
 
-    private TreeItemWalker(@NotNull TreeTableView<T> tree) {
+    private TreeItemWalker(TreeTableView<T> tree) {
         if (tree.getRoot() != null) {
             stack.push(new TreeItemTuple<>(tree.getRoot(), -1));
         }
     }
 
-    private TreeItemWalker(@NotNull TreeView<T> tree) {
+    private TreeItemWalker(TreeView<T> tree) {
         if (tree.getRoot() != null) {
             stack.push(new TreeItemTuple<>(tree.getRoot(), -1));
         }
     }
 
     @SuppressWarnings("MethodCallInLoopCondition")
-    public static <T> void visit(@NotNull TreeTableView<T> tree, @NotNull Consumer<TreeItem<T>> visitor) {
+    public static <T> void visit(TreeTableView<T> tree, Consumer<TreeItem<T>> visitor) {
         TreeItemWalker<T> walker = new TreeItemWalker<>(tree);
         while (walker.hasNext()) {
             visitor.accept(walker.next());
@@ -40,7 +36,7 @@ public final class TreeItemWalker<T> {
     }
 
     @SuppressWarnings("MethodCallInLoopCondition")
-    public static <T> void visit(@NotNull TreeView<T> tree, @NotNull Consumer<TreeItem<T>> visitor) {
+    public static <T> void visit(TreeView<T> tree, Consumer<TreeItem<T>> visitor) {
         TreeItemWalker<T> walker = new TreeItemWalker<>(tree);
         while (walker.hasNext()) {
             visitor.accept(walker.next());
@@ -48,7 +44,7 @@ public final class TreeItemWalker<T> {
     }
 
     @SuppressWarnings("MethodCallInLoopCondition")
-    public static <T> void visitItems(@NotNull TreeTableView<T> tree, @NotNull Consumer<T> visitor) {
+    public static <T> void visitItems(TreeTableView<T> tree, Consumer<T> visitor) {
         TreeItemWalker<T> walker = new TreeItemWalker<>(tree);
         while (walker.hasNext()) {
             visitor.accept(walker.next().getValue());
@@ -56,7 +52,7 @@ public final class TreeItemWalker<T> {
     }
 
     @SuppressWarnings("MethodCallInLoopCondition")
-    public static <T> void visitItems(@NotNull TreeView<T> tree, @NotNull Consumer<T> visitor) {
+    public static <T> void visitItems(TreeView<T> tree, Consumer<T> visitor) {
         TreeItemWalker<T> walker = new TreeItemWalker<>(tree);
         while (walker.hasNext()) {
             visitor.accept(walker.next().getValue());
@@ -91,28 +87,17 @@ public final class TreeItemWalker<T> {
         return next;
     }
 
-    @NotNull
     public Stream<TreeItem<T>> stream() {
         return StreamSupport.stream(new TreeItemSpliterator(), false);
     }
 
     private static final class TreeItemTuple<T> {
-        @NotNull
-        private final TreeItem<T> item;
         private final int index;
+        private final TreeItem<T> item;
 
-        private TreeItemTuple(@NotNull TreeItem<T> item, int index) {
+        private TreeItemTuple(TreeItem<T> item, int index) {
             this.item = item;
             this.index = index;
-        }
-
-        @NotNull
-        private TreeItem<T> getItem() {
-            return item;
-        }
-
-        public TreeItemTuple<T> setItem(@NotNull TreeItem<T> item) {
-            return new TreeItemTuple<>(item, index);
         }
 
         private int getIndex() {
@@ -120,6 +105,14 @@ public final class TreeItemWalker<T> {
         }
 
         private TreeItemTuple<T> setIndex(int index) {
+            return new TreeItemTuple<>(item, index);
+        }
+
+        private TreeItem<T> getItem() {
+            return item;
+        }
+
+        public TreeItemTuple<T> setItem(TreeItem<T> item) {
             return new TreeItemTuple<>(item, index);
         }
 
@@ -131,9 +124,8 @@ public final class TreeItemWalker<T> {
 
     @SuppressWarnings("unused")
     private final class TreeItemSpliterator implements Spliterator<TreeItem<T>> {
-
         @Override
-        public boolean tryAdvance(@NotNull Consumer<? super TreeItem<T>> action) {
+        public boolean tryAdvance(Consumer<? super TreeItem<T>> action) {
             if (hasNext()) {
                 action.accept(next());
                 return true;
@@ -143,7 +135,6 @@ public final class TreeItemWalker<T> {
         }
 
         @Override
-        @Nullable
         public Spliterator<TreeItem<T>> trySplit() {
             return null;
         }

@@ -1,8 +1,6 @@
 package gargoyle.rpycg.model;
 
 import gargoyle.rpycg.ui.model.FULLNESS;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.text.MessageFormat;
 import java.util.Collections;
@@ -12,23 +10,16 @@ import java.util.Optional;
 import java.util.Set;
 
 public final class ModelItem {
-    @NotNull
     private final Set<ModelItem> children = new LinkedHashSet<>(FULLNESS.FULL.getSize());
-    @NotNull
     private final String label;
-    @NotNull
     private final ModelType modelType;
-    @NotNull
     private final String name;
-    @Nullable
     private final VarType type;
-    @NotNull
     private final String value;
-    @Nullable
     private ModelItem parent;
 
-    private ModelItem(@NotNull ModelType modelType, @NotNull String label,
-                      @NotNull String name, @NotNull String value, @Nullable VarType type) {
+    private ModelItem(ModelType modelType, String label,
+                      String name, String value, VarType type) {
         this.modelType = modelType;
         this.label = label;
         this.name = name;
@@ -36,53 +27,44 @@ public final class ModelItem {
         this.type = type;
     }
 
-    @NotNull
-    public static ModelItem createMenu(@NotNull String label, @NotNull String name) {
+    public static ModelItem createMenu(String label, String name) {
         return new ModelItem(ModelType.MENU, label, name, "", null);
     }
 
-    @NotNull
-    public static ModelItem createVariable(@Nullable VarType type,
-                                           @NotNull String label, @NotNull String name, @NotNull String value) {
+    public static ModelItem createVariable(VarType type,
+                                           String label, String name, String value) {
         return new ModelItem(ModelType.VARIABLE, label, name, value, type);
     }
 
-    public void addChild(@NotNull ModelItem child) {
+    public void addChild(ModelItem child) {
         children.add(child);
         child.parent = this;
     }
 
-    @NotNull
     public Set<ModelItem> getChildren() {
         return Collections.unmodifiableSet(children);
     }
 
-    @NotNull
     public String getLabel() {
         return label;
     }
 
-    @NotNull
     public ModelType getModelType() {
         return modelType;
     }
 
-    @NotNull
     public String getName() {
         return name;
     }
 
-    @Nullable
     public ModelItem getParent() {
         return parent;
     }
 
-    @Nullable
     public VarType getType() {
         return type;
     }
 
-    @NotNull
     public String getValue() {
         return value;
     }

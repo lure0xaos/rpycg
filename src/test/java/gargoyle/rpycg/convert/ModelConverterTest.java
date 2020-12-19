@@ -9,11 +9,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-
 class ModelConverterTest {
     private ModelConverter modelConverter;
     private ModelItem templateTree;
-
     @BeforeEach
     void setUp() {
         modelConverter = new ModelConverter();
@@ -29,7 +27,6 @@ class ModelConverterTest {
         rootMenu.addChild(ModelItem.createVariable(VarType.INT, "custom name", "fixed_variable7", "100"));
         templateTree = rootMenu;
     }
-
     @Test
     void toModelToTree() {
         TreeItem<DisplayItem> tree = modelConverter.toTree(templateTree);

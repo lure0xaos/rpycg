@@ -1,18 +1,13 @@
 package gargoyle.rpycg.fx;
 
 import javafx.application.Application;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.PropertyKey;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 
 public final class FXContextFactory {
-    @PropertyKey(resourceBundle = "gargoyle.rpycg.fx.FXContextFactory")
     public static final String LC_ERROR_NO_HOST_SERVICES = "error.no-host-services";
-    @PropertyKey(resourceBundle = "gargoyle.rpycg.fx.FXContextFactory")
     public static final String LC_ERROR_NO_PARAMETERS = "error.no-parameters";
-    @PropertyKey(resourceBundle = "gargoyle.rpycg.fx.FXContextFactory")
     public static final String LC_ERROR_NO_PREFERENCES = "error.no-preferences";
     private static final FXHolder<FXContextImpl> context = new FXHolder<>(() ->
             new FXContextImpl(StandardCharsets.UTF_8, Locale.getDefault(),
@@ -26,25 +21,21 @@ public final class FXContextFactory {
         getContext().setLocale(locale);
     }
 
-    @NotNull
     private static FXContextImpl getContext() {
         return context.get();
     }
 
-    @NotNull
     public static FXContext currentContext() {
         return getContext();
     }
 
-    @NotNull
-    public static FXContext forLocale(@NotNull FXContext original, @NotNull Locale locale) {
+    public static FXContext forLocale(FXContext original, Locale locale) {
         FXContextImpl fxContext = copy(original);
         fxContext.setLocale(locale);
         return fxContext;
     }
 
-    @NotNull
-    private static FXContextImpl copy(@NotNull FXContext original) {
+    private static FXContextImpl copy(FXContext original) {
         FXContextImpl fxContext = new FXContextImpl(original.getCharset(), original.getLocale(),
                 original.getClassLoader());
         fxContext.setHostServices(FXUtil.requireNonNull(original.getHostServices(), () ->
@@ -63,8 +54,8 @@ public final class FXContextFactory {
         return fxContext;
     }
 
-    public static void initializeContext(@NotNull Application application,
-                                         @NotNull Class<? extends FXApplication> appClass) {
+    public static void initializeContext(Application application,
+                                         Class<? extends FXApplication> appClass) {
         FXContextImpl fxContext = getContext();
         fxContext.setClassLoader(appClass.getClassLoader());
         fxContext.setHostServices(application.getHostServices());
@@ -77,8 +68,7 @@ public final class FXContextFactory {
         fxContext.initializeLocale();
     }
 
-    @NotNull
-    public static FXContext snapshot(@NotNull FXContext original) {
+    public static FXContext snapshot(FXContext original) {
         return copy(original);
     }
 }

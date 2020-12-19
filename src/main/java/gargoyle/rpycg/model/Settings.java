@@ -6,7 +6,6 @@ import javafx.beans.property.Property;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.scene.input.KeyCodeCombination;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.Locale;
 import java.util.prefs.Preferences;
@@ -22,37 +21,26 @@ public final class Settings {
     private static final String PREF_LOCALE_MENU = "localeMenu";
     private static final String PREF_ROLLBACK = "rollback";
     private static final String PREF_WRITE = "write";
-    @NotNull
     private final KeyConverter converter;
-    @NotNull
     private final Property<Boolean> enableCheat;
-    @NotNull
     private final Property<Boolean> enableConsole;
-    @NotNull
     private final Property<Boolean> enableDeveloper;
-    @NotNull
     private final Property<Boolean> enableRollback;
-    @NotNull
     private final Property<Boolean> enableWrite;
-    @NotNull
     private final Property<KeyCodeCombination> keyCheat;
-    @NotNull
     private final Property<KeyCodeCombination> keyConsole;
-    @NotNull
     private final Property<KeyCodeCombination> keyDeveloper;
-    @NotNull
     private final Property<KeyCodeCombination> keyWrite;
     private final LocaleConverter localeConverter = new LocaleConverter();
-    @NotNull
     private final Property<Locale> localeMenu;
 
     @SuppressWarnings("ConstructorWithTooManyParameters")
-    public Settings(@NotNull Preferences preferences,
+    public Settings(Preferences preferences,
                     boolean enableCheat, boolean enableConsole, boolean enableDeveloper,
                     boolean enableWrite, boolean enableRollback,
-                    @NotNull KeyCodeCombination keyCheat, @NotNull KeyCodeCombination keyConsole,
-                    @NotNull KeyCodeCombination keyDeveloper, @NotNull KeyCodeCombination keyWrite,
-                    @NotNull Locale localeMenu) {
+                    KeyCodeCombination keyCheat, KeyCodeCombination keyConsole,
+                    KeyCodeCombination keyDeveloper, KeyCodeCombination keyWrite,
+                    Locale localeMenu) {
         this(enableCheat, enableConsole, enableDeveloper, enableWrite, enableRollback,
                 keyCheat, keyConsole, keyDeveloper, keyWrite,
                 localeMenu);
@@ -70,7 +58,6 @@ public final class Settings {
                 converter.toString(keyDeveloper))).orElse(keyDeveloper));
         this.keyWrite.setValue(converter.toCombination(preferences.get(PREF_KEY_WRITE,
                 converter.toString(keyWrite))).orElse(keyWrite));
-
         this.localeMenu.addListener((observable, oldValue, newValue) -> {
             if (newValue != null) {
                 preferences.put(PREF_LOCALE_MENU, localeConverter.toString(newValue));
@@ -99,9 +86,9 @@ public final class Settings {
     @SuppressWarnings("ConstructorWithTooManyParameters")
     public Settings(boolean enableCheat, boolean enableConsole, boolean enableDeveloper,
                     boolean enableWrite, boolean enableRollback,
-                    @NotNull KeyCodeCombination keyCheat, @NotNull KeyCodeCombination keyConsole,
-                    @NotNull KeyCodeCombination keyDeveloper, @NotNull KeyCodeCombination keyWrite,
-                    @NotNull Locale localeMenu) {
+                    KeyCodeCombination keyCheat, KeyCodeCombination keyConsole,
+                    KeyCodeCombination keyDeveloper, KeyCodeCombination keyWrite,
+                    Locale localeMenu) {
         converter = new KeyConverter();
         this.enableCheat = new SimpleBooleanProperty(enableCheat);
         this.enableConsole = new SimpleBooleanProperty(enableConsole);
@@ -115,142 +102,122 @@ public final class Settings {
         this.localeMenu = new SimpleObjectProperty<>(localeMenu);
     }
 
-    @NotNull
     public Property<Boolean> enableCheatProperty() {
         return enableCheat;
     }
 
-    @NotNull
     public Property<Boolean> enableConsoleProperty() {
         return enableConsole;
     }
 
-    @NotNull
     public Property<Boolean> enableDeveloperProperty() {
         return enableDeveloper;
     }
 
-    @NotNull
     public Property<Boolean> enableRollbackProperty() {
         return enableRollback;
     }
 
-    @NotNull
     public Property<Boolean> enableWriteProperty() {
         return enableWrite;
     }
 
-    @NotNull
     public Boolean getEnableCheat() {
         return enableCheat.getValue();
     }
 
-    public void setEnableCheat(@NotNull Boolean enableCheat) {
+    public void setEnableCheat(Boolean enableCheat) {
         this.enableCheat.setValue(enableCheat);
     }
 
-    @NotNull
     public Boolean getEnableConsole() {
         return enableConsole.getValue();
     }
 
-    public void setEnableConsole(@NotNull Boolean enableConsole) {
+    public void setEnableConsole(Boolean enableConsole) {
         this.enableConsole.setValue(enableConsole);
     }
 
-    @NotNull
     public Boolean getEnableDeveloper() {
         return enableDeveloper.getValue();
     }
 
-    public void setEnableDeveloper(@NotNull Boolean enableDeveloper) {
+    public void setEnableDeveloper(Boolean enableDeveloper) {
         this.enableDeveloper.setValue(enableDeveloper);
     }
 
-    @NotNull
     public Boolean getEnableRollback() {
         return enableRollback.getValue();
     }
 
-    public void setEnableRollback(@NotNull Boolean enableRollback) {
+    public void setEnableRollback(Boolean enableRollback) {
         this.enableRollback.setValue(enableRollback);
     }
 
-    @NotNull
     public Boolean getEnableWrite() {
         return enableWrite.getValue();
     }
 
-    public void setEnableWrite(@NotNull Boolean enableWrite) {
+    public void setEnableWrite(Boolean enableWrite) {
         this.enableWrite.setValue(enableWrite);
     }
 
-    @NotNull
     public KeyCodeCombination getKeyCheat() {
         return keyCheat.getValue();
     }
 
-    public void setKeyCheat(@NotNull KeyCodeCombination keyCheat) {
+    public void setKeyCheat(KeyCodeCombination keyCheat) {
         this.keyCheat.setValue(keyCheat);
     }
 
-    @NotNull
     public KeyCodeCombination getKeyConsole() {
         return keyConsole.getValue();
     }
 
-    public void setKeyConsole(@NotNull KeyCodeCombination keyConsole) {
+    public void setKeyConsole(KeyCodeCombination keyConsole) {
         this.keyConsole.setValue(keyConsole);
     }
 
-    @NotNull
     public KeyCodeCombination getKeyDeveloper() {
         return keyDeveloper.getValue();
     }
 
-    public void setKeyDeveloper(@NotNull KeyCodeCombination keyDeveloper) {
+    public void setKeyDeveloper(KeyCodeCombination keyDeveloper) {
         this.keyDeveloper.setValue(keyDeveloper);
     }
 
-    @NotNull
     public KeyCodeCombination getKeyWrite() {
         return keyWrite.getValue();
     }
 
-    public void setKeyWrite(@NotNull KeyCodeCombination keyWrite) {
+    public void setKeyWrite(KeyCodeCombination keyWrite) {
         this.keyWrite.setValue(keyWrite);
     }
 
-    @NotNull
     public Locale getLocaleMenu() {
         return localeMenu.getValue();
     }
 
-    public void setLocaleMenu(@NotNull Locale locale) {
+    public void setLocaleMenu(Locale locale) {
         this.localeMenu.setValue(locale);
     }
 
-    @NotNull
     public Property<KeyCodeCombination> keyCheatProperty() {
         return keyCheat;
     }
 
-    @NotNull
     public Property<KeyCodeCombination> keyConsoleProperty() {
         return keyConsole;
     }
 
-    @NotNull
     public Property<KeyCodeCombination> keyDeveloperProperty() {
         return keyDeveloper;
     }
 
-    @NotNull
     public Property<KeyCodeCombination> keyWriteProperty() {
         return keyWrite;
     }
 
-    @NotNull
     public Property<Locale> localeMenuProperty() {
         return localeMenu;
     }

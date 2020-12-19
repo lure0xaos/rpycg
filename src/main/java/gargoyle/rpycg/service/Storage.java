@@ -5,24 +5,16 @@ import gargoyle.rpycg.model.ModelItem;
 import javafx.beans.property.Property;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.PropertyKey;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
 public final class Storage {
-    @PropertyKey(resourceBundle = "gargoyle.rpycg.service.Storage")
     public static final String LC_ERROR_LOAD = "error.load";
-    @PropertyKey(resourceBundle = "gargoyle.rpycg.service.Storage")
     public static final String LC_ERROR_SAVE = "error.save";
-    @NotNull
     private final ScriptConverter converter;
-    @NotNull
     private final Property<Boolean> modified;
-    @NotNull
     private final Property<Path> path;
 
     public Storage() {
@@ -39,22 +31,19 @@ public final class Storage {
         this.modified.setValue(modified);
     }
 
-    @Nullable
     public Path getPath() {
         return path.getValue();
     }
 
-    public void setPath(@NotNull Path path) {
+    public void setPath(Path path) {
         this.path.setValue(path);
     }
 
-    @NotNull
-    public ModelItem load(@NotNull Path loadPath) {
+    public ModelItem load(Path loadPath) {
         path.setValue(loadPath);
         return reload();
     }
 
-    @NotNull
     private ModelItem reload() {
         try {
             ModelItem item = converter.fromScript(Files.readAllLines(path.getValue()));
@@ -66,21 +55,20 @@ public final class Storage {
         }
     }
 
-    public @NotNull Property<Boolean> modifiedProperty() {
+    public Property<Boolean> modifiedProperty() {
         return modified;
     }
 
-    @NotNull
     public Property<Path> pathProperty() {
         return path;
     }
 
-    public void saveAs(@NotNull Path savePath, @NotNull ModelItem root) {
+    public void saveAs(Path savePath, ModelItem root) {
         path.setValue(savePath);
         save(root);
     }
 
-    private void save(@NotNull ModelItem root) {
+    private void save(ModelItem root) {
         try {
             Files.writeString(path.getValue(), String.join(System.lineSeparator(), converter.toScript(root)));
             modified.setValue(false);

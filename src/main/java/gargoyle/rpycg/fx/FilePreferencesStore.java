@@ -1,7 +1,5 @@
 package gargoyle.rpycg.fx;
 
-import org.jetbrains.annotations.NotNull;
-
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -27,7 +25,7 @@ final class FilePreferencesStore {
         throw new IllegalStateException(FilePreferencesStore.class.getName());
     }
 
-    public static synchronized void load(@NotNull Path path, @NotNull Map<String, String> map) throws IOException {
+    public static synchronized void load(Path path, Map<String, String> map) throws IOException {
         Properties properties = new Properties();
         if (Files.exists(path)) {
             try (BufferedReader reader = Files.newBufferedReader(path, CHARSET)) {
@@ -39,8 +37,8 @@ final class FilePreferencesStore {
         }
     }
 
-    public static synchronized void save(@NotNull Path path, @NotNull Map<String, String> map,
-                                         @NotNull String comments) throws IOException {
+    public static synchronized void save(Path path, Map<String, String> map,
+                                         String comments) throws IOException {
         try (BufferedWriter writer = Files.newBufferedWriter(path, CHARSET,
                 StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
             new SortedProperties(map).store(writer, comments);

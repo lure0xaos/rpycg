@@ -1,10 +1,5 @@
 package gargoyle.rpycg.fx;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JWindow;
@@ -21,8 +16,7 @@ public final class FXImageSplash implements FXSplash {
     private static final Logger log = LoggerFactory.getLogger(FXImageSplash.class);
 
     @Override
-    @NotNull
-    public Window createWindow(@NotNull URL location, @Nullable ResourceBundle resources) {
+    public Window createWindow(URL location, ResourceBundle resources) {
         JWindow window = new JWindow();
         Container pane = window.getContentPane();
         pane.setLayout(new BorderLayout());
@@ -34,7 +28,7 @@ public final class FXImageSplash implements FXSplash {
     }
 
     @Override
-    public void handleSplashNotification(@NotNull FXSplashNotification splashNotification) {
+    public void handleSplashNotification(FXSplashNotification splashNotification) {
         log.info(MessageFormat.format("{0}.{1}:{2}({3})", splashNotification.getClass().getSimpleName(),
                 splashNotification.getType(), splashNotification.getProgress(), splashNotification.getDetails()));
     }

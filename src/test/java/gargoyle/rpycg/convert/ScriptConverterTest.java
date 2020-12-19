@@ -4,7 +4,6 @@ import gargoyle.rpycg.fx.FXUtil;
 import gargoyle.rpycg.model.ModelItem;
 import gargoyle.rpycg.model.VarType;
 import gargoyle.rpycg.service.ScriptConverter;
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -17,29 +16,22 @@ import java.text.MessageFormat;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-
 class ScriptConverterTest {
     private static final String TEMPLATE_SCRIPT = "template_script.txt";
     private ScriptConverter scriptConverter;
     private ModelItem templateTree;
-
     @Test
     void fromScript() throws Exception {
         ModelItem actual = scriptConverter.fromScript(Files.readAllLines(getPath(TEMPLATE_SCRIPT)));
         assertEquals(templateTree, actual, "wrong tree");
     }
-
-    @NotNull
     private Path getPath(String name) throws URISyntaxException {
         return Paths.get(getResource(name).toURI());
     }
-
-    @NotNull
     private static URL getResource(String name) {
         return FXUtil.requireNonNull(ScriptConverterTest.class.getClassLoader().getResource(name),
                 () -> MessageFormat.format("no {0} found", name));
     }
-
     @BeforeEach
     void setUp() {
         scriptConverter = new ScriptConverter();
@@ -55,9 +47,6 @@ class ScriptConverterTest {
         rootMenu.addChild(ModelItem.createVariable(VarType.INT, "custom name", "fixed_variable7", "100"));
         templateTree = rootMenu;
     }
-
-
-
     @Test
     void toScript() throws Exception {
         List<String> script = scriptConverter.toScript(templateTree);

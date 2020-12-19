@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
 <?import gargoyle.rpycg.ui.Banner?>
 <?import javafx.scene.control.Label?>
 <fx:root xmlns:fx="http://javafx.com/fxml"

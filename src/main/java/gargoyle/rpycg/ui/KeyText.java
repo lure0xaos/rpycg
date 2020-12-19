@@ -11,24 +11,16 @@ import javafx.scene.control.Tooltip;
 import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.input.KeyEvent;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.PropertyKey;
 
 import java.util.Optional;
 import java.util.ResourceBundle;
 
 @DefaultProperty("keyCode")
 public final class KeyText extends TextField {
-    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.KeyText")
     private static final String LC_DEFAULT = "default-is";
-    @PropertyKey(resourceBundle = "gargoyle.rpycg.ui.KeyText")
     private static final String LC_PRESS_ANY_KEY = "press-any-key";
-    @NotNull
     private final Property<Boolean> activated;
-    @NotNull
     private final Property<KeyCodeCombination> combination;
-    @NotNull
     private final Property<KeyCodeCombination> defaultCombination;
 
     public KeyText() {
@@ -75,13 +67,12 @@ public final class KeyText extends TextField {
         });
     }
 
-    private void updateTooltip(@Nullable KeyCodeCombination keyCodeCombination, @NotNull String tooltipString) {
+    private void updateTooltip(KeyCodeCombination keyCodeCombination, String tooltipString) {
         Optional.ofNullable(keyCodeCombination).ifPresent(newKeyCode ->
                 setTooltip(new Tooltip(tooltipString + ' ' + newKeyCode.getDisplayText())));
     }
 
-    @NotNull
-    private static KeyCodeCombination toCombination(@NotNull KeyEvent event) {
+    private static KeyCodeCombination toCombination(KeyEvent event) {
         return new KeyCodeCombination(event.getCode(),
                 event.isShiftDown() ? KeyCombination.ModifierValue.DOWN : KeyCombination.ModifierValue.UP,
                 event.isControlDown() ? KeyCombination.ModifierValue.DOWN : KeyCombination.ModifierValue.UP,
@@ -90,37 +81,31 @@ public final class KeyText extends TextField {
                 event.isShortcutDown() ? KeyCombination.ModifierValue.DOWN : KeyCombination.ModifierValue.UP);
     }
 
-    @NotNull
     public ReadOnlyProperty<Boolean> activatedProperty() {
         return activated;
     }
 
-    @NotNull
     public ReadOnlyProperty<KeyCodeCombination> combinationProperty() {
         return combination;
     }
 
-    @NotNull
     public Property<KeyCodeCombination> defaultCombinationProperty() {
         return defaultCombination;
     }
 
-    @NotNull
     public Boolean getActivated() {
         return activated.getValue();
     }
 
-    @NotNull
     public KeyCodeCombination getCombination() {
         return combination.getValue();
     }
 
-    @NotNull
     public KeyCodeCombination getDefaultCombination() {
         return defaultCombination.getValue();
     }
 
-    public void setDefaultCombination(@NotNull KeyCodeCombination defaultCombination) {
+    public void setDefaultCombination(KeyCodeCombination defaultCombination) {
         this.defaultCombination.setValue(defaultCombination);
     }
 

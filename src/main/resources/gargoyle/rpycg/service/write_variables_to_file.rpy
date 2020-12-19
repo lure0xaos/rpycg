@@ -1,9 +1,8 @@
-# @formatter:off
     # Define function to write variables to file
     def write_variables():
         renpy.call_in_new_context("write_variables_to_file")
     # Enable write variables to file
-    config.keymap["write_variables_bind"] = ["${settings.keyWrite}"]
+    config.keymap["write_variables_bind"] = ["${keyWrite}"]
     config.underlay.append(renpy.Keymap(write_variables_bind=write_variables))
 # Find unique game variables
 label write_variables_to_file:
@@ -17,5 +16,5 @@ label write_variables_to_file:
                 new_game_defaults.append(str(item) + " = " + str(repr(globals().get(item))) + "\n")
     $ f.write("\n".join([unicode(i) for i in new_game_defaults]))
     $ f.close()
-    "${msg("message-written")}"
+    "${messageWritten}"
     return
