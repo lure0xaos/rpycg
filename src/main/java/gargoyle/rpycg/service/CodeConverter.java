@@ -14,52 +14,88 @@ import java.io.InputStreamReader;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.text.MessageFormat;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import static gargoyle.rpycg.ex.AppUserException.LC_ERROR_NO_RESOURCES;
 
 public final class CodeConverter {
-    public static final String GAME_VARIABLES = "Game Variables.txt";
-    public static final int SPACES = 4;
+    private static final String EXT_RPY = "rpy";
+    private static final String EXT_TXT = ".txt";
+    private static final String KEY_FILE_VARIABLES = "fileVariables";
+    private static final String KEY_MESSAGE_WRITTEN = "messageWritten";
+    private static final String KEY_WRITE = "keyWrite";
+    private static final String LC_BACK = "back";
+    private static final String LC_FILE_VARIABLES = "file-variables";
+    private static final String LC_MESSAGE_PROMPT = "message-prompt";
+    private static final String LC_MESSAGE_WRITTEN = "message-written";
+    private static final String LC_NEVERMIND = "nevermind";
+    private static final String LOC_WRITE = "write_variables_to_file";
+    private static final String MSG_BACK = "Back";
+    private static final String MSG_GAME_VARIABLES = "Game Variables";
+    private static final String MSG_MESSAGE_PROMPT = "Change {0} from {1} to";
+    private static final String MSG_NEVERMIND = "Nevermind";
+    private static final String MSG_VARIABLES_WRITTEN = "Game variables written to file.";
     private final FXContext context;
-    private final String fileVariables;
     private final KeyConverter keyConverter;
     private final Settings settings;
-    private final int spaces;
 
-    public CodeConverter(FXContext context, Settings settings, int spaces, String fileVariables) {
+    public CodeConverter(FXContext context, Settings settings) {
         keyConverter = new KeyConverter();
         this.context = context;
         this.settings = settings;
-        this.spaces = spaces;
-        this.fileVariables = fileVariables;
     }
 
-    private static List<String> format(List<String> format, Map<String, Object> values) {
-        return format.stream().map(s -> format(s, values)).collect(Collectors.toList());
+    private static List<String> format(List<String> formats, Map<String, Object> values) {
+        List<String> list = new ArrayList<>(formats.size());
+        for (String format : formats) {
+            list.add(format(format, values));
+        }
+        return list;
     }
 
     private static String format(String format, Map<String, Object> values) {
-        return Pattern.compile("\\$\\{(\\w+)}").matcher(format).replaceAll(match -> {
+        return Pattern.compile("\\$\\{([^}]+)}").matcher(format).replaceAll(match -> {
             Object value = values.get(match.group(1));
             return value != null ? value.toString() : match.group(0);
         });
     }
 
+    private static List<String> include(Charset charset, URL resource) {
+        List<String> lines = new LinkedList<>();
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(resource.openStream(), charset))) {
+            String line;
+            while (null != (line = reader.readLine())) {
+                lines.add(line);
+            }
+        } catch (IOException e) {
+            throw new CodeGenerationException(e.getLocalizedMessage());
+        }
+        return lines;
+    }
+
+    private static String indent(int indent, String line) {
+        StringBuilder result = new StringBuilder(line);
+        for (int i = 0; i < indent; i++) {
+            result.insert(0, "    ");
+        }
+        return result.toString();
+    }
+
     private List<String> createCheatMenu(ResourceBundle messages, ModelItem root) {
         List<String> buffer = new LinkedList<>();
         buffer.add("label show_cheat_menu:");
-        buffer.add("    jump CheatMenu");
-        buffer.add("label CheatMenu:");
+        buffer.add("    jump " + "CheatMenu");
+        buffer.add("label " + "CheatMenu:");
         buffer.add("    menu:");
         buffer.addAll(createCheatSubmenu(1, messages, root, "CheatMenu"));
         buffer.add("        # nevermind");
-        buffer.add("        \"~" + messages.getString("nevermind") + "~\":");
+        buffer.add("        \"~" + (messages.containsKey(LC_NEVERMIND) ?
+                messages.getString(LC_NEVERMIND) : MSG_NEVERMIND) + "~\":");
         buffer.add("            return");
         return buffer;
     }
@@ -89,7 +125,8 @@ public final class CodeConverter {
                 } else {
                     buffer.add(indent(indent,
                             "    \"" + itemLabel + " \\[[" + itemName + "]\\]\" :"));
-                    String prompt = messages.getString("message-prompt");
+                    String prompt = messages.containsKey(LC_MESSAGE_PROMPT) ? messages.getString(LC_MESSAGE_PROMPT) :
+                            MSG_MESSAGE_PROMPT;
                     buffer.add(indent(indent,
                             "        $" + itemName + " = " + itemTypeKeyword + "(renpy.input(\"" +
                                     MessageFormat.format(prompt, itemLabel, "[" + itemName + "]")
@@ -104,34 +141,12 @@ public final class CodeConverter {
                 buffer.add(indent(indent, "            menu:"));
                 buffer.addAll(createCheatSubmenu(indent + 3, messages, item, itemName));
                 buffer.add(indent(indent, "                # back"));
-                buffer.add(indent(indent, "                \"~" + messages.getString("back") + "~\":"));
+                buffer.add(indent(indent, "                \"~" + (messages.containsKey(LC_BACK) ?
+                        messages.getString(LC_BACK) : MSG_BACK) + "~\":"));
                 buffer.add(indent(indent, "                    jump " + parentLabel));
             }
         }
         return buffer;
-    }
-
-    private List<String> include(Charset charset, URL resource) {
-        List<String> lines = new LinkedList<>();
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(resource.openStream(), charset))) {
-            String line;
-            while (null != (line = reader.readLine())) {
-                lines.add(line);
-            }
-        } catch (IOException e) {
-            throw new CodeGenerationException(e.getLocalizedMessage());
-        }
-        return lines;
-    }
-
-    private String indent(int indent, String line) {
-        StringBuilder result = new StringBuilder(line);
-        for (int i = 0; i < indent; i++) {
-            for (int s = 0; s < spaces; s++) {
-                result.insert(0, " ");
-            }
-        }
-        return result.toString();
     }
 
     public List<String> toCode(ModelItem menu) {
@@ -139,6 +154,8 @@ public final class CodeConverter {
                 .loadResources(CodeConverter.class)
                 .orElseThrow(() -> new CodeGenerationException(MessageFormat.format(LC_ERROR_NO_RESOURCES,
                         CodeConverter.class.getName())));
+        String fileVariables = messages.containsKey(LC_FILE_VARIABLES) ? messages.getString(LC_FILE_VARIABLES) :
+                MSG_GAME_VARIABLES;
         List<String> buffer = new LinkedList<>();
         buffer.add("init 999 python:");
         if (settings.getEnableConsole()) {
@@ -173,13 +190,14 @@ public final class CodeConverter {
             buffer.add("    config.rollback_enabled = True");
         }
         if (settings.getEnableWrite()) {
-            String messageWritten = messages.getString("message-written");
+            String messageWritten = messages.containsKey(LC_MESSAGE_WRITTEN) ? messages.getString(LC_MESSAGE_WRITTEN) :
+                    MSG_VARIABLES_WRITTEN;
             buffer.addAll(context.findResource(
-                    context.getBaseName(CodeConverter.class, "write_variables_to_file"), "rpy")
+                    context.getBaseName(CodeConverter.class, LOC_WRITE), EXT_RPY)
                     .map(resource -> format(include(context.getCharset(), resource), Map.of(
-                            "keyWrite", keyConverter.toBinding(settings.getKeyWrite()),
-                            "messageWritten", messageWritten,
-                            "fileVariables", fileVariables
+                            KEY_WRITE, keyConverter.toBinding(settings.getKeyWrite()),
+                            KEY_MESSAGE_WRITTEN, messageWritten,
+                            KEY_FILE_VARIABLES, fileVariables + EXT_TXT
                     ))).orElse(List.of()));
         }
         if (settings.getEnableCheat()) {

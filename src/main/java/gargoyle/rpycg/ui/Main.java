@@ -121,8 +121,8 @@ public final class Main extends BorderPane implements Initializable {
         this.resources = FXUtil.requireNonNull(resources, FXUserException.LC_ERROR_NO_RESOURCES,
                 location.toExternalForm());
         scriptConverter = new ScriptConverter();
-        codeConverter = new CodeConverter(FXContextFactory.currentContext(), tabSettings.getSettings(),
-                CodeConverter.SPACES, CodeConverter.GAME_VARIABLES);
+        codeConverter = new CodeConverter(FXContextFactory.currentContext(), tabSettings.getSettings()
+        );
         gameChooser = createGameChooser(resources, tabSettings.getGameDirectory());
         initializeTabs();
         storage = createStorage();

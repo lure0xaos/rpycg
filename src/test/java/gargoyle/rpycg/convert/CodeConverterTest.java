@@ -38,8 +38,8 @@ class CodeConverterTest {
                         new KeyCodeCombination(KeyCode.O, KeyCombination.SHIFT_DOWN),
                         new KeyCodeCombination(KeyCode.D, KeyCombination.SHIFT_DOWN),
                         new KeyCodeCombination(KeyCode.M, KeyCombination.SHIFT_DOWN),
-                        Locale.ENGLISH),
-                CodeConverter.SPACES, CodeConverter.GAME_VARIABLES);
+                        Locale.ENGLISH)
+        );
         ModelItem rootMenu = ModelItem.createMenu("", "");
         rootMenu.addChild(ModelItem.createVariable(VarType.STR, "custom name", "variable_name1", ""));
         rootMenu.addChild(ModelItem.createVariable(VarType.STR, "variable_name2", "variable_name2", ""));
