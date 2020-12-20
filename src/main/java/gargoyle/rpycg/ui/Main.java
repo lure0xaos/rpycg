@@ -126,7 +126,7 @@ public final class Main extends BorderPane implements Initializable {
         gameChooser = createGameChooser(resources, tabSettings.getGameDirectory());
         initializeTabs();
         storage = createStorage();
-        storageChooser = createStorageChooser(storage.getPath());
+        storageChooser = createStorageChooser(storage.getPath(), tabSettings.getStorageDirectory());
         FXRun.runLater(() -> FXLauncher.requestPrevent(getStage().orElseThrow(),
                 stage -> doSaveOnClose(resources, stage)));
     }
@@ -199,16 +199,17 @@ public final class Main extends BorderPane implements Initializable {
         return newStorage;
     }
 
-    private FileChooser createStorageChooser(Path storagePath) {
+    private FileChooser createStorageChooser(Path storagePath, Path storageDirectory) {
         FileChooser fileChooser = new FileChooser();
         FileChooser.ExtensionFilter filter = new FileChooser.ExtensionFilter(
                 resources.getString(LC_EXTENSION_DESCRIPTION), "*." + EXTENSION);
         fileChooser.getExtensionFilters().add(filter);
         fileChooser.setSelectedExtensionFilter(filter);
-        Optional.ofNullable(storagePath).ifPresent(path -> {
+        Optional.ofNullable(storagePath).ifPresentOrElse(path -> {
             fileChooser.setInitialDirectory(path.getParent().toFile());
             fileChooser.setInitialFileName(path.getFileName().toString());
-        });
+        }, () -> Optional.ofNullable(storageDirectory).ifPresent(path ->
+                fileChooser.setInitialDirectory(path.toFile())));
         return fileChooser;
     }
 
@@ -282,6 +283,7 @@ public final class Main extends BorderPane implements Initializable {
                 ButtonBar.ButtonData.CANCEL_CLOSE, resources.getString(LC_SAVE_AS_CONFIRM_CANCEL)
         ))) {
             save(stage, path);
+            tabSettings.setStorageDirectory(path.getParent());
         }
         return true;
     }
@@ -415,6 +417,7 @@ public final class Main extends BorderPane implements Initializable {
 
     private void doLoad(Path path) {
         storage.setPath(path);
+        tabSettings.setStorageDirectory(path.getParent());
         updateTree(storage.load(path));
         updateScript(true);
         storage.setModified(false);

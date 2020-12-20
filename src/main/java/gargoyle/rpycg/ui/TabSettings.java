@@ -45,6 +45,7 @@ public final class TabSettings extends GridPane implements Initializable {
     private static final String LC_NEED_RESTART_CANCEL = "need-restart-cancel";
     private static final String LC_NEED_RESTART_OK = "need-restart-ok";
     private static final String PREF_GAME = "game";
+    private static final String PREF_STORAGE = "storage";
     private final LocaleConverter localeConverter = new LocaleConverter();
     private final Preferences preferences;
     @FXML
@@ -74,7 +75,8 @@ public final class TabSettings extends GridPane implements Initializable {
     public TabSettings() {
         preferences = Objects.requireNonNull(FXContextFactory.currentContext().getPreferences());
         FXContextFactory.currentContext().loadComponent(this)
-                .orElseThrow(() -> new AppUserException(AppUserException.LC_ERROR_NO_VIEW, TabSettings.class.getName()));
+                .orElseThrow(() ->
+                        new AppUserException(AppUserException.LC_ERROR_NO_VIEW, TabSettings.class.getName()));
     }
 
     @SuppressWarnings("AccessOfSystemProperties")
@@ -84,6 +86,15 @@ public final class TabSettings extends GridPane implements Initializable {
 
     public void setGameDirectory(Path gameDirectory) {
         preferences.put(PREF_GAME, gameDirectory.toFile().getAbsolutePath());
+    }
+
+    @SuppressWarnings("AccessOfSystemProperties")
+    public Path getStorageDirectory() {
+        return Paths.get(preferences.get(PREF_STORAGE, System.getProperty("user.home")));
+    }
+
+    public void setStorageDirectory(Path storageDirectory) {
+        preferences.put(PREF_STORAGE, storageDirectory.toFile().getAbsolutePath());
     }
 
     public Settings getSettings() {
