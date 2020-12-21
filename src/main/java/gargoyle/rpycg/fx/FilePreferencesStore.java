@@ -45,7 +45,7 @@ final class FilePreferencesStore {
         }
     }
 
-    @SuppressWarnings({"serial", "CloneableClassInSecureContext",
+    @SuppressWarnings({"CloneableClassInSecureContext",
             "ClassExtendsConcreteCollection", "CloneableClassWithoutClone"})
     private static final class SortedProperties extends Properties {
         private SortedProperties(Map<String, String> map) {
@@ -55,7 +55,8 @@ final class FilePreferencesStore {
 
         @Override
         public synchronized Enumeration<Object> keys() {
-            Collection<Object> set = new TreeSet<>((o1, o2) -> o1.toString().compareToIgnoreCase(o2.toString()));
+            Collection<Object> set = new TreeSet<>((o1, o2) ->
+                    String.CASE_INSENSITIVE_ORDER.compare(o1.toString(), o2.toString()));
             set.addAll(keySet());
             return Collections.enumeration(set);
         }
@@ -63,7 +64,7 @@ final class FilePreferencesStore {
         @Override
         public Set<Map.Entry<Object, Object>> entrySet() {
             SortedSet<Map.Entry<Object, Object>> set = new TreeSet<>((o1, o2) ->
-                    o1.getKey().toString().compareToIgnoreCase(o2.getKey().toString()));
+                    String.CASE_INSENSITIVE_ORDER.compare(o1.getKey().toString(),o2.getKey().toString()));
             set.addAll(super.entrySet());
             return Collections.unmodifiableSortedSet(set);
         }

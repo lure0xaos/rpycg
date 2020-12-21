@@ -31,6 +31,7 @@ final class FXContextImpl implements FXContext {
     private final LocaleConverter localeConverter;
     private final Property<Application.Parameters> parameters;
     private final Property<Preferences> preferences;
+    private final FXRegistry registry;
     private final Property<String> skin;
 
     FXContextImpl(Charset charset, Locale locale, ClassLoader classLoader) {
@@ -48,6 +49,7 @@ final class FXContextImpl implements FXContext {
         parameters = new SimpleObjectProperty<>();
         preferences = new SimpleObjectProperty<>();
         skin = new SimpleObjectProperty<>();
+        registry = new FXRegistry();
     }
 
     public Property<Charset> charsetProperty() {
@@ -61,22 +63,20 @@ final class FXContextImpl implements FXContext {
     private <C, V extends Parent> Optional<FXComponent<C, V>> createComponent(FXMLLoader fxmlLoader,
                                                                               String baseName,
                                                                               V view) {
-        FXContext context = this;
         findResource(baseName, FXConstants.EXT_CSS).ifPresent(url -> view.getStylesheets().add(url.toExternalForm()));
-        Optional.ofNullable(context.getSkin()).map(skin -> baseName + '_' + skin)
+        Optional.ofNullable(getSkin()).map(skin -> baseName + '_' + skin)
                 .flatMap(skin -> findResource(skin, FXConstants.EXT_CSS))
                 .ifPresent(url -> view.getStylesheets().add(url.toExternalForm()));
         return Optional.of(view).map(parent ->
-                new FXComponent<>(context, fxmlLoader.getLocation(), baseName, fxmlLoader.getController(), parent));
+                new FXComponent<>(this, fxmlLoader.getLocation(), baseName, fxmlLoader.getController(), parent));
     }
 
     private Optional<FXMLLoader> createFxmlLoader(String baseName,
                                                   Callback<Class<?>, Object> controllerFactory) {
-        FXContext context = this;
         return findResource(baseName, FXConstants.EXT_FXML).map(location -> {
             FXMLLoader fxmlLoader = new FXMLLoader();
-            fxmlLoader.setCharset(context.getCharset());
-            fxmlLoader.setClassLoader(context.getClassLoader());
+            fxmlLoader.setCharset(getCharset());
+            fxmlLoader.setClassLoader(getClassLoader());
             fxmlLoader.setControllerFactory(controllerFactory);
             loadResources(baseName).ifPresent(fxmlLoader::setResources);
             fxmlLoader.setLocation(location);
@@ -219,7 +219,7 @@ final class FXContextImpl implements FXContext {
 
     @Override
     public <T> T getBean(Class<? extends T> type) {
-        return FXReflection.instantiate(type);
+        return registry.getBean(type);
     }
 
     @Override
