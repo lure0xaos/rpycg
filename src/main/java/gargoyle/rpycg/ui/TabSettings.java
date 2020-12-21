@@ -14,7 +14,6 @@ import javafx.beans.binding.Bindings;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.Node;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
@@ -46,6 +45,7 @@ public final class TabSettings extends GridPane implements Initializable {
     private static final String LC_NEED_RESTART_OK = "need-restart-ok";
     private static final String PREF_GAME = "game";
     private static final String PREF_STORAGE = "storage";
+    private static final String USER_HOME = System.getProperty("user.home");
     private final LocaleConverter localeConverter = new LocaleConverter();
     private final Preferences preferences;
     @FXML
@@ -81,7 +81,7 @@ public final class TabSettings extends GridPane implements Initializable {
 
     @SuppressWarnings("AccessOfSystemProperties")
     public Path getGameDirectory() {
-        return Paths.get(preferences.get(PREF_GAME, System.getProperty("user.home")));
+        return Paths.get(preferences.get(PREF_GAME, USER_HOME));
     }
 
     public void setGameDirectory(Path gameDirectory) {
@@ -90,7 +90,7 @@ public final class TabSettings extends GridPane implements Initializable {
 
     @SuppressWarnings("AccessOfSystemProperties")
     public Path getStorageDirectory() {
-        return Paths.get(preferences.get(PREF_STORAGE, System.getProperty("user.home")));
+        return Paths.get(preferences.get(PREF_STORAGE, USER_HOME));
     }
 
     public void setStorageDirectory(Path storageDirectory) {
@@ -148,10 +148,7 @@ public final class TabSettings extends GridPane implements Initializable {
                 cell.setGraphic(null);
                 cell.setText("");
             } else {
-                FXContext context = FXContextFactory.currentContext();
-                context.findResource(context.getBaseName(TabSettings.class,
-                        "flags/" + item.getLanguage()), FXConstants.EXT_IMAGES)
-                        .map(URL::toExternalForm).map(ImageView::new).ifPresent(cell::setGraphic);
+                getFlag(item.getLanguage()).ifPresent(cell::setGraphic);
                 cell.setText(localeConverter.toDisplayString(item));
             }
         });
@@ -164,33 +161,34 @@ public final class TabSettings extends GridPane implements Initializable {
     }
 
     private void initializeLocaleUi(ResourceBundle resources) {
-        cmbLocaleUi.getItems().setAll(localeConverter.getLocales().stream().filter(Objects::nonNull).map(locale -> {
-            MenuItem menuItem = new MenuItem(localeConverter.toDisplayString(locale), getFlag(locale));
-            menuItem.setOnAction(event -> {
-                FXContextFactory.changeLocale(locale);
-                if (FXDialogs.confirm(getStage().orElse(null), resources.getString(LC_NEED_RESTART), Map.of(
-                        ButtonBar.ButtonData.OK_DONE, resources.getString(LC_NEED_RESTART_OK),
-                        ButtonBar.ButtonData.CANCEL_CLOSE, resources.getString(LC_NEED_RESTART_CANCEL)))) {
-                    FXLauncher.requestRestart(getStage().orElseThrow());
-                }
-            });
-            return menuItem;
-        }).collect(Collectors.toList()));
+        cmbLocaleUi.getItems().setAll(localeConverter.getLocales().stream().map(locale -> getFlag(locale.getLanguage())
+                .map(imageView -> {
+                    MenuItem menuItem = new MenuItem(localeConverter.toDisplayString(locale), imageView);
+                    menuItem.setOnAction(event -> {
+                        FXContextFactory.changeLocale(locale);
+                        if (FXDialogs.confirm(getStage().orElseThrow(), resources.getString(LC_NEED_RESTART), Map.of(
+                                ButtonBar.ButtonData.OK_DONE, resources.getString(LC_NEED_RESTART_OK),
+                                ButtonBar.ButtonData.CANCEL_CLOSE, resources.getString(LC_NEED_RESTART_CANCEL)))) {
+                            FXLauncher.requestRestart(getStage().orElseThrow());
+                        }
+                    });
+                    return menuItem;
+                }).orElse(null)).filter(Objects::nonNull).collect(Collectors.toList()));
         settings.localeMenuProperty().addListener((observable, oldValue, newValue) -> {
             cmbLocaleUi.setText(localeConverter.toDisplayString(newValue));
-            cmbLocaleUi.setGraphic(getFlag(newValue));
+            getFlag(newValue.getLanguage()).ifPresent(cmbLocaleUi::setGraphic);
         });
         Locale currentLocale = localeConverter.getSimilarLocale(localeConverter.getLocales(),
                 FXContextFactory.currentContext().getLocale());
         cmbLocaleUi.setText(localeConverter.toDisplayString(currentLocale));
-        cmbLocaleUi.setGraphic(getFlag(currentLocale));
+        getFlag(currentLocale.getLanguage()).ifPresent(cmbLocaleUi::setGraphic);
     }
 
-    private Node getFlag(Locale locale) {
+    private Optional<ImageView> getFlag(String language) {
         FXContext context = FXContextFactory.currentContext();
         return context.findResource(context.getBaseName(TabSettings.class,
-                MessageFormat.format("flags/{0}", locale.getLanguage())), FXConstants.EXT_IMAGES)
-                .map(URL::toExternalForm).map(ImageView::new).orElse(null);
+                MessageFormat.format("flags/{0}", language)), FXConstants.EXT_IMAGES)
+                .map(URL::toExternalForm).map(ImageView::new);
     }
 
     private Optional<Stage> getStage() {
