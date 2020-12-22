@@ -17,7 +17,7 @@ import java.util.regex.Pattern;
 
 public final class FXUtil {
 
-    private static final Pattern PATTERN_FORMAT = Pattern.compile("\\$\\{([^}]+)}");
+    private static final Pattern PATTERN_FORMAT = Pattern.compile("#\\{([^}]+)}");
 
     private FXUtil() {
         throw new IllegalStateException(FXUtil.class.getName());
