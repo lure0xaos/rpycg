@@ -79,26 +79,24 @@ public final class FXLauncher extends Application {
 
     public static void splashStart(Class<? extends FXApplication> appClass) {
         String splashClassName = System.getProperty(KEY_SPLASH_CLASS, SPLASH_CLASS_DEFAULT);
-        Class<? extends FXSplash> splashClass = FXReflection.classForName(splashClassName);
-        splash = FXReflection.instantiate(splashClass);
-        ResourceBundle resources = null;
         try {
-            resources = ResourceBundle.getBundle(FXContextFactory.currentContext().getBaseName(splashClass));
-        } catch (MissingResourceException e) {
+            Class<? extends FXSplash> splashClass = FXReflection.classForName(splashClassName);
+            splash = FXReflection.instantiate(splashClass);
+            String splashLocation = System.getProperty(KEY_SPLASH);
+            splashWindow = splash.createWindow(splashLocation != null ?
+                            appClass.getResource(splashLocation) : FXLauncher.class.getResource(SPLASH_DEFAULT),
+                    ResourceBundle.getBundle(FXContextFactory.currentContext().getBaseName(splashClass)));
+            splashWindow.pack();
+            splashWindow.setAlwaysOnTop(true);
+            splashWindow.setLocationRelativeTo(null);
+            splashWindow.setVisible(true);
+            notifySplash(FXSplash.FXSplashNotification.Type.PRE_INIT, 0, "");
+        } catch (MissingResourceException | FXException e) {
             log.warn(new FXUserException(FXUserException.LC_ERROR_NO_RESOURCES, splashClassName).getMessage());
         }
-        String splashLocation = System.getProperty(KEY_SPLASH);
-        splashWindow = splashLocation != null ? splash.createWindow(appClass.getResource(splashLocation), resources) :
-                splash.createWindow(FXLauncher.class.getResource(SPLASH_DEFAULT), resources);
-        splashWindow.pack();
-        splashWindow.setAlwaysOnTop(true);
-        splashWindow.setLocationRelativeTo(null);
-        splashWindow.setVisible(true);
-        notifySplash(FXSplash.FXSplashNotification.Type.PRE_INIT, 0, "");
     }
 
-    private static void notifySplash(FXSplash.FXSplashNotification.Type type,
-                                     double progress, String details) {
+    public static void notifySplash(FXSplash.FXSplashNotification.Type type, double progress, String details) {
         notifySplash(new FXSplashNotificationImpl(type, progress, details));
     }
 
@@ -192,7 +190,7 @@ public final class FXLauncher extends Application {
         }
     }
 
-    private static final class FXSplashNotificationImpl implements FXSplash.FXSplashNotification {
+    public static final class FXSplashNotificationImpl implements FXSplash.FXSplashNotification {
         private final String details;
         private final double progress;
         private final Type type;

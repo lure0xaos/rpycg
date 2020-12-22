@@ -1,14 +1,11 @@
 package gargoyle.rpycg.fx;
 
 import java.awt.Window;
-import java.io.Closeable;
 import java.net.URL;
 import java.util.ResourceBundle;
 
 @FunctionalInterface
-public interface FXSplash extends Closeable {
-    default void close() {
-    }
+public interface FXSplash {
 
     Window createWindow(URL location, ResourceBundle resources);
 

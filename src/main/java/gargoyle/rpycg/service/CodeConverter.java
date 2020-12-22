@@ -3,6 +3,7 @@ package gargoyle.rpycg.service;
 import gargoyle.rpycg.ex.CodeGenerationException;
 import gargoyle.rpycg.fx.FXContext;
 import gargoyle.rpycg.fx.FXContextFactory;
+import gargoyle.rpycg.fx.FXUtil;
 import gargoyle.rpycg.model.ModelItem;
 import gargoyle.rpycg.model.ModelType;
 import gargoyle.rpycg.model.Settings;
@@ -14,12 +15,10 @@ import java.io.InputStreamReader;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.text.MessageFormat;
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
-import java.util.regex.Pattern;
 
 import static gargoyle.rpycg.ex.AppUserException.LC_ERROR_NO_RESOURCES;
 
@@ -50,21 +49,6 @@ public final class CodeConverter {
         this.settings = settings;
     }
 
-    private static List<String> format(List<String> formats, Map<String, Object> values) {
-        List<String> list = new ArrayList<>(formats.size());
-        for (String format : formats) {
-            list.add(format(format, values));
-        }
-        return list;
-    }
-
-    private static String format(String format, Map<String, Object> values) {
-        return Pattern.compile("\\$\\{([^}]+)}").matcher(format).replaceAll(match -> {
-            Object value = values.get(match.group(1));
-            return value != null ? value.toString() : match.group(0);
-        });
-    }
-
     private static List<String> include(Charset charset, URL resource) {
         List<String> lines = new LinkedList<>();
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(resource.openStream(), charset))) {
@@ -90,7 +74,7 @@ public final class CodeConverter {
         List<String> buffer = new LinkedList<>();
         buffer.add("label show_cheat_menu:");
         buffer.add("    jump " + "CheatMenu");
-        buffer.add("label " + "CheatMenu:");
+        buffer.add("label " + "CheatMenu" + ":");
         buffer.add("    menu:");
         buffer.addAll(createCheatSubmenu(1, messages, root, "CheatMenu"));
         buffer.add("        # nevermind");
@@ -194,7 +178,7 @@ public final class CodeConverter {
                     MSG_VARIABLES_WRITTEN;
             buffer.addAll(context.findResource(
                     context.getBaseName(CodeConverter.class, LOC_WRITE), EXT_RPY)
-                    .map(resource -> format(include(context.getCharset(), resource), Map.of(
+                    .map(resource -> FXUtil.format(include(context.getCharset(), resource), Map.of(
                             KEY_WRITE, keyConverter.toBinding(settings.getKeyWrite()),
                             KEY_MESSAGE_WRITTEN, messageWritten,
                             KEY_FILE_VARIABLES, fileVariables + EXT_TXT
