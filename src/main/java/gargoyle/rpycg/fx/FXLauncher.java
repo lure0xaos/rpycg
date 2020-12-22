@@ -160,7 +160,6 @@ public final class FXLauncher extends Application {
             if (splashWindow.isVisible()) {
                 notifySplash(FXSplash.FXSplashNotification.Type.STOP, 1, details);
                 splashWindow.dispose();
-                splash.close();
             }
         }
     }
