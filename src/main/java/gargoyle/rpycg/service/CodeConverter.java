@@ -73,13 +73,13 @@ public final class CodeConverter {
     private List<String> createCheatMenu(ResourceBundle messages, ModelItem root) {
         List<String> buffer = new LinkedList<>();
         buffer.add("label show_cheat_menu:");
-        buffer.add("    jump " + "CheatMenu");
-        buffer.add("label " + "CheatMenu" + ":");
+        buffer.add("    jump CheatMenu");
+        buffer.add("label CheatMenu:");
         buffer.add("    menu:");
         buffer.addAll(createCheatSubmenu(1, messages, root, "CheatMenu"));
         buffer.add("        # nevermind");
-        buffer.add("        \"~" + (messages.containsKey(LC_NEVERMIND) ?
-                messages.getString(LC_NEVERMIND) : MSG_NEVERMIND) + "~\":");
+        buffer.add(FXUtil.format("        \"~#{nevermind}~\":", "nevermind",
+                messages.containsKey(LC_NEVERMIND) ? messages.getString(LC_NEVERMIND) : MSG_NEVERMIND));
         buffer.add("            return");
         return buffer;
     }
@@ -94,40 +94,70 @@ public final class CodeConverter {
                 VarType itemType = item.getType();
                 String itemValue = item.getValue();
                 buffer.add(indent(indent,
-                        "    # variable " + itemName + "=" + itemType + "(" + itemValue + ") " + itemLabel));
+                        FXUtil.format("    # variable #{itemName}=#{itemType}(#{itemValue}) #{itemLabel}",
+                                "itemName", itemName,
+                                "itemType", itemType,
+                                "itemValue", itemValue,
+                                "itemLabel", itemLabel
+                        )));
                 String itemTypeKeyword = itemType.getKeyword();
                 if (!itemValue.isBlank()) {
                     buffer.add(indent(indent,
-                            "    \"" + itemLabel + "=" + itemValue + " \\[[" + itemName + "]\\]\" :"));
+                            FXUtil.format("    \"$#{itemLabel}=#{itemValue} \\[[#{itemName}]\\]\" :",
+                                    "itemLabel", itemLabel,
+                                    "itemValue", itemValue,
+                                    "itemName", itemName
+                            )));
                     if (itemType == VarType.STR) {
                         buffer.add(indent(indent,
-                                "        $" + itemName + " = \"" + itemTypeKeyword + "(\"" + itemValue + "\")\""));
+                                FXUtil.format("        $#{itemName} = \"#{itemTypeKeyword}(\"#{itemValue}\")\"",
+                                        "itemName", itemName,
+                                        "itemTypeKeyword", itemTypeKeyword,
+                                        "itemValue", itemValue
+                                )));
                     } else {
                         buffer.add(indent(indent,
-                                "        $" + itemName + " = " + itemValue));
+                                FXUtil.format("        $#{itemName} = #{itemValue}",
+                                        "itemName", itemName,
+                                        "itemValue", itemValue
+                                )));
                     }
                 } else {
                     buffer.add(indent(indent,
-                            "    \"" + itemLabel + " \\[[" + itemName + "]\\]\" :"));
+                            FXUtil.format("    \"#{itemLabel} \\[[#{itemName}]\\]\" :",
+                                    "itemLabel", itemLabel,
+                                    "itemName", itemName
+                            )));
                     String prompt = messages.containsKey(LC_MESSAGE_PROMPT) ? messages.getString(LC_MESSAGE_PROMPT) :
                             MSG_MESSAGE_PROMPT;
-                    buffer.add(indent(indent,
-                            "        $" + itemName + " = " + itemTypeKeyword + "(renpy.input(\"" +
-                                    MessageFormat.format(prompt, itemLabel, "[" + itemName + "]")
-                                    + "\").strip() or " + itemName + ")"));
+                    buffer.add(indent(indent, FXUtil.format(
+                            "        $#{itemName} = #{itemTypeKeyword}(renpy.input(\"#{itemValue}\").strip() or #{itemName})",
+                            "itemName", itemName,
+                            "itemTypeKeyword", itemTypeKeyword,
+                            "itemValue", FXUtil.format(prompt,
+                                    "itemLabel", itemLabel,
+                                    "itemValue", "[" + itemName + "]"
+                            ),
+                            "itemName", itemName)));
                 }
-                buffer.add(indent(indent, "        jump " + parentLabel));
+                buffer.add(indent(indent, FXUtil.format("        jump #{parentLabel}",
+                        "parentLabel", parentLabel)));
             }
             if (modelType == ModelType.MENU) {
-                buffer.add(indent(indent, "    # menu " + itemLabel));
-                buffer.add(indent(indent, "    \"~" + itemLabel + "~\":"));
-                buffer.add(indent(indent, "        label " + itemName + ":"));
+                buffer.add(indent(indent, FXUtil.format("    # menu #{itemLabel}",
+                        "itemLabel", itemLabel)));
+                buffer.add(indent(indent, FXUtil.format("    \"~#{itemLabel}~\":",
+                        "itemLabel", itemLabel)));
+                buffer.add(indent(indent, FXUtil.format("        label #{itemName}:",
+                        "itemName", itemName)));
                 buffer.add(indent(indent, "            menu:"));
                 buffer.addAll(createCheatSubmenu(indent + 3, messages, item, itemName));
                 buffer.add(indent(indent, "                # back"));
-                buffer.add(indent(indent, "                \"~" + (messages.containsKey(LC_BACK) ?
-                        messages.getString(LC_BACK) : MSG_BACK) + "~\":"));
-                buffer.add(indent(indent, "                    jump " + parentLabel));
+                buffer.add(indent(indent, FXUtil.format("                \"~#{back}~\":",
+                        LC_BACK, messages.containsKey(LC_BACK) ?
+                                messages.getString(LC_BACK) : MSG_BACK)));
+                buffer.add(indent(indent, FXUtil.format("                    jump #{parentLabel}",
+                        "parentLabel", parentLabel)));
             }
         }
         return buffer;
@@ -156,17 +186,20 @@ public final class CodeConverter {
             buffer.add("    # Define function to open the menu");
             buffer.add("    def enable_cheat_menu():");
             buffer.add("        renpy.call_in_new_context(\"show_cheat_menu\")");
-            buffer.add("    config.keymap[\"cheat_menu_bind\"] = [\"" + cheatKey + "\"]");
+            buffer.add(FXUtil.format("    config.keymap[\"cheat_menu_bind\"] = [\"#{cheatKey}\"]",
+                    "cheatKey", cheatKey));
         }
         if (settings.getEnableConsole()) {
             String consoleKey = keyConverter.toBinding(settings.getKeyConsole());
             buffer.add("    # Enable fast console");
-            buffer.add("    config.keymap[\"console\"] = [\"" + consoleKey + "\"]");
+            buffer.add(FXUtil.format("    config.keymap[\"console\"] = [\"#{consoleKey}\"]",
+                    "consoleKey", consoleKey));
         }
         if (settings.getEnableDeveloper()) {
             String developerKey = keyConverter.toBinding(settings.getKeyDeveloper());
             buffer.add("    # Enable developer mode");
-            buffer.add("    config.keymap[\"developer\"] = [\"" + developerKey + "\"]");
+            buffer.add(FXUtil.format("    config.keymap[\"developer\"] = [\"#{developerKey}\"]",
+                    "developerKey", developerKey));
             buffer.add("    config.underlay.append(renpy.Keymap(cheat_menu_bind=enable_cheat_menu))");
         }
         if (settings.getEnableRollback()) {
