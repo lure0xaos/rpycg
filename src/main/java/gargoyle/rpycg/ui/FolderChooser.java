@@ -10,6 +10,7 @@ import gargoyle.rpycg.fx.FXUserException;
 import gargoyle.rpycg.fx.FXUtil;
 import gargoyle.rpycg.fx.Logger;
 import gargoyle.rpycg.fx.LoggerFactory;
+import gargoyle.rpycg.util.GameUtil;
 import javafx.beans.property.Property;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
@@ -144,7 +145,7 @@ public final class FolderChooser extends Dialog<Path> implements Initializable {
         });
         initialDirectory.addListener((observable, oldValue, newValue) -> {
             if (newValue != null) {
-                selectItem(newValue);
+                selectItem(newValue, !GameUtil.isGameDirectory(newValue));
             }
         });
         FXRun.runLater(() -> fileTree.requestFocus());
@@ -195,13 +196,14 @@ public final class FolderChooser extends Dialog<Path> implements Initializable {
         fileTree.scrollTo(fileTree.getRow(item));
     }
 
-    private void selectItem(Path path) {
+    private void selectItem(Path path, boolean expanded) {
         Collection<TreeItem<Path>> result = new LinkedList<>();
         TreeItem<Path> item = getItems(fileTree.getRoot(), result, getExistingParent(path));
         result.forEach(treeItem -> {
             treeItem.setExpanded(true);
             fileTree.getSelectionModel().select(treeItem);
         });
+        item.setExpanded(expanded);
         scrollTo(item);
     }
 

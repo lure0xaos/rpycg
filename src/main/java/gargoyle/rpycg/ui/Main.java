@@ -17,6 +17,7 @@ import gargoyle.rpycg.model.ModelItem;
 import gargoyle.rpycg.service.CodeConverter;
 import gargoyle.rpycg.service.ScriptConverter;
 import gargoyle.rpycg.service.Storage;
+import gargoyle.rpycg.util.GameUtil;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
 import javafx.beans.value.ObservableObjectValue;
@@ -136,9 +137,9 @@ public final class Main extends BorderPane implements Initializable {
         Optional.ofNullable(resources).ifPresent(bundle ->
                 directoryChooser.setTitle(bundle.getString(LC_GAME_CHOOSER_TITLE)));
         directoryChooser.setInitialDirectory(gameDirectory);
-        directoryChooser.setSelectionFilter(Main::isGameDirectory);
+        directoryChooser.setSelectionFilter(GameUtil::isGameDirectory);
         directoryChooser.setAdditionalIconProvider((path, expanded) -> {
-            if (isGameDirectory(path)) {
+            if (GameUtil.isGameDirectory(path)) {
                 FXContext context = FXContextFactory.currentContext();
                 return context.findResource(
                         context.getBaseName(Main.class, expanded ? ICON_GAME_FOLDER_OPEN : ICON_GAME_FOLDER),
@@ -239,14 +240,6 @@ public final class Main extends BorderPane implements Initializable {
                     .ifPresent(buttonType -> RPyCG.mailError(e));
             return FXLauncher.FXCloseAction.KEEP;
         }
-    }
-
-    private static boolean isGameDirectory(Path path) {
-        return path != null &&
-                Files.isDirectory(path) &&
-                Files.isDirectory(path.resolve("renpy")) &&
-                Files.isDirectory(path.resolve("game")) &&
-                Files.isDirectory(path.resolve("lib"));
     }
 
     private void updateScript(boolean forced) {
@@ -353,7 +346,7 @@ public final class Main extends BorderPane implements Initializable {
     @FXML
     void onInstall(ActionEvent actionEvent) {
         chooseGameDirectory().ifPresent(gamePath -> {
-            if (isGameDirectory(gamePath)) {
+            if (GameUtil.isGameDirectory(gamePath)) {
                 try {
                     Files.writeString(gamePath.resolve("game").resolve(INSTALL_NAME), generateCodeString());
                     FXDialogs.alert(getStage().orElse(null), resources.getString(LC_SUCCESS_INSTALL));
