@@ -1,15 +1,7 @@
 package gargoyle.rpycg.ui;
 
 import gargoyle.rpycg.ex.AppUserException;
-import gargoyle.rpycg.fx.FXConstants;
-import gargoyle.rpycg.fx.FXContext;
-import gargoyle.rpycg.fx.FXContextFactory;
-import gargoyle.rpycg.fx.FXDialogs;
-import gargoyle.rpycg.fx.FXRun;
-import gargoyle.rpycg.fx.FXUserException;
-import gargoyle.rpycg.fx.FXUtil;
-import gargoyle.rpycg.fx.Logger;
-import gargoyle.rpycg.fx.LoggerFactory;
+import gargoyle.rpycg.fx.*;
 import gargoyle.rpycg.util.GameUtil;
 import javafx.beans.property.Property;
 import javafx.beans.property.SimpleObjectProperty;
@@ -18,13 +10,7 @@ import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.Node;
-import javafx.scene.control.ButtonBar;
-import javafx.scene.control.Dialog;
-import javafx.scene.control.SelectionMode;
-import javafx.scene.control.Tooltip;
-import javafx.scene.control.TreeCell;
-import javafx.scene.control.TreeItem;
-import javafx.scene.control.TreeView;
+import javafx.scene.control.*;
 import javafx.scene.image.ImageView;
 import javafx.stage.Stage;
 import javafx.util.Callback;
@@ -35,22 +21,8 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.URL;
 import java.net.UnknownHostException;
-import java.nio.file.ClosedWatchServiceException;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardWatchEventKinds;
-import java.nio.file.WatchEvent;
-import java.nio.file.WatchKey;
-import java.nio.file.WatchService;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.ResourceBundle;
+import java.nio.file.*;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
@@ -245,8 +217,9 @@ public final class FolderChooser extends Dialog<Path> implements Initializable {
         return selectionFilter;
     }
 
-    public Path showDialog(Stage stage) {
+    public Path showDialog() {
         fileWatcher.start();
+        Stage stage = FXContextFactory.currentContext().getStage();
         if (!stage.isShowing()) {
             initOwner(stage);
         }

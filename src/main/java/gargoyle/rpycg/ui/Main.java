@@ -5,14 +5,7 @@ import gargoyle.rpycg.ex.AppException;
 import gargoyle.rpycg.ex.AppUserException;
 import gargoyle.rpycg.ex.CodeGenerationException;
 import gargoyle.rpycg.ex.MalformedScriptException;
-import gargoyle.rpycg.fx.FXConstants;
-import gargoyle.rpycg.fx.FXContext;
-import gargoyle.rpycg.fx.FXContextFactory;
-import gargoyle.rpycg.fx.FXDialogs;
-import gargoyle.rpycg.fx.FXLauncher;
-import gargoyle.rpycg.fx.FXRun;
-import gargoyle.rpycg.fx.FXUserException;
-import gargoyle.rpycg.fx.FXUtil;
+import gargoyle.rpycg.fx.*;
 import gargoyle.rpycg.model.ModelItem;
 import gargoyle.rpycg.service.CodeConverter;
 import gargoyle.rpycg.service.ScriptConverter;
@@ -40,12 +33,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.ResourceBundle;
+import java.util.*;
 
 public final class Main extends BorderPane implements Initializable {
     private static final String EXTENSION = "rpycg";
@@ -128,8 +116,8 @@ public final class Main extends BorderPane implements Initializable {
         initializeTabs();
         storage = createStorage();
         storageChooser = createStorageChooser(storage.getPath(), tabSettings.getStorageDirectory());
-        FXRun.runLater(() -> FXLauncher.requestPrevent(getStage().orElseThrow(),
-                stage -> doSaveOnClose(resources, stage)));
+        FXRun.runLater(() -> FXLauncher.requestPrevent(FXContextFactory.currentContext().getStage(),
+                stage -> doSaveOnClose(resources)));
     }
 
     private static FolderChooser createGameChooser(ResourceBundle resources, Path gameDirectory) {
@@ -166,7 +154,7 @@ public final class Main extends BorderPane implements Initializable {
                     creator.decorateError(Collections.emptySet());
                 } catch (IllegalArgumentException | IllegalStateException | MalformedScriptException e) {
                     creator.decorateError(Collections.singleton(e.getLocalizedMessage()));
-                    FXDialogs.error(getStage().orElse(null),
+                    FXDialogs.error(FXContextFactory.currentContext().getStage(),
                             resources.getString(LC_ERROR_MALFORMED_SCRIPT) + "\n" + e.getLocalizedMessage());
                 }
             }
@@ -214,11 +202,8 @@ public final class Main extends BorderPane implements Initializable {
         return fileChooser;
     }
 
-    private Optional<Stage> getStage() {
-        return FXUtil.findStage(btnLoadReload);
-    }
-
-    private FXLauncher.FXCloseAction doSaveOnClose(ResourceBundle resources, Stage stage) {
+    private FXLauncher.FXCloseAction doSaveOnClose(ResourceBundle resources) {
+        Stage stage = FXContextFactory.currentContext().getStage();
         if (!storage.getModified() || builder.isTreeEmpty() ||
                 FXDialogs.confirm(stage, resources.getString(LC_CLOSE_CONFIRM), Map.of(
                         ButtonBar.ButtonData.OK_DONE, resources.getString(LC_CLOSE_CONFIRM_OK),
@@ -228,9 +213,9 @@ public final class Main extends BorderPane implements Initializable {
         try {
             Path storagePath = storage.getPath();
             if (storagePath != null) {
-                return doSave(stage) ? FXLauncher.FXCloseAction.CLOSE : FXLauncher.FXCloseAction.KEEP;
+                return doSave() ? FXLauncher.FXCloseAction.CLOSE : FXLauncher.FXCloseAction.KEEP;
             } else {
-                return doSaveAs(stage) ? FXLauncher.FXCloseAction.CLOSE : FXLauncher.FXCloseAction.KEEP;
+                return doSaveAs() ? FXLauncher.FXCloseAction.CLOSE : FXLauncher.FXCloseAction.KEEP;
             }
         } catch (IllegalArgumentException | IllegalStateException e) {
             FXDialogs.error(stage, resources.getString(LC_ERROR_MALFORMED_SCRIPT), e, Map.of(
@@ -255,17 +240,19 @@ public final class Main extends BorderPane implements Initializable {
         builder.setModel(scriptConverter.fromScript(creator.getScript()));
     }
 
-    private boolean doSave(Stage stage) {
+    private boolean doSave() {
+        Stage stage = FXContextFactory.currentContext().getStage();
         Path storagePath = Objects.requireNonNull(storage.getPath());
         if (Files.exists(storagePath) || FXDialogs.confirm(stage, resources.getString(LC_SAVE_CONFIRM), Map.of(
                 ButtonBar.ButtonData.OK_DONE, resources.getString(LC_SAVE_CONFIRM_OK),
                 ButtonBar.ButtonData.CANCEL_CLOSE, resources.getString(LC_SAVE_CONFIRM_CANCEL)))) {
-            return save(stage, storagePath);
+            return save(storagePath);
         }
         return false;
     }
 
-    private boolean doSaveAs(Stage stage) {
+    private boolean doSaveAs() {
+        Stage stage = FXContextFactory.currentContext().getStage();
         File saveFile = storageChooser.showSaveDialog(stage);
         if (saveFile == null) {
             return false;
@@ -275,19 +262,19 @@ public final class Main extends BorderPane implements Initializable {
                 ButtonBar.ButtonData.OK_DONE, resources.getString(LC_SAVE_AS_CONFIRM_OK),
                 ButtonBar.ButtonData.CANCEL_CLOSE, resources.getString(LC_SAVE_AS_CONFIRM_CANCEL)
         ))) {
-            save(stage, path);
+            save(path);
             tabSettings.setStorageDirectory(path.getParent());
         }
         return true;
     }
 
-    private boolean save(Stage stage, Path storagePath) {
+    private boolean save(Path storagePath) {
         try {
             storage.saveAs(storagePath, builder.getModel());
             storage.setPath(storagePath);
             return true;
         } catch (AppException e) {
-            FXDialogs.error(stage, resources.getString(LC_ERROR_SAVE), e, Map.of(
+            FXDialogs.error(FXContextFactory.currentContext().getStage(), resources.getString(LC_ERROR_SAVE), e, Map.of(
                     ButtonBar.ButtonData.OK_DONE, resources.getString(LC_CLOSE),
                     ButtonBar.ButtonData.OTHER, resources.getString(LC_REPORT)))
                     .filter(buttonType -> buttonType.getButtonData() == ButtonBar.ButtonData.OTHER)
@@ -299,7 +286,7 @@ public final class Main extends BorderPane implements Initializable {
     @FXML
     void onClear(ActionEvent actionEvent) {
         if (builder.isTreeEmpty() ||
-                FXDialogs.confirm(getStage().orElse(null), resources.getString(LC_CLEAR_CONFIRM), Map.of(
+                FXDialogs.confirm(FXContextFactory.currentContext().getStage(), resources.getString(LC_CLEAR_CONFIRM), Map.of(
                         ButtonBar.ButtonData.OK_DONE, resources.getString(LC_CLEAR_CONFIRM_OK),
                         ButtonBar.ButtonData.CANCEL_CLOSE, resources.getString(LC_CLEAR_CONFIRM_CANCEL)))) {
             doClear();
@@ -315,12 +302,12 @@ public final class Main extends BorderPane implements Initializable {
     void onGenerate(ActionEvent actionEvent) {
         try {
             putClipboard(generateCodeString());
-            FXDialogs.alert(getStage().orElse(null), resources.getString(LC_SUCCESS_GENERATE));
+            FXDialogs.alert(FXContextFactory.currentContext().getStage(), resources.getString(LC_SUCCESS_GENERATE));
         } catch (CodeGenerationException e) {
-            FXDialogs.error(getStage().orElse(null),
+            FXDialogs.error(FXContextFactory.currentContext().getStage(),
                     resources.getString(LC_ERROR_GENERATE) + "\n" + e.getLocalizedMessage());
         } catch (RuntimeException e) {
-            FXDialogs.error(getStage().orElse(null), resources.getString(LC_ERROR_GENERATE), e, Map.of(
+            FXDialogs.error(FXContextFactory.currentContext().getStage(), resources.getString(LC_ERROR_GENERATE), e, Map.of(
                     ButtonBar.ButtonData.OK_DONE, resources.getString(LC_CLOSE),
                     ButtonBar.ButtonData.OTHER, resources.getString(LC_REPORT)))
                     .filter(buttonType -> buttonType.getButtonData() == ButtonBar.ButtonData.OTHER)
@@ -349,17 +336,17 @@ public final class Main extends BorderPane implements Initializable {
             if (GameUtil.isGameDirectory(gamePath)) {
                 try {
                     Files.writeString(gamePath.resolve("game").resolve(INSTALL_NAME), generateCodeString());
-                    FXDialogs.alert(getStage().orElse(null), resources.getString(LC_SUCCESS_INSTALL));
+                    FXDialogs.alert(FXContextFactory.currentContext().getStage(), resources.getString(LC_SUCCESS_INSTALL));
                     storeGamePath(gamePath);
                 } catch (IOException | CodeGenerationException e) {
-                    FXDialogs.error(getStage().orElse(null), resources.getString(LC_ERROR_WRITE), e, Map.of(
+                    FXDialogs.error(FXContextFactory.currentContext().getStage(), resources.getString(LC_ERROR_WRITE), e, Map.of(
                             ButtonBar.ButtonData.OK_DONE, resources.getString(LC_CLOSE),
                             ButtonBar.ButtonData.OTHER, resources.getString(LC_REPORT)))
                             .filter(buttonType -> buttonType.getButtonData() == ButtonBar.ButtonData.OTHER)
                             .ifPresent(buttonType -> RPyCG.mailError(e));
                 }
             } else {
-                FXDialogs.error(getStage().orElse(null), resources.getString(LC_ERROR_NOT_GAME));
+                FXDialogs.error(FXContextFactory.currentContext().getStage(), resources.getString(LC_ERROR_NOT_GAME));
             }
         });
     }
@@ -367,7 +354,7 @@ public final class Main extends BorderPane implements Initializable {
     @SuppressWarnings("MethodCallInLoopCondition")
     private Optional<Path> chooseGameDirectory() {
         if (gameChooser.getOwner() == null) {
-            gameChooser.initOwner(getStage().orElse(null));
+            gameChooser.initOwner(FXContextFactory.currentContext().getStage());
         }
         Optional.ofNullable(gameChooser.getInitialDirectory()).ifPresent(directory -> {
             Path initialDirectory = directory;
@@ -376,7 +363,7 @@ public final class Main extends BorderPane implements Initializable {
                 gameChooser.setInitialDirectory(initialDirectory);
             }
         });
-        return Optional.ofNullable(gameChooser.showDialog(getStage().orElseThrow()));
+        return Optional.ofNullable(gameChooser.showDialog());
     }
 
     private void storeGamePath(Path gamePath) {
@@ -386,19 +373,19 @@ public final class Main extends BorderPane implements Initializable {
 
     @FXML
     void onLoad(ActionEvent actionEvent) {
-        Optional.ofNullable(storageChooser.showOpenDialog(getStage().orElse(null))).map(File::toPath)
+        Optional.ofNullable(storageChooser.showOpenDialog(FXContextFactory.currentContext().getStage())).map(File::toPath)
                 .ifPresent(path -> {
-                    if (builder.isTreeEmpty() || FXDialogs.confirm(getStage().orElse(null),
+                    if (builder.isTreeEmpty() || FXDialogs.confirm(FXContextFactory.currentContext().getStage(),
                             resources.getString(LC_LOAD_CONFIRM), Map.of(
                                     ButtonBar.ButtonData.OK_DONE, resources.getString(LC_LOAD_CONFIRM_OK),
                                     ButtonBar.ButtonData.CANCEL_CLOSE, resources.getString(LC_LOAD_CONFIRM_CANCEL)))) {
                         try {
                             doLoad(path);
                         } catch (MalformedScriptException e) {
-                            FXDialogs.error(getStage().orElse(null),
+                            FXDialogs.error(FXContextFactory.currentContext().getStage(),
                                     resources.getString(LC_ERROR_MALFORMED_SCRIPT) + "\n" + e.getLocalizedMessage());
                         } catch (RuntimeException e) {
-                            FXDialogs.error(getStage().orElse(null), resources.getString(LC_ERROR_LOAD), e, Map.of(
+                            FXDialogs.error(FXContextFactory.currentContext().getStage(), resources.getString(LC_ERROR_LOAD), e, Map.of(
                                     ButtonBar.ButtonData.OK_DONE, resources.getString(LC_CLOSE),
                                     ButtonBar.ButtonData.OTHER, resources.getString(LC_REPORT)))
                                     .filter(buttonType -> buttonType.getButtonData() == ButtonBar.ButtonData.OTHER)
@@ -429,16 +416,16 @@ public final class Main extends BorderPane implements Initializable {
     void onReload(ActionEvent actionEvent) {
         Optional.ofNullable(storage.getPath()).ifPresent(path -> {
             if (builder.isTreeEmpty() ||
-                    FXDialogs.confirm(getStage().orElse(null), resources.getString(LC_RELOAD_CONFIRM), Map.of(
+                    FXDialogs.confirm(FXContextFactory.currentContext().getStage(), resources.getString(LC_RELOAD_CONFIRM), Map.of(
                             ButtonBar.ButtonData.OK_DONE, resources.getString(LC_RELOAD_CONFIRM_OK),
                             ButtonBar.ButtonData.CANCEL_CLOSE, resources.getString(LC_RELOAD_CONFIRM_CANCEL)))) {
                 try {
                     doLoad(path);
                 } catch (MalformedScriptException e) {
-                    FXDialogs.error(getStage().orElse(null),
+                    FXDialogs.error(FXContextFactory.currentContext().getStage(),
                             resources.getString(LC_ERROR_MALFORMED_SCRIPT) + "\n" + e.getLocalizedMessage());
                 } catch (RuntimeException e) {
-                    FXDialogs.error(getStage().orElse(null),
+                    FXDialogs.error(FXContextFactory.currentContext().getStage(),
                             resources.getString(LC_ERROR_LOAD), e, Map.of(
                                     ButtonBar.ButtonData.OK_DONE, resources.getString(LC_CLOSE),
                                     ButtonBar.ButtonData.OTHER, resources.getString(LC_REPORT)))
@@ -453,9 +440,9 @@ public final class Main extends BorderPane implements Initializable {
     void onSave(ActionEvent actionEvent) {
         Optional.ofNullable(storage.getPath()).ifPresent(path -> {
             try {
-                doSave(getStage().orElse(null));
+                doSave();
             } catch (RuntimeException e) {
-                FXDialogs.error(getStage().orElse(null),
+                FXDialogs.error(FXContextFactory.currentContext().getStage(),
                         resources.getString(LC_ERROR_SAVE), e, Map.of(
                                 ButtonBar.ButtonData.OK_DONE, resources.getString(LC_CLOSE),
                                 ButtonBar.ButtonData.OTHER, resources.getString(LC_REPORT)))
@@ -468,9 +455,9 @@ public final class Main extends BorderPane implements Initializable {
     @FXML
     void onSaveAs(ActionEvent actionEvent) {
         try {
-            doSaveAs(getStage().orElse(null));
+            doSaveAs();
         } catch (RuntimeException e) {
-            FXDialogs.error(getStage().orElse(null),
+            FXDialogs.error(FXContextFactory.currentContext().getStage(),
                     resources.getString(LC_ERROR_SAVE), e, Map.of(
                             ButtonBar.ButtonData.OK_DONE, resources.getString(LC_CLOSE),
                             ButtonBar.ButtonData.OTHER, resources.getString(LC_REPORT)))

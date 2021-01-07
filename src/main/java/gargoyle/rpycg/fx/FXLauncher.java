@@ -9,8 +9,7 @@ import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import javafx.util.Callback;
 
-import java.awt.Component;
-import java.awt.Window;
+import java.awt.*;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.MissingResourceException;
@@ -50,6 +49,7 @@ public final class FXLauncher extends Application {
 
     private void restart(Stage primaryStage) throws Exception {
         FXContext context = FXContextFactory.currentContext();
+        FXContextFactory.initializeStage(primaryStage);
         String baseName = context.getBaseName(appClass);
         context.loadResources(baseName).ifPresent(resources -> primaryStage.setTitle(resources.getString(LC_TITLE)));
         context.findResource(baseName, FXConstants.EXT_IMAGES)

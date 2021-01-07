@@ -8,6 +8,7 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.control.Dialog;
+import javafx.stage.Stage;
 import javafx.util.Callback;
 
 import java.io.IOException;
@@ -33,6 +34,7 @@ final class FXContextImpl implements FXContext {
     private final Property<Preferences> preferences;
     private final FXRegistry registry;
     private final Property<String> skin;
+    private Stage stage;
 
     FXContextImpl(Charset charset, Locale locale, ClassLoader classLoader) {
         this.locale = new SimpleObjectProperty<>(locale);
@@ -159,6 +161,11 @@ final class FXContextImpl implements FXContext {
     @Override
     public String getSkin() {
         return skin.getValue();
+    }
+
+    @Override
+    public Stage getStage() {
+        return stage;
     }
 
     @Override
@@ -294,5 +301,9 @@ final class FXContextImpl implements FXContext {
 
     public Property<String> skinProperty() {
         return skin;
+    }
+
+    public void setStage(Stage stage) {
+        this.stage = stage;
     }
 }

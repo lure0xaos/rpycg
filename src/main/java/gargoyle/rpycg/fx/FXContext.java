@@ -4,6 +4,7 @@ import javafx.application.Application;
 import javafx.application.HostServices;
 import javafx.scene.Parent;
 import javafx.scene.control.Dialog;
+import javafx.stage.Stage;
 import javafx.util.Callback;
 
 import java.net.URL;
@@ -35,6 +36,8 @@ public interface FXContext {
     Preferences getPreferences();
 
     String getSkin();
+
+    Stage getStage();
 
     <C extends V, V extends Parent> Optional<FXComponent<C, V>> loadComponent(
             Class<? extends C> componentClass);

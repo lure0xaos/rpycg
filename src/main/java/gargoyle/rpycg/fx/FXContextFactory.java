@@ -1,6 +1,7 @@
 package gargoyle.rpycg.fx;
 
 import javafx.application.Application;
+import javafx.stage.Stage;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Locale;
@@ -70,5 +71,9 @@ public final class FXContextFactory {
 
     public static FXContext snapshot(FXContext original) {
         return copy(original);
+    }
+
+    public static void initializeStage(Stage stage) {
+        getContext().setStage(stage);
     }
 }
