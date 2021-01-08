@@ -27,7 +27,7 @@ final class FilePreferencesStore {
 
     public static synchronized void load(Path path, Map<String, String> map) throws IOException {
         Properties properties = new Properties();
-        if (Files.exists(path)) {
+        if (Files.exists(path) && Files.isRegularFile(path)) {
             try (BufferedReader reader = Files.newBufferedReader(path, CHARSET)) {
                 properties.load(reader);
             }
