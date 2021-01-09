@@ -10,7 +10,7 @@ import java.util.concurrent.FutureTask;
 public final class FXRun {
     private static final Logger log = LoggerFactory.getLogger(FXRun.class);
 
-    public FXRun() {
+    private FXRun() {
         throw new IllegalStateException(FXRun.class.getName());
     }
 

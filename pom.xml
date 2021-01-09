@@ -26,7 +26,7 @@
         <repository>
             <id>github</id>
             <name>GitHub</name>
-            <url>https://maven.pkg.github.com/lure0xaos/rpycg/rpycg</url>
+            <url>https://maven.pkg.github.com/lure0xaos/rpycg/</url>
         </repository>
     </distributionManagement>
 
