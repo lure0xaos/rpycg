@@ -2,6 +2,10 @@
 > I created this to make it easier to make custom cheat menus for RenPy games, its basically a text editor where you can
 > make a menu and open it ingame.
 The only requirement is that you know the name of the variables.
+
+based on [this f95 thread](https://f95zone.to/threads/renpy-cheat-generator.14104/)
+(thanks to [@Aziien](https://f95zone.to/members/aziien.13215/))
+
 ## Features:
 - Enables console.
 - Get list of current used variables + values to file "Game Variables.txt" in game root dir 
@@ -32,8 +36,6 @@ Although application mimic the original, it has some differences:
 - Column built-in sorting and resizing
 - When installing, select game directory, and cheat will be placed at correct location
 - I would recommend grouping variables by menus, as excess of variables will be offscreen
-based on [this f95 thread](https://f95zone.to/threads/renpy-cheat-generator.14104/) 
-(thanks to [@Aziien](https://f95zone.to/members/aziien.13215/))
 ## TODO
 - Improve a visual hint where dropped item will be placed, as it's difficult to aim
   - (should think of the way how to do it)
