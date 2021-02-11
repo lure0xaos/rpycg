@@ -47,6 +47,7 @@ public final class FolderChooser extends Dialog<Path> implements Initializable {
     @FXML
     private TreeView<Path> fileTree;
     private String rootLabel;
+    private static final Logger log = LoggerFactory.getLogger(FolderChooser.class);
 
     public FolderChooser() {
         fileWatcher = new FileWatcher();
@@ -154,9 +155,10 @@ public final class FolderChooser extends Dialog<Path> implements Initializable {
         }
         if (Files.isDirectory(path)) {
             try (Stream<Path> list = Files.list(path)) {
-                return FXCollections.observableArrayList(list.filter(Files::isDirectory).sorted()
+                List<FileTreeItem> collect = list.filter(Files::isDirectory).sorted()
                         .map(watchPath -> new FileTreeItem(watchPath, fileWatcher, iconProvider, navigate))
-                        .collect(Collectors.toList()));
+                        .collect(Collectors.toList());
+                return FXCollections.observableArrayList(collect);
             } catch (IOException e) {
                 return FXCollections.observableArrayList();
             }
@@ -316,7 +318,7 @@ public final class FolderChooser extends Dialog<Path> implements Initializable {
                         iconProvider.apply(treeItem.getValue(), e.getSource().isExpanded())
                                 .ifPresent(treeItem::setGraphic);
                         treeItem.getChildren().clear();
-                        navigate.accept(treeItem, false);
+                        FXRun.runLater(()->navigate.accept(treeItem, false));
                     });
                     addEventHandler(TreeItem.branchExpandedEvent(), (TreeModificationEvent<Path> e) -> {
                         TreeItem<Path> treeItem = e.getSource();
@@ -324,7 +326,7 @@ public final class FolderChooser extends Dialog<Path> implements Initializable {
                         iconProvider.apply(treeItem.getValue(), treeItem.isExpanded())
                                 .ifPresent(treeItem::setGraphic);
                         fetch = false;
-                        navigate.accept(treeItem, true);
+                        FXRun.runLater(()->navigate.accept(treeItem, true));
                     });
                     fileWatcher.register(getValue(), ev -> updateChildren(this));
                 }
@@ -341,19 +343,20 @@ public final class FolderChooser extends Dialog<Path> implements Initializable {
         private Boolean updateChildren(TreeItem<Path> treeItem) {
             ObservableList<TreeItem<Path>> oldChildren = treeItem.getChildren();
             fetch = true;
-            ObservableList<TreeItem<Path>> newChildren = findNewChildren(oldChildren, navigate);
+            ObservableList<TreeItem<Path>> newChildren = findNewChildren(treeItem, oldChildren, navigate);
             oldChildren.setAll(newChildren);
             return fetch;
         }
 
         @SuppressWarnings("TypeMayBeWeakened")
-        private ObservableList<TreeItem<Path>> findNewChildren(ObservableList<TreeItem<Path>> oldChildren,
+        private ObservableList<TreeItem<Path>> findNewChildren(TreeItem<Path> treeItem, ObservableList<TreeItem<Path>> oldChildren,
                                                                BiConsumer<TreeItem<Path>, Boolean> collapse) {
             ObservableList<TreeItem<Path>> newChildren = FXCollections.observableArrayList(oldChildren);
             newChildren.removeIf(item -> !Files.isReadable(item.getValue()));
-            FolderChooser.findChildren(getValue(), fileWatcher, iconProvider, collapse)
+            FolderChooser.findChildren(treeItem.getValue(), fileWatcher, iconProvider, collapse)
                     .stream().filter(item -> Files.isReadable(item.getValue())
-                    && !oldChildren.contains(item))
+                    && !oldChildren.contains(item)
+                    && item.getValue().getParent().equals(treeItem.getValue()))
                     .forEach(newChildren::add);
             return newChildren;
         }
@@ -381,7 +384,7 @@ public final class FolderChooser extends Dialog<Path> implements Initializable {
                 return oldChildren;
             }
             fetch = true;
-            ObservableList<TreeItem<Path>> newChildren = findNewChildren(oldChildren, navigate);
+            ObservableList<TreeItem<Path>> newChildren = findNewChildren(this, oldChildren, navigate);
             oldChildren.setAll(newChildren);
             return newChildren;
         }
