@@ -2,7 +2,7 @@ package gargoyle.rpycg.fx;
 
 import java.util.function.Supplier;
 
-public class FXHolder<T> implements Supplier<T> {
+public final class FXHolder<T> implements Supplier<T> {
     private final Supplier<T> supplier;
     private T data;
 

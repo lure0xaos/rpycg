@@ -1,6 +1,6 @@
 package gargoyle.rpycg.ex;
 
-public class CodeGenerationException extends AppException {
+public final class CodeGenerationException extends AppException {
     public CodeGenerationException(String message) {
         super(message);
     }

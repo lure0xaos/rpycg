@@ -1,6 +1,6 @@
 package gargoyle.rpycg.ex;
 
-public class MalformedScriptException extends AppException {
+public final class MalformedScriptException extends AppException {
     public MalformedScriptException(String message) {
         super(message);
     }
