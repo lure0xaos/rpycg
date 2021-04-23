@@ -163,6 +163,13 @@
                                 </ImageView>
                             </graphic>
                         </MenuItem>
+                        <MenuItem text="%reinstall" onAction="#onReinstall" fx:id="btnReinstall">
+                            <graphic>
+                                <ImageView>
+                                    <Image url="@icons/save.png"/>
+                                </ImageView>
+                            </graphic>
+                        </MenuItem>
                     </items>
                 </MenuButton>
             </buttons>

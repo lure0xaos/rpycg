@@ -14,13 +14,27 @@ public final class Storage {
     public static final String LC_ERROR_LOAD = "error.load";
     public static final String LC_ERROR_SAVE = "error.save";
     private final ScriptConverter converter;
+    private final Property<Path> gamePath;
     private final Property<Boolean> modified;
     private final Property<Path> path;
 
     public Storage() {
         converter = new ScriptConverter();
         path = new SimpleObjectProperty<>();
+        gamePath = new SimpleObjectProperty<>();
         modified = new SimpleBooleanProperty(false);
+    }
+
+    public Property<Path> gamePathProperty() {
+        return gamePath;
+    }
+
+    public Path getGamePath() {
+        return gamePath.getValue();
+    }
+
+    public void setGamePath(Path path) {
+        this.gamePath.setValue(path);
     }
 
     public Boolean getModified() {
@@ -44,6 +58,14 @@ public final class Storage {
         return reload();
     }
 
+    public Property<Boolean> modifiedProperty() {
+        return modified;
+    }
+
+    public Property<Path> pathProperty() {
+        return path;
+    }
+
     private ModelItem reload() {
         try {
             ModelItem item = converter.fromScript(Files.readAllLines(path.getValue()));
@@ -55,19 +77,6 @@ public final class Storage {
         }
     }
 
-    public Property<Boolean> modifiedProperty() {
-        return modified;
-    }
-
-    public Property<Path> pathProperty() {
-        return path;
-    }
-
-    public void saveAs(Path savePath, ModelItem root) {
-        path.setValue(savePath);
-        save(root);
-    }
-
     private void save(ModelItem root) {
         try {
             Files.writeString(path.getValue(), String.join(System.lineSeparator(), converter.toScript(root)));
@@ -75,5 +84,10 @@ public final class Storage {
         } catch (IOException e) {
             throw new AppUserException(e, LC_ERROR_SAVE, path.toString());
         }
+    }
+
+    public void saveAs(Path savePath, ModelItem root) {
+        path.setValue(savePath);
+        save(root);
     }
 }

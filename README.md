@@ -40,7 +40,7 @@ Although application mimic the original, it has some differences:
 - Improve a visual hint where dropped item will be placed, as it's difficult to aim
   - (should think of the way how to do it)
 - ~~Visually separate menus~~
-- Some kind of syntax highlighting in Creator tab
+- ~~Some kind of syntax highlighting in Creator tab~~
 ## The latest changes
 - 05.08.2020 18:00 - First final usable version.
 - 10.08.2020 13:00 - Packaging into exe.
@@ -63,5 +63,6 @@ Although application mimic the original, it has some differences:
 - 13.11.2020 16:00 - Custom dialogs buttons for better user experience.
 - 17.11.2020 22:00 - Ui improvements.
 - 19.11.2020 15:00 - Syntax highlighting (Swing component).
+- 23.04.2021 13:00 - Reinstall option, i.e. update script in game folder.
 ### List of tested games
 - Corruption
