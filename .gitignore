@@ -2,3 +2,5 @@
 /.idea/
 /renpy-cheat-generator.iml
 debug.log
+/.gradle/
+/build/

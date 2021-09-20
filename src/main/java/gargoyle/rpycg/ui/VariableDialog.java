@@ -2,7 +2,6 @@ package gargoyle.rpycg.ui;
 
 import gargoyle.rpycg.ex.AppUserException;
 import gargoyle.rpycg.fx.FXContextFactory;
-import gargoyle.rpycg.fx.FXDialogs;
 import gargoyle.rpycg.fx.FXRun;
 import gargoyle.rpycg.fx.FXUserException;
 import gargoyle.rpycg.fx.FXUtil;
@@ -57,6 +56,24 @@ public final class VariableDialog extends Dialog<DisplayItem> implements Initial
                         new AppUserException(AppUserException.LC_ERROR_NO_VIEW, VariableDialog.class.getName()));
     }
 
+    private static String createOk(final ResourceBundle resources, final Boolean newValue) {
+        return resources.getString(newValue ? LC_OK_EDIT : LC_OK_CREATE);
+    }
+
+    private static String createTitle(final ResourceBundle resources, final Boolean value) {
+        return resources.getString(value ? LC_TITLE_EDIT : LC_TITLE_CREATE);
+    }
+
+    private static void decorateError(final Control cell, final Collection<String> errors) {
+        if (errors.isEmpty()) {
+            Classes.classRemove(cell, CLASS_DANGER);
+            cell.setTooltip(null);
+        } else {
+            Classes.classAdd(cell, CLASS_DANGER);
+            cell.setTooltip(new Tooltip(String.join("\n", errors)));
+        }
+    }
+
     public SimpleObjectProperty<DisplayItem> displayItemProperty() {
         return displayItem;
     }
@@ -69,15 +86,15 @@ public final class VariableDialog extends Dialog<DisplayItem> implements Initial
         return displayItem.getValue();
     }
 
-    public void setDisplayItem(DisplayItem displayItem) {
+    public void setDisplayItem(final DisplayItem displayItem) {
         this.displayItem.setValue(displayItem);
     }
 
     @SuppressWarnings("ReturnOfNull")
     @Override
-    public void initialize(URL location, ResourceBundle resources) {
+    public void initialize(final URL location, final ResourceBundle resources) {
         FXUtil.requireNonNull(resources, FXUserException.LC_ERROR_NO_RESOURCES, location.toExternalForm());
-        FXDialogs.decorateDialog(this,
+        FXContextFactory.currentContext().decorateDialog(this,
                 buttonType -> buttonType.getButtonData().isCancelButton() ? null :
                         DisplayItem.createVariable(type.getValue(),
                                 label.getText(), name.getText(), value.getText()), Map.of(
@@ -122,34 +139,19 @@ public final class VariableDialog extends Dialog<DisplayItem> implements Initial
         FXRun.runLater(this::onShow);
     }
 
-    private static String createOk(ResourceBundle resources, Boolean newValue) {
-        return resources.getString(newValue ? LC_OK_EDIT : LC_OK_CREATE);
+    public boolean isEdit() {
+        return edit.getValue();
     }
 
-    private static String createTitle(ResourceBundle resources, Boolean value) {
-        return resources.getString(value ? LC_TITLE_EDIT : LC_TITLE_CREATE);
+    public void setEdit(final boolean edit) {
+        this.edit.setValue(edit);
     }
 
-    private void onShow() {
-        validator.validate();
-        name.requestFocus();
+    private boolean isEmpty(final String val) {
+        return null == val || val.isEmpty();
     }
 
-    private static void decorateError(Control cell, Collection<String> errors) {
-        if (errors.isEmpty()) {
-            Classes.classRemove(cell, CLASS_DANGER);
-            cell.setTooltip(null);
-        } else {
-            Classes.classAdd(cell, CLASS_DANGER);
-            cell.setTooltip(new Tooltip(String.join("\n", errors)));
-        }
-    }
-
-    private boolean isEmpty(String val) {
-        return val == null || val.isEmpty();
-    }
-
-    private boolean isMatchFormat(String val, VarType varType) {
+    private boolean isMatchFormat(final String val, final VarType varType) {
         switch (varType) {
             case INT:
                 return Check.isInteger(val);
@@ -161,11 +163,8 @@ public final class VariableDialog extends Dialog<DisplayItem> implements Initial
         return false;
     }
 
-    public boolean isEdit() {
-        return edit.getValue();
-    }
-
-    public void setEdit(boolean edit) {
-        this.edit.setValue(edit);
+    private void onShow() {
+        validator.validate();
+        name.requestFocus();
     }
 }

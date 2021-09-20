@@ -8,36 +8,36 @@ public final class Classes {
         throw new IllegalStateException(Classes.class.getName());
     }
 
-    public static void classAddRemove(Styleable cell,
-                                      String classNameAdd, String classNameRemove) {
-        classAdd(cell, classNameAdd);
-        classRemove(cell, classNameRemove);
-    }
-
-    public static void classAdd(Styleable cell, String className) {
-        ObservableList<String> styleClass = cell.getStyleClass();
+    public static void classAdd(final Styleable cell, final String className) {
+        final ObservableList<String> styleClass = cell.getStyleClass();
         if (!styleClass.contains(className)) {
             styleClass.add(className);
         }
     }
 
+    public static void classAddRemove(final Styleable cell,
+                                      final String classNameAdd, final String classNameRemove) {
+        classAdd(cell, classNameAdd);
+        classRemove(cell, classNameRemove);
+    }
+
+    @SuppressWarnings("SameParameterValue")
+    public static void classAddRemoveAll(final Styleable cell,
+                                         final String classNameAdd, final String... classNameRemove) {
+        classAdd(cell, classNameAdd);
+        classRemoveAll(cell, classNameRemove);
+    }
+
     @SuppressWarnings("MethodCallInLoopCondition")
-    public static void classRemove(Styleable cell, String className) {
-        ObservableList<String> styleClass = cell.getStyleClass();
+    public static void classRemove(final Styleable cell, final String className) {
+        final ObservableList<String> styleClass = cell.getStyleClass();
         while (styleClass.contains(className)) {
             styleClass.remove(className);
         }
     }
 
-    @SuppressWarnings("SameParameterValue")
-    public static void classAddRemoveAll(Styleable cell,
-                                         String classNameAdd, String... classNameRemove) {
-        classAdd(cell, classNameAdd);
-        classRemoveAll(cell, classNameRemove);
-    }
-
-    public static void classRemoveAll(Styleable cell, String... classNames) {
-        for (String className : classNames) {
+    public static void classRemoveAll(final Styleable cell, final String... classNames) {
+        for (final String className : classNames) {
             classRemove(cell, className);
         }
     }

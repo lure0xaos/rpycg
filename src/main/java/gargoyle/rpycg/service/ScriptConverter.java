@@ -9,12 +9,7 @@ import gargoyle.rpycg.model.VarType;
 import gargoyle.rpycg.util.Check;
 
 import java.text.MessageFormat;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Locale;
-import java.util.ResourceBundle;
+import java.util.*;
 
 public final class ScriptConverter {
     private static final String LC_ERROR_FAIL_TYPE = "error.fail-type";
@@ -29,55 +24,55 @@ public final class ScriptConverter {
                         new AppUserException(AppUserException.LC_ERROR_NO_RESOURCES, ScriptConverter.class.getName()));
     }
 
-    public ModelItem fromScript(Iterable<String> lines) {
-        ModelItem root = ModelItem.createMenu("", "");
+    public ModelItem fromScript(final Iterable<String> lines) {
+        final ModelItem root = ModelItem.createMenu("", "");
         ModelItem menu = root;
-        for (String raw : lines) {
+        for (final String raw : lines) {
             if (raw.isBlank()) {
                 continue;
             }
-            String line = raw.trim();
-            if (line.charAt(0) == '<') {
-                String substring = line.substring(1);
-                int posName = substring.lastIndexOf(';');
-                String label;
-                String name;
-                if (posName > 0) {
+            final String line = raw.trim();
+            if ('<' == line.charAt(0)) {
+                final String substring = line.substring(1);
+                final int posName = substring.lastIndexOf(';');
+                final String label;
+                final String name;
+                if (0 < posName) {
                     label = substring.substring(0, posName).trim();
                     name = substring.substring(posName + 1).trim();
                 } else {
                     label = substring;
                     name = substring;
                 }
-                ModelItem child = ModelItem.createMenu(label, name);
+                final ModelItem child = ModelItem.createMenu(label, name);
                 menu.addChild(child);
                 menu = child;
                 continue;
             }
-            if (line.charAt(0) == '>') {
+            if ('>' == line.charAt(0)) {
                 menu = menu.getParent();
-                if (menu == null) {
+                if (null == menu) {
                     return root;
                 }
                 continue;
             }
             String expr = line;
-            int posLabel = expr.lastIndexOf(';');
-            String label;
-            if (posLabel > 0) {
+            final int posLabel = expr.lastIndexOf(';');
+            final String label;
+            if (0 < posLabel) {
                 label = expr.substring(posLabel + 1).trim();
                 expr = expr.substring(0, posLabel).trim();
             } else {
                 label = "";
             }
             VarType type = null;
-            if (!expr.isEmpty() && expr.charAt(expr.length() - 1) == ')') {
-                int open = expr.lastIndexOf('(');
-                if (open > 0) {
-                    String typeValue = expr.substring(open + 1, expr.length() - 1).trim();
+            if (!expr.isEmpty() && ')' == expr.charAt(expr.length() - 1)) {
+                final int open = expr.lastIndexOf('(');
+                if (0 < open) {
+                    final String typeValue = expr.substring(open + 1, expr.length() - 1).trim();
                     try {
                         type = VarType.valueOf(typeValue.toUpperCase(Locale.ENGLISH));
-                    } catch (IllegalArgumentException e) {
+                    } catch (final IllegalArgumentException e) {
                         throw new MalformedScriptException(
                                 MessageFormat.format(resources.getString(LC_ERROR_WRONG_TYPE),
                                         typeValue, Arrays.toString(VarType.values())), e);
@@ -85,16 +80,16 @@ public final class ScriptConverter {
                     expr = expr.substring(0, open).trim();
                 }
             }
-            String name;
-            String value;
-            int posEq = expr.lastIndexOf('=');
-            if (posEq > 0) {
-                String val = expr.substring(posEq + 1).trim();
+            final String name;
+            final String value;
+            final int posEq = expr.lastIndexOf('=');
+            if (0 < posEq) {
+                final String val = expr.substring(posEq + 1).trim();
                 name = expr.substring(0, posEq).trim();
-                int len = val.length();
-                char first = val.charAt(0);
-                char last = val.charAt(len - 1);
-                if (first == '\'' && last == '\'' || first == '\"' && last == '\"') {
+                final int len = val.length();
+                final char first = val.charAt(0);
+                final char last = val.charAt(len - 1);
+                if ('\'' == first && '\'' == last || '\"' == first && '\"' == last) {
                     type = VarType.STR;
                     value = val.substring(1, len - 2).trim();
                 } else {
@@ -104,7 +99,7 @@ public final class ScriptConverter {
                 name = expr;
                 value = "";
             }
-            if (type == null) {
+            if (null == type) {
                 if (value.isBlank()) {
                     type = VarType.STR;
                 } else if (Check.isFloat(value)) {
@@ -136,17 +131,17 @@ public final class ScriptConverter {
         return root;
     }
 
-    public List<String> toScript(ModelItem item) {
-        String label = item.getLabel();
-        String name = item.getName();
-        ModelType modelType = item.getModelType();
+    public List<String> toScript(final ModelItem item) {
+        final String label = item.getLabel();
+        final String name = item.getName();
+        final ModelType modelType = item.getModelType();
         switch (modelType) {
             case MENU:
-                List<String> lines = new LinkedList<>();
+                final List<String> lines = new LinkedList<>();
                 if (!name.isBlank()) {
                     lines.add(MessageFormat.format("<{0};{1}", label, name));
                 }
-                for (ModelItem child : item.getChildren()) {
+                for (final ModelItem child : item.getChildren()) {
                     lines.addAll(toScript(child));
                 }
                 if (!name.isBlank()) {
@@ -154,8 +149,8 @@ public final class ScriptConverter {
                 }
                 return lines;
             case VARIABLE:
-                String value = item.getValue();
-                String keyword = item.getType() == null ? "" : item.getType().getKeyword();
+                final String value = item.getValue();
+                final String keyword = null == item.getType() ? "" : item.getType().getKeyword();
                 return Collections.singletonList(MessageFormat.format("{0}{1}({2}){3}",
                         name,
                         value.isBlank() ? "" : '=' + value,

@@ -10,10 +10,10 @@ public final class ModelTemplate {
     }
 
     public static ModelItem getTemplateTree() {
-        ModelItem rootMenu = ModelItem.createMenu("", "");
+        final ModelItem rootMenu = ModelItem.createMenu("", "");
         rootMenu.addChild(ModelItem.createVariable(VarType.STR, "custom name", "variable_name1", ""));
         rootMenu.addChild(ModelItem.createVariable(VarType.STR, "variable_name2", "variable_name2", ""));
-        ModelItem menu = ModelItem.createMenu("menu_title", "menu_title");
+        final ModelItem menu = ModelItem.createMenu("menu_title", "menu_title");
         menu.addChild(ModelItem.createVariable(VarType.STR, "variable_name3", "variable_name3", ""));
         menu.addChild(ModelItem.createVariable(VarType.STR, "variable_name4", "variable_name4", ""));
         rootMenu.addChild(menu);
@@ -24,41 +24,41 @@ public final class ModelTemplate {
     }
 
     public static ModelItem getTestTemplateTree() {
-        ModelItem rootMenu = ModelItem.createMenu("", "");
+        final ModelItem rootMenu = ModelItem.createMenu("", "");
         int v = 1;
-        for (int i = 0; i < 2; i++) {
+        for (int i = 0; 2 > i; i++) {
             rootMenu.addChild(createVariable(v));
             v++;
         }
         int m = 1;
-        ModelItem menuAlmost = createMenu(m);
+        final ModelItem menuAlmost = createMenu(m);
         m++;
-        int almostSize = FULLNESS.ALMOST.getSize();
+        final int almostSize = FULLNESS.ALMOST.getSize();
         for (int i = 0; i <= almostSize; i++) {
             menuAlmost.addChild(createVariable(v));
             v++;
         }
         rootMenu.addChild(menuAlmost);
-        ModelItem menuFull = createMenu(m);
-        int fullSize = FULLNESS.FULL.getSize();
+        final ModelItem menuFull = createMenu(m);
+        final int fullSize = FULLNESS.FULL.getSize();
         for (int i = 0; i <= fullSize; i++) {
             menuFull.addChild(createVariable(v));
             v++;
         }
         rootMenu.addChild(menuFull);
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; 3 > i; i++) {
             rootMenu.addChild(createVariable(v));
             v++;
         }
         return rootMenu;
     }
 
-    private static ModelItem createVariable(int v) {
-        return ModelItem.createVariable(VarType.STR,
-                MessageFormat.format("custom name{0}", v), MessageFormat.format("variable_name{0}", v), "");
+    private static ModelItem createMenu(final int m) {
+        return ModelItem.createMenu(MessageFormat.format("menu_title{0}", m), MessageFormat.format("menu_title{0}", m));
     }
 
-    private static ModelItem createMenu(int m) {
-        return ModelItem.createMenu(MessageFormat.format("menu_title{0}", m), MessageFormat.format("menu_title{0}", m));
+    private static ModelItem createVariable(final int v) {
+        return ModelItem.createVariable(VarType.STR,
+                MessageFormat.format("custom name{0}", v), MessageFormat.format("variable_name{0}", v), "");
     }
 }

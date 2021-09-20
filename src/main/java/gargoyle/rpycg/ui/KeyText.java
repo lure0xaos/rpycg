@@ -27,11 +27,11 @@ public final class KeyText extends TextField {
         defaultCombination = new SimpleObjectProperty<>(null);
         combination = new SimpleObjectProperty<>(null);
         activated = new SimpleBooleanProperty(false);
-        Optional<ResourceBundle> optional = FXContextFactory.currentContext().loadResources(KeyText.class);
-        String tooltip = optional.map(resources -> resources.getString(LC_DEFAULT)).orElse(LC_DEFAULT);
-        String pressKey = optional.map(resources -> resources.getString(LC_PRESS_ANY_KEY)).orElse(LC_PRESS_ANY_KEY);
+        final Optional<ResourceBundle> optional = FXContextFactory.currentContext().loadResources(KeyText.class);
+        final String tooltip = optional.map(resources -> resources.getString(LC_DEFAULT)).orElse(LC_DEFAULT);
+        final String pressKey = optional.map(resources -> resources.getString(LC_PRESS_ANY_KEY)).orElse(LC_PRESS_ANY_KEY);
         defaultCombination.addListener((observable, oldValue, newValue) -> {
-            if (oldValue == null) {
+            if (null == oldValue) {
                 combination.setValue(newValue);
                 updateTooltip(newValue, tooltip);
             }
@@ -39,7 +39,7 @@ public final class KeyText extends TextField {
         });
         updateTooltip(defaultCombination.getValue(), tooltip);
         combination.addListener((observable, oldValue, newValue) -> {
-            if (oldValue == null) {
+            if (null == oldValue) {
                 updateTooltip(newValue, tooltip);
             }
             setText(newValue.getDisplayText());
@@ -67,12 +67,7 @@ public final class KeyText extends TextField {
         });
     }
 
-    private void updateTooltip(KeyCodeCombination keyCodeCombination, String tooltipString) {
-        Optional.ofNullable(keyCodeCombination).ifPresent(newKeyCode ->
-                setTooltip(new Tooltip(tooltipString + ' ' + newKeyCode.getDisplayText())));
-    }
-
-    private static KeyCodeCombination toCombination(KeyEvent event) {
+    private static KeyCodeCombination toCombination(final KeyEvent event) {
         return new KeyCodeCombination(event.getCode(),
                 event.isShiftDown() ? KeyCombination.ModifierValue.DOWN : KeyCombination.ModifierValue.UP,
                 event.isControlDown() ? KeyCombination.ModifierValue.DOWN : KeyCombination.ModifierValue.UP,
@@ -105,12 +100,17 @@ public final class KeyText extends TextField {
         return defaultCombination.getValue();
     }
 
-    public void setDefaultCombination(KeyCodeCombination defaultCombination) {
+    public void setDefaultCombination(final KeyCodeCombination defaultCombination) {
         this.defaultCombination.setValue(defaultCombination);
     }
 
     public void reset() {
         combination.setValue(defaultCombination.getValue());
         activated.setValue(false);
+    }
+
+    private void updateTooltip(final KeyCodeCombination keyCodeCombination, final String tooltipString) {
+        Optional.ofNullable(keyCodeCombination).ifPresent(newKeyCode ->
+                setTooltip(new Tooltip(tooltipString + ' ' + newKeyCode.getDisplayText())));
     }
 }

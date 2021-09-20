@@ -9,7 +9,7 @@ public interface FXSplash {
 
     Window createWindow(URL location, ResourceBundle resources);
 
-    default void handleSplashNotification(FXSplashNotification splashNotification) {
+    default void handleSplashNotification(final FXSplashNotification splashNotification) {
     }
 
     interface FXSplashNotification {

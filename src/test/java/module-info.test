@@ -1,0 +1,6 @@
+--add-opens
+    RenPyCheatGenerator=org.junit.platform.engine
+--add-reads
+    RenPyCheatGenerator=org.junit.jupiter.api
+--add-exports
+    RenPyCheatGenerator=org.junit.platform.engine

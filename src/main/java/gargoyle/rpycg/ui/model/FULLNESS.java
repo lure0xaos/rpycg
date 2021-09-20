@@ -9,11 +9,11 @@ public enum FULLNESS {
     FULL(12);
     private final int size;
 
-    FULLNESS(int size) {
+    FULLNESS(final int size) {
         this.size = size;
     }
 
-    public static FULLNESS determineFullness(int size) {
+    public static FULLNESS determineFullness(final int size) {
         return Arrays.stream(values()).sorted(Comparator.comparingInt(o -> -o.size))
                 .filter(fullness -> size >= fullness.size).findFirst().orElse(NORMAL);
     }

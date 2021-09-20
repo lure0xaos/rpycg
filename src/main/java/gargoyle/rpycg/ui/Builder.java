@@ -1,19 +1,19 @@
 package gargoyle.rpycg.ui;
 
-import gargoyle.rpycg.RPyCG;
 import gargoyle.rpycg.ex.AppUserException;
 import gargoyle.rpycg.fx.FXComponent;
 import gargoyle.rpycg.fx.FXConstants;
 import gargoyle.rpycg.fx.FXContext;
 import gargoyle.rpycg.fx.FXContextFactory;
-import gargoyle.rpycg.fx.FXDialogs;
 import gargoyle.rpycg.fx.FXRun;
 import gargoyle.rpycg.fx.FXUserException;
 import gargoyle.rpycg.fx.FXUtil;
 import gargoyle.rpycg.model.ModelItem;
 import gargoyle.rpycg.model.ModelTemplate;
 import gargoyle.rpycg.model.ModelType;
+import gargoyle.rpycg.service.ErrorMailer;
 import gargoyle.rpycg.service.ModelConverter;
+import gargoyle.rpycg.ui.icons.Icons;
 import gargoyle.rpycg.ui.model.DROPPING;
 import gargoyle.rpycg.ui.model.DisplayItem;
 import gargoyle.rpycg.ui.model.FULLNESS;
@@ -76,11 +76,6 @@ public final class Builder extends ScrollPane implements Initializable {
     private static final String CLASS_ODD = "odd";
     private static final String CLASS_VARIABLE = "variable";
     private static final String CLASS_WARN = "warn";
-    private static final String ICON_DELETE = "icons/clear";
-    private static final String ICON_EMPTY = "icons/empty";
-    private static final String ICON_MENU = "icons/menu";
-    private static final String ICON_TEMPLATE = "icons/template";
-    private static final String ICON_VARIABLE = "icons/var";
     private static final String KEY_DEBUG = "debug";
     private static final String LC_CLOSE = "close";
     private static final String LC_ERROR_MALFORMED_SCRIPT = "error.malformed-script";
@@ -111,16 +106,16 @@ public final class Builder extends ScrollPane implements Initializable {
                 .orElseThrow(() -> new AppUserException(AppUserException.LC_ERROR_NO_VIEW, Builder.class.getName()));
     }
 
-    private static boolean canBeChildOfParent(DisplayItem child, DisplayItem parent) {
+    private static boolean canBeChildOfParent(final DisplayItem child, final DisplayItem parent) {
         child.getModelType();
-        return parent.getModelType() == ModelType.MENU;
+        return ModelType.MENU == parent.getModelType();
     }
 
-    private static FULLNESS getFullness(TreeItem<DisplayItem> treeItem) {
-        DisplayItem item = treeItem.getValue();
+    private static FULLNESS getFullness(final TreeItem<DisplayItem> treeItem) {
+        final DisplayItem item = treeItem.getValue();
         switch (item.getModelType()) {
             case VARIABLE:
-                return FULLNESS.determineFullness(treeItem.getParent() == null ? 0
+                return FULLNESS.determineFullness(null == treeItem.getParent() ? 0
                         : treeItem.getParent().getChildren().size());
             case MENU:
                 return FULLNESS.determineFullness(treeItem.getChildren().size());
@@ -129,43 +124,43 @@ public final class Builder extends ScrollPane implements Initializable {
         }
     }
 
-    private static boolean isFirstChild(TreeItem<DisplayItem> treeItem) {
-        if (treeItem == null) {
+    private static boolean isFirstChild(final TreeItem<DisplayItem> treeItem) {
+        if (null == treeItem) {
             return true;
         }
-        TreeItem<DisplayItem> parent = treeItem.getParent();
-        if (parent == null) {
+        final TreeItem<DisplayItem> parent = treeItem.getParent();
+        if (null == parent) {
             return true;
         }
-        ObservableList<TreeItem<DisplayItem>> children = parent.getChildren();
-        return children.indexOf(treeItem) == 0;
+        final ObservableList<TreeItem<DisplayItem>> children = parent.getChildren();
+        return 0 == children.indexOf(treeItem);
     }
 
-    private static boolean isLastChild(TreeItem<DisplayItem> treeItem) {
-        if (treeItem == null) {
+    private static boolean isLastChild(final TreeItem<DisplayItem> treeItem) {
+        if (null == treeItem) {
             return false;
         }
-        TreeItem<DisplayItem> parent = treeItem.getParent();
-        if (parent == null) {
+        final TreeItem<DisplayItem> parent = treeItem.getParent();
+        if (null == parent) {
             return false;
         }
-        ObservableList<TreeItem<DisplayItem>> children = parent.getChildren();
+        final ObservableList<TreeItem<DisplayItem>> children = parent.getChildren();
         return children.indexOf(treeItem) == children.size() - 1;
     }
 
     @SuppressWarnings("ObjectEquality")
-    private static boolean isNotParent(TreeItem<DisplayItem> parent, TreeItem<DisplayItem> child) {
+    private static boolean isNotParent(final TreeItem<DisplayItem> parent, final TreeItem<DisplayItem> child) {
         TreeItem<DisplayItem> item = child;
         boolean result = true;
-        while (result && item != null) {
+        while (result && null != item) {
             result = item.getParent() != parent;
             item = item.getParent();
         }
         return result;
     }
 
-    private static void setCellSignalDecorations(Styleable cell, TreeItem<DisplayItem> treeItem) {
-        if (treeItem != null && treeItem.getValue() != null) {
+    private static void setCellSignalDecorations(final Styleable cell, final TreeItem<DisplayItem> treeItem) {
+        if (null != treeItem && null != treeItem.getValue()) {
             switch (getFullness(treeItem)) {
                 case NORMAL:
                     Classes.classRemoveAll(cell, CLASS_WARN, CLASS_DANGER);
@@ -182,12 +177,12 @@ public final class Builder extends ScrollPane implements Initializable {
         }
     }
 
-    private static void setCellSplitDecorations(Styleable cell,
-                                                TreeItem<DisplayItem> treeItem) {
+    private static void setCellSplitDecorations(final Styleable cell,
+                                                final TreeItem<DisplayItem> treeItem) {
         Classes.classRemoveAll(cell, CLASS_VARIABLE, CLASS_MENU, CLASS_FIRST_CHILD, CLASS_LAST_CHILD);
-        if (treeItem != null) {
-            DisplayItem displayItem = treeItem.getValue();
-            if (displayItem != null) {
+        if (null != treeItem) {
+            final DisplayItem displayItem = treeItem.getValue();
+            if (null != displayItem) {
                 switch (displayItem.getModelType()) {
                     case MENU:
                         Classes.classAddRemoveAll(cell, CLASS_MENU,
@@ -213,11 +208,11 @@ public final class Builder extends ScrollPane implements Initializable {
         }
     }
 
-    private static void setCellZebraDecorations(Styleable cell,
-                                                TreeItem<DisplayItem> treeItem, int cellIndex) {
+    private static void setCellZebraDecorations(final Styleable cell,
+                                                final TreeItem<DisplayItem> treeItem, final int cellIndex) {
         Classes.classRemoveAll(cell, CLASS_ODD, CLASS_EVEN);
-        if (treeItem != null && treeItem.getValue() != null) {
-            if (cellIndex % 2 == 0) {
+        if (null != treeItem && null != treeItem.getValue()) {
+            if (0 == cellIndex % 2) {
                 Classes.classAddRemove(cell, CLASS_EVEN, CLASS_ODD);
             } else {
                 Classes.classAddRemove(cell, CLASS_ODD, CLASS_EVEN);
@@ -229,64 +224,8 @@ public final class Builder extends ScrollPane implements Initializable {
         addMenu(getRoot());
     }
 
-    private void addMenu(TreeItem<DisplayItem> item) {
-        MenuDialog dialog = new MenuDialog();
-        dialog.setKnown(getKnownNames(""));
-        getStage().ifPresent(dialog::initOwner);
-        dialog.showAndWait().ifPresent(menu -> addItem(item, menu, true));
-    }
-
-    private TreeItem<DisplayItem> getRoot() {
-        return tree.getRoot();
-    }
-
-    private Set<String> getKnownNames(String allow) {
-        Set<String> known = new HashSet<>(tree.getChildrenUnmodifiable().size());
-        TreeItemWalker.visitItems(tree, displayItem -> {
-            String name = displayItem.getName();
-            if (!name.equalsIgnoreCase(allow)) {
-                known.add(name);
-            }
-        });
-        return known;
-    }
-
-    private Optional<Stage> getStage() {
-        return FXUtil.findStage(tree);
-    }
-
-    private void addItem(TreeItem<DisplayItem> item, DisplayItem displayItem, boolean expanded) {
-        TreeItem<DisplayItem> treeItem = item == null ? tree.getRoot() : item;
-        TreeItem<DisplayItem> newItem = DisplayItem.toTreeItem(displayItem, expanded);
-        treeItem.getChildren().add(newItem);
-        changed.setValue(true);
-        selectItem(newItem);
-    }
-
-    private void selectItem(TreeItem<DisplayItem> item) {
-        TreeItem<DisplayItem> treeItem = item;
-        while (treeItem != null) {
-            treeItem.setExpanded(treeItem.getValue() != null && treeItem.getValue().getModelType() == ModelType.MENU);
-            treeItem = treeItem.getParent();
-        }
-        tree.getSelectionModel().select(item);
-        tree.scrollTo(tree.getRow(item));
-    }
-
     public void addRootVariable() {
         addVariable(getRoot());
-    }
-
-    private void addVariable(TreeItem<DisplayItem> item) {
-        VariableDialog dialog = new VariableDialog();
-        getStage().ifPresent(dialog::initOwner);
-        dialog.showAndWait().ifPresent(variable -> addItem(item, variable, false));
-    }
-
-    private void attachTo(TreeItem<DisplayItem> destItem, TreeItem<DisplayItem> dragItem) {
-        dragItem.getParent().getChildren().remove(dragItem);
-        destItem.getChildren().add(dragItem);
-        selectItem(dragItem);
     }
 
     public SimpleBooleanProperty changedProperty() {
@@ -297,52 +236,117 @@ public final class Builder extends ScrollPane implements Initializable {
         changed.setValue(shouldClearRoot());
     }
 
-    private ContextMenu createContextMenuForCell(TreeItem<DisplayItem> treeItem) {
-        List<MenuItem> menuItems = FXCollections.observableArrayList();
-        if (treeItem != null) {
-            DisplayItem displayItem = treeItem.getValue();
-            if (displayItem != null) {
-                ModelType modelType = displayItem.getModelType();
-                if (modelType == ModelType.VARIABLE) {
-                    menuItems.add(createMenuItem(ICON_VARIABLE, "edit-variable", treeItem, this::editVariable));
+    public Node createPlaceHolder(final ResourceBundle resources) {
+        final FXContext context = FXContextFactory.currentContext();
+        final Button placeholder = new Button(resources.getString(LC_TEMPLATE),
+                context.findResource(context.resolveBaseName(Icons.class, Icons.ICON_TEMPLATE), FXConstants.EXT__IMAGES)
+                        .map(URL::toExternalForm).map(ImageView::new).orElse(null));
+        placeholder.setTooltip(new Tooltip(resources.getString(LC_TEMPLATE_TOOLTIP)));
+        placeholder.setOnAction(this::onTemplate);
+        return placeholder;
+    }
+
+    public ModelItem getModel() {
+        return modelConverter.toModel(tree.getRoot());
+    }
+
+    public void setModel(final ModelItem rootItem) {
+        FXRun.runLater(() -> changed.setValue(shouldUpdateTree(modelConverter.toTree(rootItem))));
+    }
+
+    @SuppressWarnings("ParameterHidesMemberVariable")
+    @Override
+    public void initialize(final URL location, final ResourceBundle resources) {
+        this.resources = FXUtil.requireNonNull(resources, FXUserException.LC_ERROR_NO_RESOURCES,
+                location.toExternalForm());
+        initializeTree(createPlaceHolder(resources));
+    }
+
+    public boolean isChanged() {
+        return changed.getValue();
+    }
+
+    public void setChanged(final boolean changed) {
+        this.changed.setValue(changed);
+    }
+
+    public boolean isTreeEmpty() {
+        return tree.getRoot().getChildren().isEmpty();
+    }
+
+    private void addItem(final TreeItem<DisplayItem> item, final DisplayItem displayItem, final boolean expanded) {
+        final TreeItem<DisplayItem> treeItem = null == item ? tree.getRoot() : item;
+        final TreeItem<DisplayItem> newItem = DisplayItem.toTreeItem(displayItem, expanded);
+        treeItem.getChildren().add(newItem);
+        changed.setValue(true);
+        selectItem(newItem);
+    }
+
+    private void addMenu(final TreeItem<DisplayItem> item) {
+        final MenuDialog dialog = new MenuDialog();
+        dialog.setKnown(getKnownNames(""));
+        getStage().ifPresent(dialog::initOwner);
+        dialog.showAndWait().ifPresent(menu -> addItem(item, menu, true));
+    }
+
+    private void addVariable(final TreeItem<DisplayItem> item) {
+        final VariableDialog dialog = new VariableDialog();
+        getStage().ifPresent(dialog::initOwner);
+        dialog.showAndWait().ifPresent(variable -> addItem(item, variable, false));
+    }
+
+    private void attachTo(final TreeItem<DisplayItem> destItem, final TreeItem<DisplayItem> dragItem) {
+        dragItem.getParent().getChildren().remove(dragItem);
+        destItem.getChildren().add(dragItem);
+        selectItem(dragItem);
+    }
+
+    private ContextMenu createContextMenuForCell(final TreeItem<DisplayItem> treeItem) {
+        final List<MenuItem> menuItems = FXCollections.observableArrayList();
+        if (null != treeItem) {
+            final DisplayItem displayItem = treeItem.getValue();
+            if (null != displayItem) {
+                final ModelType modelType = displayItem.getModelType();
+                if (ModelType.VARIABLE == modelType) {
+                    menuItems.add(createMenuItem(Icons.ICON_VARIABLE, "edit-variable", treeItem, this::editVariable));
                 }
-                if (modelType == ModelType.MENU) {
-                    menuItems.add(createMenuItem(ICON_MENU, "edit-menu", treeItem, this::editMenu));
+                if (ModelType.MENU == modelType) {
+                    menuItems.add(createMenuItem(Icons.ICON_MENU, "edit-menu", treeItem, this::editMenu));
                     menuItems.add(new SeparatorMenuItem());
-                    menuItems.add(createMenuItem(ICON_VARIABLE, "create-variable", treeItem, this::addVariable));
-                    menuItems.add(createMenuItem(ICON_MENU, "create-menu", treeItem, this::addMenu));
+                    menuItems.add(createMenuItem(Icons.ICON_VARIABLE, "create-variable", treeItem, this::addVariable));
+                    menuItems.add(createMenuItem(Icons.ICON_MENU, "create-menu", treeItem, this::addMenu));
                     menuItems.add(new SeparatorMenuItem());
-                    menuItems.add(createMenuItem(ICON_MENU, "split-menu", treeItem, this::splitMenu));
+                    menuItems.add(createMenuItem(Icons.ICON_MENU, "split-menu", treeItem, this::splitMenu));
                 }
-                if (treeItem.getParent() != null) {
+                if (null != treeItem.getParent()) {
                     menuItems.add(new SeparatorMenuItem());
-                    menuItems.add(createMenuItem(ICON_DELETE, "remove", treeItem, this::removeItem));
+                    menuItems.add(createMenuItem(Icons.ICON_DELETE, "remove", treeItem, this::removeItem));
                 }
                 return new ContextMenu(menuItems.toArray(MENU_ITEMS));
             }
         }
         menuItems.add(new SeparatorMenuItem());
-        TreeItem<DisplayItem> rootItem = tree.getRoot();
-        menuItems.add(createMenuItem(ICON_VARIABLE, "create-variable", rootItem, this::addVariable));
-        menuItems.add(createMenuItem(ICON_MENU, "create-menu", rootItem, this::addMenu));
+        final TreeItem<DisplayItem> rootItem = tree.getRoot();
+        menuItems.add(createMenuItem(Icons.ICON_VARIABLE, "create-variable", rootItem, this::addVariable));
+        menuItems.add(createMenuItem(Icons.ICON_MENU, "create-menu", rootItem, this::addMenu));
         return new ContextMenu(menuItems.toArray(MENU_ITEMS));
     }
 
-    private TreeCell<DisplayItem> createDisplayItemTreeCell(TreeView<DisplayItem> treeView) {
-        TreeCell<DisplayItem> treeCell = new DisplayItemTreeCell((cell, displayItem) -> {
+    private TreeCell<DisplayItem> createDisplayItemTreeCell(final TreeView<DisplayItem> treeView) {
+        final TreeCell<DisplayItem> treeCell = new DisplayItemTreeCell((cell, displayItem) -> {
             cell.setText(Optional.ofNullable(displayItem)
                     .map(DisplayItem::getLabel).filter(s -> !s.isBlank()).orElseGet(() ->
                             Optional.ofNullable(displayItem).map(DisplayItem::getName).orElse("")));
             component.findResource(Optional.ofNullable(displayItem).map(DisplayItem::getModelType).map(type -> {
-                switch (type) {
-                    case MENU:
-                        return ICON_MENU;
-                    case VARIABLE:
-                        return ICON_VARIABLE;
-                    default:
-                        return ICON_EMPTY;
-                }
-            }).orElse(ICON_EMPTY), FXConstants.EXT_IMAGES)
+                        switch (type) {
+                            case MENU:
+                                return Icons.ICON_MENU;
+                            case VARIABLE:
+                                return Icons.ICON_VARIABLE;
+                            default:
+                                return Icons.ICON_EMPTY;
+                        }
+                    }).orElse(Icons.ICON_EMPTY), FXConstants.EXT__IMAGES)
                     .map(URL::toExternalForm).map(ImageView::new)
                     .ifPresent(cell::setGraphic);
             updateCell(cell, cell.getTreeItem(), cell.getIndex());
@@ -351,7 +355,7 @@ public final class Builder extends ScrollPane implements Initializable {
         treeCell.indexProperty().addListener((observable, oldValue, newValue) ->
                 updateCell(treeCell, treeCell.getTreeItem(), treeCell.getIndex()));
         treeCell.treeViewProperty().addListener((observable, oldValue, newValue) -> {
-            if (newValue != null) {
+            if (null != newValue) {
                 newValue.setOnScroll(scrollEvent ->
                         updateCell(treeCell, treeCell.getTreeItem(), treeCell.getIndex()));
             }
@@ -361,26 +365,17 @@ public final class Builder extends ScrollPane implements Initializable {
         return treeCell;
     }
 
-    private MenuItem createMenuItem(String graphicName,
-                                    String key,
-                                    TreeItem<DisplayItem> treeItem,
-                                    Consumer<TreeItem<DisplayItem>> handler) {
-        MenuItem item = new MenuItem(resources.getString(key), Optional.ofNullable(graphicName).flatMap(location ->
-                component.findResource(location, FXConstants.EXT_IMAGES)
-                        .map(URL::toExternalForm).map(ImageView::new))
+    private MenuItem createMenuItem(final String graphicName,
+                                    final String key,
+                                    final TreeItem<DisplayItem> treeItem,
+                                    final Consumer<? super TreeItem<DisplayItem>> handler) {
+        final MenuItem item = new MenuItem(resources.getString(key), Optional.ofNullable(graphicName)
+                .flatMap(location ->
+                        FXContextFactory.currentContext().findResource(Icons.class, location, FXConstants.EXT__IMAGES)
+                                .map(URL::toExternalForm).map(ImageView::new))
                 .orElse(null));
         item.setOnAction(event -> handler.accept(treeItem));
         return item;
-    }
-
-    public Node createPlaceHolder(ResourceBundle resources) {
-        FXContext context = FXContextFactory.currentContext();
-        Button placeholder = new Button(resources.getString(LC_TEMPLATE),
-                context.findResource(context.getBaseName(Builder.class, ICON_TEMPLATE), FXConstants.EXT_IMAGES)
-                        .map(URL::toExternalForm).map(ImageView::new).orElse(null));
-        placeholder.setTooltip(new Tooltip(resources.getString(LC_TEMPLATE_TOOLTIP)));
-        placeholder.setOnAction(this::onTemplate);
-        return placeholder;
     }
 
     private void doTemplate() {
@@ -391,63 +386,66 @@ public final class Builder extends ScrollPane implements Initializable {
                         () -> updateTree(ModelTemplate.getTemplateTree()));
     }
 
-    private void editMenu(TreeItem<DisplayItem> item) {
-        MenuDialog dialog = new MenuDialog();
-        dialog.setKnown(getKnownNames(item == null || item.getValue() == null ? "" : item.getValue().getName()));
+    private void editMenu(final TreeItem<DisplayItem> item) {
+        final MenuDialog dialog = new MenuDialog();
+        dialog.setKnown(getKnownNames(null == item || null == item.getValue() ? "" : item.getValue().getName()));
         getStage().ifPresent(dialog::initOwner);
-        if (item != null) {
+        if (null != item) {
             dialog.setDisplayItem(item.getValue());
         }
         dialog.showAndWait().ifPresent(menu -> replaceItem(item, menu));
     }
 
-    private void editVariable(TreeItem<DisplayItem> item) {
-        VariableDialog dialog = new VariableDialog();
+    private void editVariable(final TreeItem<DisplayItem> item) {
+        final VariableDialog dialog = new VariableDialog();
         getStage().ifPresent(dialog::initOwner);
         dialog.setDisplayItem(item.getValue());
         dialog.showAndWait().ifPresent(variable -> replaceItem(item, variable));
     }
 
-    public ModelItem getModel() {
-        return modelConverter.toModel(tree.getRoot());
+    private Set<String> getKnownNames(final String allow) {
+        final Set<String> known = new HashSet<>(tree.getChildrenUnmodifiable().size());
+        TreeItemWalker.visitItems(tree, displayItem -> {
+            final String name = displayItem.getName();
+            if (!name.equalsIgnoreCase(allow)) {
+                known.add(name);
+            }
+        });
+        return known;
     }
 
-    public void setModel(ModelItem rootItem) {
-        FXRun.runLater(() -> changed.setValue(shouldUpdateTree(modelConverter.toTree(rootItem))));
+    private TreeItem<DisplayItem> getRoot() {
+        return tree.getRoot();
     }
 
-    @SuppressWarnings("ParameterHidesMemberVariable")
-    @Override
-    public void initialize(URL location, ResourceBundle resources) {
-        this.resources = FXUtil.requireNonNull(resources, FXUserException.LC_ERROR_NO_RESOURCES,
-                location.toExternalForm());
-        initializeTree(createPlaceHolder(resources));
+    private Optional<Stage> getStage() {
+        return FXUtil.findStage(component.getView());
     }
 
-    private void initializeDnD(TreeCell<DisplayItem> cell) {
+    private void initializeDnD(final TreeCell<DisplayItem> cell) {
         cell.setOnDragDetected(event -> {
             if (!cell.isEmpty()) {
-                Dragboard dragboard = cell.startDragAndDrop(TransferMode.MOVE);
+                final Dragboard dragboard = cell.startDragAndDrop(TransferMode.MOVE);
                 dragboard.setDragView(cell.snapshot(null, null));
-                Map<DataFormat, Object> content = new ClipboardContent();
+                final Map<DataFormat, Object> content = new ClipboardContent();
                 content.put(SERIALIZED_MIME_TYPE, cell.getIndex());
                 dragboard.setContent(content);
                 event.consume();
             }
         });
         cell.setOnDragOver(event -> {
-            Dragboard dragboard = event.getDragboard();
+            final Dragboard dragboard = event.getDragboard();
             if (dragboard.hasContent(SERIALIZED_MIME_TYPE)) {
-                TreeItem<DisplayItem> dragItem = tree.getTreeItem((Integer) dragboard.getContent(SERIALIZED_MIME_TYPE));
-                int index = tree.getRow(dragItem);
-                TreeItem<DisplayItem> destItem = cell.isEmpty() ? tree.getRoot() : cell.getTreeItem();
+                final TreeItem<DisplayItem> dragItem = tree.getTreeItem((Integer) dragboard.getContent(SERIALIZED_MIME_TYPE));
+                final int index = tree.getRow(dragItem);
+                final TreeItem<DisplayItem> destItem = cell.isEmpty() ? tree.getRoot() : cell.getTreeItem();
                 if (cell.getIndex() != index) {
                     if (isNotParent(dragItem, destItem)) {
-                        DROPPING dropping = DROPPING.determineDropping(cell, event, BOND);
-                        if (canBeChildOfParent(dragItem.getValue(), destItem.getValue()) && dropping == DROPPING.ONTO) {
+                        final DROPPING dropping = DROPPING.determineDropping(cell, event, BOND);
+                        if (canBeChildOfParent(dragItem.getValue(), destItem.getValue()) && DROPPING.ONTO == dropping) {
                             event.acceptTransferModes(TransferMode.MOVE);
                             event.consume();
-                        } else if (dropping == DROPPING.ABOVE || dropping == DROPPING.BELOW) {
+                        } else if (DROPPING.ABOVE == dropping || DROPPING.BELOW == dropping) {
                             event.acceptTransferModes(TransferMode.MOVE);
                             event.consume();
                         }
@@ -456,26 +454,26 @@ public final class Builder extends ScrollPane implements Initializable {
             }
         });
         cell.setOnDragDropped(event -> {
-            Dragboard dragboard = event.getDragboard();
+            final Dragboard dragboard = event.getDragboard();
             if (dragboard.hasContent(SERIALIZED_MIME_TYPE)) {
-                TreeItem<DisplayItem> dragItem = tree.getTreeItem((Integer) dragboard.getContent(SERIALIZED_MIME_TYPE));
-                int index = tree.getRow(dragItem);
-                TreeItem<DisplayItem> destItem = cell.isEmpty() ? tree.getRoot() : cell.getTreeItem();
-                int cellIndex = cell.getIndex();
+                final TreeItem<DisplayItem> dragItem = tree.getTreeItem((Integer) dragboard.getContent(SERIALIZED_MIME_TYPE));
+                final int index = tree.getRow(dragItem);
+                final TreeItem<DisplayItem> destItem = cell.isEmpty() ? tree.getRoot() : cell.getTreeItem();
+                final int cellIndex = cell.getIndex();
                 if (cellIndex != index) {
                     if (isNotParent(dragItem, destItem)) {
-                        DROPPING dropping = DROPPING.determineDropping(cell, event, BOND);
-                        if (canBeChildOfParent(dragItem.getValue(), destItem.getValue()) && dropping == DROPPING.ONTO) {
+                        final DROPPING dropping = DROPPING.determineDropping(cell, event, BOND);
+                        if (canBeChildOfParent(dragItem.getValue(), destItem.getValue()) && DROPPING.ONTO == dropping) {
                             attachTo(destItem, dragItem);
                             event.setDropCompleted(true);
                             event.consume();
                             updateCell(cell, destItem, cellIndex);
-                        } else if (dropping == DROPPING.ABOVE) {
+                        } else if (DROPPING.ABOVE == dropping) {
                             putAbove(destItem, dragItem);
                             event.setDropCompleted(true);
                             event.consume();
                             updateCell(cell, destItem, cellIndex);
-                        } else if (dropping == DROPPING.BELOW) {
+                        } else if (DROPPING.BELOW == dropping) {
                             putBelow(destItem, dragItem);
                             event.setDropCompleted(true);
                             event.consume();
@@ -487,7 +485,7 @@ public final class Builder extends ScrollPane implements Initializable {
         });
     }
 
-    private void initializeTree(Node placeholder) {
+    private void initializeTree(final Node placeholder) {
         tree.setSkin(new TreeViewPlaceholderSkin<>(tree, changed, placeholder,
                 treeView -> Optional.ofNullable(treeView)
                         .map(TreeView::getRoot)
@@ -507,7 +505,7 @@ public final class Builder extends ScrollPane implements Initializable {
                                 scrollBar.setValue(Math.max(0.0, Math.min(1.0,
                                         scrollBar.getValue() + scrollDirection))))));
         tree.setOnDragExited(event -> {
-            if (event.getY() > 0) {
+            if (0 < event.getY()) {
                 scrollDirection = 1.0 / tree.getExpandedItemCount();
             } else {
                 scrollDirection = -1.0 / tree.getExpandedItemCount();
@@ -518,33 +516,25 @@ public final class Builder extends ScrollPane implements Initializable {
         tree.setOnDragDone(event -> scrollTimeline.stop());
     }
 
-    public boolean isChanged() {
-        return changed.getValue();
-    }
-
-    public void setChanged(boolean changed) {
-        this.changed.setValue(changed);
-    }
-
-    private boolean isDifferentTrees(TreeItem<DisplayItem> oldRoot, TreeItem<DisplayItem> newRoot) {
-        if (oldRoot == null) {
+    private boolean isDifferentTrees(final TreeItem<DisplayItem> oldRoot, final TreeItem<DisplayItem> newRoot) {
+        if (null == oldRoot) {
             return true;
         }
         if (oldRoot != newRoot) {
-            DisplayItem oldRootValue = oldRoot.getValue();
-            DisplayItem newRootValue = newRoot.getValue();
+            final DisplayItem oldRootValue = oldRoot.getValue();
+            final DisplayItem newRootValue = newRoot.getValue();
             if (!Objects.equals(oldRootValue, newRootValue)) {
                 return true;
             }
-            ObservableList<TreeItem<DisplayItem>> oldRootChildren = oldRoot.getChildren();
-            ObservableList<TreeItem<DisplayItem>> newRootChildren = newRoot.getChildren();
-            int size = oldRootChildren.size();
+            final ObservableList<TreeItem<DisplayItem>> oldRootChildren = oldRoot.getChildren();
+            final ObservableList<TreeItem<DisplayItem>> newRootChildren = newRoot.getChildren();
+            final int size = oldRootChildren.size();
             if (size != newRootChildren.size()) {
                 return true;
             }
             for (int i = 0; i < size; i++) {
-                TreeItem<DisplayItem> oldChild = oldRootChildren.get(i);
-                TreeItem<DisplayItem> newChild = newRootChildren.get(i);
+                final TreeItem<DisplayItem> oldChild = oldRootChildren.get(i);
+                final TreeItem<DisplayItem> newChild = newRootChildren.get(i);
                 if (isDifferentTrees(oldChild, newChild)) {
                     return true;
                 }
@@ -553,38 +543,36 @@ public final class Builder extends ScrollPane implements Initializable {
         return false;
     }
 
-    public boolean isTreeEmpty() {
-        return tree.getRoot().getChildren().isEmpty();
-    }
-
-    private void onTemplate(ActionEvent actionEvent) {
-        if (isTreeEmpty() || FXDialogs.confirm(getStage().orElse(null),
+    private void onTemplate(final ActionEvent actionEvent) {
+        final FXContext context = FXContextFactory.currentContext();
+        if (isTreeEmpty() || context.confirm(getStage().orElse(null),
                 resources.getString(LC_TEMPLATE_CONFIRM), Map.of(
                         ButtonBar.ButtonData.OK_DONE, resources.getString(LC_TEMPLATE_CONFIRM_OK),
                         ButtonBar.ButtonData.CANCEL_CLOSE, resources.getString(LC_TEMPLATE_CONFIRM_CANCEL)))) {
             try {
                 doTemplate();
-            } catch (RuntimeException e) {
-                FXDialogs.error(getStage().orElse(null), resources.getString(LC_ERROR_MALFORMED_SCRIPT), e, Map.of(
-                        ButtonBar.ButtonData.OK_DONE, resources.getString(LC_CLOSE),
-                        ButtonBar.ButtonData.OTHER, resources.getString(LC_REPORT)))
-                        .filter(buttonType -> buttonType.getButtonData() == ButtonBar.ButtonData.OTHER)
-                        .ifPresent(buttonType -> RPyCG.mailError(e));
+            } catch (final RuntimeException e) {
+                context.error(getStage().orElse(null), resources.getString(LC_ERROR_MALFORMED_SCRIPT),
+                                e, Map.of(
+                                        ButtonBar.ButtonData.OK_DONE, resources.getString(LC_CLOSE),
+                                        ButtonBar.ButtonData.OTHER, resources.getString(LC_REPORT)))
+                        .filter(buttonType -> ButtonBar.ButtonData.OTHER == buttonType.getButtonData())
+                        .ifPresent(buttonType -> ErrorMailer.mailError(e));
             }
 //            updateScript(true);
         }
     }
 
-    private void putAbove(TreeItem<DisplayItem> destItem, TreeItem<DisplayItem> dragItem) {
-        ObservableList<TreeItem<DisplayItem>> destSiblings = destItem.getParent().getChildren();
+    private void putAbove(final TreeItem<DisplayItem> destItem, final TreeItem<DisplayItem> dragItem) {
+        final ObservableList<TreeItem<DisplayItem>> destSiblings = destItem.getParent().getChildren();
         dragItem.getParent().getChildren().remove(dragItem);
         destSiblings.add(destSiblings.indexOf(destItem), dragItem);
         selectItem(dragItem);
     }
 
-    private void putBelow(TreeItem<DisplayItem> destItem, TreeItem<DisplayItem> dragItem) {
-        ObservableList<TreeItem<DisplayItem>> destSiblings = destItem.getParent().getChildren();
-        int index = destSiblings.indexOf(destItem);
+    private void putBelow(final TreeItem<DisplayItem> destItem, final TreeItem<DisplayItem> dragItem) {
+        final ObservableList<TreeItem<DisplayItem>> destSiblings = destItem.getParent().getChildren();
+        final int index = destSiblings.indexOf(destItem);
         dragItem.getParent().getChildren().remove(dragItem);
         if (index < destSiblings.size() - 1) {
             destSiblings.add(index + 1, dragItem);
@@ -594,27 +582,38 @@ public final class Builder extends ScrollPane implements Initializable {
         selectItem(dragItem);
     }
 
-    private void removeItem(TreeItem<DisplayItem> treeItem) {
-        if (FXDialogs.confirm(getStage().orElse(null), resources.getString(LC_REMOVE_CONFIRM), Map.of(
-                ButtonBar.ButtonData.OK_DONE, resources.getString(LC_REMOVE_CONFIRM_OK),
-                ButtonBar.ButtonData.CANCEL_CLOSE, resources.getString(LC_REMOVE_CONFIRM_CANCEL)))) {
+    private void removeItem(final TreeItem<DisplayItem> treeItem) {
+        if (FXContextFactory.currentContext().confirm(getStage().orElse(null),
+                resources.getString(LC_REMOVE_CONFIRM), Map.of(
+                        ButtonBar.ButtonData.OK_DONE, resources.getString(LC_REMOVE_CONFIRM_OK),
+                        ButtonBar.ButtonData.CANCEL_CLOSE, resources.getString(LC_REMOVE_CONFIRM_CANCEL)))) {
             treeItem.getParent().getChildren().remove(treeItem);
         }
     }
 
-    private void replaceItem(TreeItem<DisplayItem> item, DisplayItem displayItem) {
-        if (item != null) {
+    private void replaceItem(final TreeItem<DisplayItem> item, final DisplayItem displayItem) {
+        if (null != item) {
             item.setValue(displayItem);
             changed.setValue(true);
             selectItem(item);
         }
     }
 
+    private void selectItem(final TreeItem<DisplayItem> item) {
+        TreeItem<DisplayItem> treeItem = item;
+        while (null != treeItem) {
+            treeItem.setExpanded(null != treeItem.getValue() && ModelType.MENU == treeItem.getValue().getModelType());
+            treeItem = treeItem.getParent();
+        }
+        tree.getSelectionModel().select(item);
+        tree.scrollTo(tree.getRow(item));
+    }
+
     private boolean shouldClearRoot() {
         return shouldUpdateTree(DisplayItem.toTreeItem(DisplayItem.createRoot(), true));
     }
 
-    private boolean shouldUpdateTree(TreeItem<DisplayItem> root) {
+    private boolean shouldUpdateTree(final TreeItem<DisplayItem> root) {
         if (isDifferentTrees(tree.getRoot(), root)) {
             tree.setRoot(root);
             root.setExpanded(true);
@@ -625,25 +624,25 @@ public final class Builder extends ScrollPane implements Initializable {
     }
 
     @SuppressWarnings("NumericCastThatLosesPrecision")
-    private void splitMenu(TreeItem<DisplayItem> item) {
-        TreeItem<DisplayItem> treeItem = item == null ? tree.getRoot() : item;
-        DisplayItem value = treeItem.getValue();
-        if (value != null) {
-            List<TreeItem<DisplayItem>> subMenus = FXCollections.observableArrayList();
-            ObservableList<TreeItem<DisplayItem>> children = treeItem.getChildren();
-            ObservableList<TreeItem<DisplayItem>> childrenCopy = FXCollections.observableArrayList(children);
-            int childrenSize = childrenCopy.size();
-            int groups = Math.max(2, childrenSize / FULLNESS.ALMOST.getSize());
-            String label = value.getLabel();
-            String name = value.getName();
+    private void splitMenu(final TreeItem<DisplayItem> item) {
+        final TreeItem<DisplayItem> treeItem = null == item ? tree.getRoot() : item;
+        final DisplayItem value = treeItem.getValue();
+        if (null != value) {
+            final List<TreeItem<DisplayItem>> subMenus = FXCollections.observableArrayList();
+            final ObservableList<TreeItem<DisplayItem>> children = treeItem.getChildren();
+            final ObservableList<TreeItem<DisplayItem>> childrenCopy = FXCollections.observableArrayList(children);
+            final int childrenSize = childrenCopy.size();
+            final int groups = Math.max(2, childrenSize / FULLNESS.ALMOST.getSize());
+            final String label = value.getLabel();
+            final String name = value.getName();
             for (int g = 0; g < groups; g++) {
-                int num = g + 1;
+                final int num = g + 1;
                 subMenus.add(DisplayItem.toTreeItem(DisplayItem.createMenu
                         (String.format("%s #%d", label, num), name + '_' + num), true));
             }
-            int groupSize = (int) Math.ceil(childrenSize / ((double) groups));
+            final int groupSize = (int) Math.ceil(childrenSize / ((double) groups));
             for (int g = 0; g < childrenSize; g++) {
-                TreeItem<DisplayItem> child = childrenCopy.get(g);
+                final TreeItem<DisplayItem> child = childrenCopy.get(g);
                 children.remove(child);
                 subMenus.get(g / groupSize).getChildren().add(child);
             }
@@ -653,8 +652,8 @@ public final class Builder extends ScrollPane implements Initializable {
         }
     }
 
-    private void updateCell(TreeCell<DisplayItem> cell, TreeItem<DisplayItem> treeItem,
-                            int cellIndex) {
+    private void updateCell(final TreeCell<DisplayItem> cell, final TreeItem<DisplayItem> treeItem,
+                            final int cellIndex) {
         cell.setContextMenu(createContextMenuForCell(treeItem));
         FXRun.runLater(() -> {
             setCellZebraDecorations(cell, cell.getTreeItem(), cellIndex);
@@ -663,38 +662,46 @@ public final class Builder extends ScrollPane implements Initializable {
         });
     }
 
-    private void updateTree(ModelItem root) {
+    private void updateTree(final ModelItem root) {
         setModel(root);
     }
 
     private static final class DisplayItemTreeCell extends TreeCell<DisplayItem> {
-        private final BiConsumer<TreeCell<DisplayItem>, DisplayItem> decorator;
+        private final BiConsumer<? super TreeCell<DisplayItem>, ? super DisplayItem> decorator;
 
-        private DisplayItemTreeCell(BiConsumer<TreeCell<DisplayItem>, DisplayItem> decorator) {
+        private DisplayItemTreeCell(final BiConsumer<? super TreeCell<DisplayItem>, ? super DisplayItem> decorator) {
             this.decorator = decorator;
         }
 
         @Override
-        protected void updateItem(DisplayItem item, boolean empty) {
+        protected void updateItem(final DisplayItem item, final boolean empty) {
             super.updateItem(item, empty);
             decorator.accept(this, empty ? null : item);
         }
     }
 
-    private static class TreeViewPlaceholderSkin<T> extends TreeViewSkin<T> {
+    private static final class TreeViewPlaceholderSkin<T> extends TreeViewSkin<T> {
         private static final String CLASS_PLACEHOLDER = "placeholder";
-        private final Predicate<TreeView<?>> emptyPredicate;
+        private final Predicate<? super TreeView<?>> emptyPredicate;
         private final Node placeholder;
         private final ObservableValue<?> watch;
         private StackPane placeholderRegion;
 
-        public TreeViewPlaceholderSkin(TreeView<T> treeView, ObservableValue<?> watch,
-                                       Node placeholder, Predicate<TreeView<?>> emptyPredicate) {
+        public TreeViewPlaceholderSkin(final TreeView<T> treeView, final ObservableValue<?> watch,
+                                       final Node placeholder, final Predicate<? super TreeView<?>> emptyPredicate) {
             super(treeView);
             this.watch = watch;
             this.placeholder = placeholder;
             this.emptyPredicate = emptyPredicate;
             installPlaceholderSupport();
+        }
+
+        @Override
+        protected void layoutChildren(final double x, final double y, final double w, final double h) {
+            super.layoutChildren(x, y, w, h);
+            if (null != placeholderRegion && placeholderRegion.isVisible()) {
+                placeholderRegion.resizeRelocate(x, y, w, h);
+            }
         }
 
         private void installPlaceholderSupport() {
@@ -703,9 +710,13 @@ public final class Builder extends ScrollPane implements Initializable {
             updatePlaceholderSupport();
         }
 
+        private boolean isTreeEmpty() {
+            return emptyPredicate.test(getSkinnable());
+        }
+
         private void updatePlaceholderSupport() {
             if (isTreeEmpty()) {
-                if (placeholderRegion == null) {
+                if (null == placeholderRegion) {
                     placeholderRegion = new StackPane();
                     placeholderRegion.getStyleClass().setAll(CLASS_PLACEHOLDER);
                     getChildren().add(placeholderRegion);
@@ -713,20 +724,8 @@ public final class Builder extends ScrollPane implements Initializable {
                 }
             }
             getVirtualFlow().setVisible(!isTreeEmpty());
-            if (placeholderRegion != null) {
+            if (null != placeholderRegion) {
                 placeholderRegion.setVisible(isTreeEmpty());
-            }
-        }
-
-        private boolean isTreeEmpty() {
-            return emptyPredicate.test(getSkinnable());
-        }
-
-        @Override
-        protected void layoutChildren(double x, double y, double w, double h) {
-            super.layoutChildren(x, y, w, h);
-            if (placeholderRegion != null && placeholderRegion.isVisible()) {
-                placeholderRegion.resizeRelocate(x, y, w, h);
             }
         }
     }

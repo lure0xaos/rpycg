@@ -7,8 +7,6 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Hyperlink;
 import javafx.scene.layout.GridPane;
 
-import java.util.Optional;
-
 public final class About extends GridPane {
     @FXML
     private Hyperlink link;
@@ -19,8 +17,7 @@ public final class About extends GridPane {
     }
 
     @FXML
-    void onLink(ActionEvent e) {
-        Optional.ofNullable(FXContextFactory.currentContext().getHostServices())
-                .ifPresent(hostServices -> hostServices.showDocument(String.valueOf(link.getUserData())));
+    void onLink(final ActionEvent e) {
+        FXContextFactory.currentContext().showDocument(String.valueOf(link.getUserData()));
     }
 }

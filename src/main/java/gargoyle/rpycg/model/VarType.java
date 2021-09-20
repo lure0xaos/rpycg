@@ -6,7 +6,7 @@ public enum VarType {
     STR("str");
     private final String keyword;
 
-    VarType(String keyword) {
+    VarType(final String keyword) {
         this.keyword = keyword;
     }
 

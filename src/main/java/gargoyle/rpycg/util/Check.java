@@ -10,29 +10,29 @@ public final class Check {
         throw new IllegalStateException(Check.class.getName());
     }
 
-    public static boolean isFloat(String val) {
+    public static boolean isFloat(final String val) {
         try {
             Float.parseFloat(val);
             return true;
-        } catch (NumberFormatException e) {
+        } catch (final NumberFormatException e) {
             return false;
         }
     }
 
-    public static boolean isIdentifier(CharSequence id) {
+    public static boolean isIdentifier(final CharSequence id) {
         return PATTERN_ID.matcher(id).matches();
     }
 
-    public static boolean isInteger(String val) {
+    public static boolean isInteger(final String val) {
         try {
             Integer.parseInt(val);
             return true;
-        } catch (NumberFormatException e) {
+        } catch (final NumberFormatException e) {
             return false;
         }
     }
 
-    public static boolean isText(CharSequence text) {
+    public static boolean isText(final CharSequence text) {
         return PATTERN_TEXT.matcher(text).matches();
     }
 }

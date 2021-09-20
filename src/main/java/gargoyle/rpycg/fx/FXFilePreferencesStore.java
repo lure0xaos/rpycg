@@ -8,38 +8,30 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
+import java.util.*;
 
-final class FilePreferencesStore {
+final class FXFilePreferencesStore {
     private static final Charset CHARSET = StandardCharsets.UTF_8;
 
-    private FilePreferencesStore() {
-        throw new IllegalStateException(FilePreferencesStore.class.getName());
+    private FXFilePreferencesStore() {
+        throw new IllegalStateException(FXFilePreferencesStore.class.getName());
     }
 
-    public static synchronized void load(Path path, Map<String, String> map) throws IOException {
-        Properties properties = new Properties();
+    public static synchronized void load(final Path path, final Map<? super String, ? super String> map) throws IOException {
+        final Properties properties = new Properties();
         if (Files.exists(path) && Files.isRegularFile(path)) {
-            try (BufferedReader reader = Files.newBufferedReader(path, CHARSET)) {
+            try (final BufferedReader reader = Files.newBufferedReader(path, CHARSET)) {
                 properties.load(reader);
             }
-            for (Map.Entry<Object, Object> entry : properties.entrySet()) {
+            for (final Map.Entry<Object, Object> entry : properties.entrySet()) {
                 map.put(String.valueOf(entry.getKey()), String.valueOf(entry.getValue()));
             }
         }
     }
 
-    public static synchronized void save(Path path, Map<String, String> map,
-                                         String comments) throws IOException {
-        try (BufferedWriter writer = Files.newBufferedWriter(path, CHARSET,
+    public static synchronized void save(final Path path, final Map<String, String> map,
+                                         final String comments) throws IOException {
+        try (final BufferedWriter writer = Files.newBufferedWriter(path, CHARSET,
                 StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
             new SortedProperties(map).store(writer, comments);
         }
@@ -48,14 +40,16 @@ final class FilePreferencesStore {
     @SuppressWarnings({"CloneableClassInSecureContext",
             "ClassExtendsConcreteCollection", "CloneableClassWithoutClone"})
     private static final class SortedProperties extends Properties {
-        private SortedProperties(Map<String, String> map) {
+        private static final long serialVersionUID = -5927406542352159884L;
+
+        private SortedProperties(final Map<String, String> map) {
             super(null);
-            new LinkedHashMap<>(map).forEach(this::put);
+            putAll(new LinkedHashMap<>(map));
         }
 
         @Override
-        public synchronized Enumeration<Object> keys() {
-            Collection<Object> set = new TreeSet<>((o1, o2) ->
+        public Enumeration<Object> keys() {
+            final Collection<Object> set = new TreeSet<>((o1, o2) ->
                     String.CASE_INSENSITIVE_ORDER.compare(o1.toString(), o2.toString()));
             set.addAll(keySet());
             return Collections.enumeration(set);
@@ -63,8 +57,8 @@ final class FilePreferencesStore {
 
         @Override
         public Set<Map.Entry<Object, Object>> entrySet() {
-            SortedSet<Map.Entry<Object, Object>> set = new TreeSet<>((o1, o2) ->
-                    String.CASE_INSENSITIVE_ORDER.compare(o1.getKey().toString(),o2.getKey().toString()));
+            final SortedSet<Map.Entry<Object, Object>> set = new TreeSet<>((o1, o2) ->
+                    String.CASE_INSENSITIVE_ORDER.compare(o1.getKey().toString(), o2.getKey().toString()));
             set.addAll(super.entrySet());
             return Collections.unmodifiableSortedSet(set);
         }

@@ -31,16 +31,15 @@ public final class Settings {
     private final Property<KeyCodeCombination> keyConsole;
     private final Property<KeyCodeCombination> keyDeveloper;
     private final Property<KeyCodeCombination> keyWrite;
-    private final LocaleConverter localeConverter = new LocaleConverter();
     private final Property<Locale> localeMenu;
 
     @SuppressWarnings("ConstructorWithTooManyParameters")
-    public Settings(Preferences preferences,
-                    boolean enableCheat, boolean enableConsole, boolean enableDeveloper,
-                    boolean enableWrite, boolean enableRollback,
-                    KeyCodeCombination keyCheat, KeyCodeCombination keyConsole,
-                    KeyCodeCombination keyDeveloper, KeyCodeCombination keyWrite,
-                    Locale localeMenu) {
+    public Settings(final LocaleConverter localeConverter, final Preferences preferences,
+                    final boolean enableCheat, final boolean enableConsole, final boolean enableDeveloper,
+                    final boolean enableWrite, final boolean enableRollback,
+                    final KeyCodeCombination keyCheat, final KeyCodeCombination keyConsole,
+                    final KeyCodeCombination keyDeveloper, final KeyCodeCombination keyWrite,
+                    final Locale localeMenu) {
         this(enableCheat, enableConsole, enableDeveloper, enableWrite, enableRollback,
                 keyCheat, keyConsole, keyDeveloper, keyWrite,
                 localeMenu);
@@ -59,7 +58,7 @@ public final class Settings {
         this.keyWrite.setValue(converter.toCombination(preferences.get(PREF_KEY_WRITE,
                 converter.toString(keyWrite))).orElse(keyWrite));
         this.localeMenu.addListener((observable, oldValue, newValue) -> {
-            if (newValue != null) {
+            if (null != newValue) {
                 preferences.put(PREF_LOCALE_MENU, localeConverter.toString(newValue));
             }
         });
@@ -84,11 +83,11 @@ public final class Settings {
     }
 
     @SuppressWarnings("ConstructorWithTooManyParameters")
-    public Settings(boolean enableCheat, boolean enableConsole, boolean enableDeveloper,
-                    boolean enableWrite, boolean enableRollback,
-                    KeyCodeCombination keyCheat, KeyCodeCombination keyConsole,
-                    KeyCodeCombination keyDeveloper, KeyCodeCombination keyWrite,
-                    Locale localeMenu) {
+    public Settings(final boolean enableCheat, final boolean enableConsole, final boolean enableDeveloper,
+                    final boolean enableWrite, final boolean enableRollback,
+                    final KeyCodeCombination keyCheat, final KeyCodeCombination keyConsole,
+                    final KeyCodeCombination keyDeveloper, final KeyCodeCombination keyWrite,
+                    final Locale localeMenu) {
         converter = new KeyConverter();
         this.enableCheat = new SimpleBooleanProperty(enableCheat);
         this.enableConsole = new SimpleBooleanProperty(enableConsole);
@@ -126,7 +125,7 @@ public final class Settings {
         return enableCheat.getValue();
     }
 
-    public void setEnableCheat(Boolean enableCheat) {
+    public void setEnableCheat(final Boolean enableCheat) {
         this.enableCheat.setValue(enableCheat);
     }
 
@@ -134,7 +133,7 @@ public final class Settings {
         return enableConsole.getValue();
     }
 
-    public void setEnableConsole(Boolean enableConsole) {
+    public void setEnableConsole(final Boolean enableConsole) {
         this.enableConsole.setValue(enableConsole);
     }
 
@@ -142,7 +141,7 @@ public final class Settings {
         return enableDeveloper.getValue();
     }
 
-    public void setEnableDeveloper(Boolean enableDeveloper) {
+    public void setEnableDeveloper(final Boolean enableDeveloper) {
         this.enableDeveloper.setValue(enableDeveloper);
     }
 
@@ -150,7 +149,7 @@ public final class Settings {
         return enableRollback.getValue();
     }
 
-    public void setEnableRollback(Boolean enableRollback) {
+    public void setEnableRollback(final Boolean enableRollback) {
         this.enableRollback.setValue(enableRollback);
     }
 
@@ -158,7 +157,7 @@ public final class Settings {
         return enableWrite.getValue();
     }
 
-    public void setEnableWrite(Boolean enableWrite) {
+    public void setEnableWrite(final Boolean enableWrite) {
         this.enableWrite.setValue(enableWrite);
     }
 
@@ -166,7 +165,7 @@ public final class Settings {
         return keyCheat.getValue();
     }
 
-    public void setKeyCheat(KeyCodeCombination keyCheat) {
+    public void setKeyCheat(final KeyCodeCombination keyCheat) {
         this.keyCheat.setValue(keyCheat);
     }
 
@@ -174,7 +173,7 @@ public final class Settings {
         return keyConsole.getValue();
     }
 
-    public void setKeyConsole(KeyCodeCombination keyConsole) {
+    public void setKeyConsole(final KeyCodeCombination keyConsole) {
         this.keyConsole.setValue(keyConsole);
     }
 
@@ -182,7 +181,7 @@ public final class Settings {
         return keyDeveloper.getValue();
     }
 
-    public void setKeyDeveloper(KeyCodeCombination keyDeveloper) {
+    public void setKeyDeveloper(final KeyCodeCombination keyDeveloper) {
         this.keyDeveloper.setValue(keyDeveloper);
     }
 
@@ -190,7 +189,7 @@ public final class Settings {
         return keyWrite.getValue();
     }
 
-    public void setKeyWrite(KeyCodeCombination keyWrite) {
+    public void setKeyWrite(final KeyCodeCombination keyWrite) {
         this.keyWrite.setValue(keyWrite);
     }
 
@@ -198,7 +197,7 @@ public final class Settings {
         return localeMenu.getValue();
     }
 
-    public void setLocaleMenu(Locale locale) {
+    public void setLocaleMenu(final Locale locale) {
         this.localeMenu.setValue(locale);
     }
 

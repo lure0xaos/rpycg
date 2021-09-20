@@ -7,9 +7,9 @@ public enum DROPPING {
     ONTO, ABOVE, BELOW;
 
     @SuppressWarnings("ConstantExpression")
-    public static DROPPING determineDropping(TreeCell<DisplayItem> cell, DragEvent event,
-                                             double bond) {
-        double ratio = event.getY() / cell.getLayoutBounds().getHeight();
+    public static DROPPING determineDropping(final TreeCell<DisplayItem> cell, final DragEvent event,
+                                             final double bond) {
+        final double ratio = event.getY() / cell.getLayoutBounds().getHeight();
         if (ratio < bond) {
             return ABOVE;
         }

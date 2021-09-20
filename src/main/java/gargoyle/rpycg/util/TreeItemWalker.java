@@ -15,48 +15,52 @@ import java.util.stream.StreamSupport;
 public final class TreeItemWalker<T> {
     private final Deque<TreeItemTuple<T>> stack = new ArrayDeque<>(2);
 
-    private TreeItemWalker(TreeTableView<T> tree) {
-        if (tree.getRoot() != null) {
+    private TreeItemWalker(final TreeTableView<T> tree) {
+        if (null != tree.getRoot()) {
             stack.push(new TreeItemTuple<>(tree.getRoot(), -1));
         }
     }
 
-    private TreeItemWalker(TreeView<T> tree) {
-        if (tree.getRoot() != null) {
+    private TreeItemWalker(final TreeView<T> tree) {
+        if (null != tree.getRoot()) {
             stack.push(new TreeItemTuple<>(tree.getRoot(), -1));
         }
     }
 
     @SuppressWarnings("MethodCallInLoopCondition")
-    public static <T> void visit(TreeTableView<T> tree, Consumer<TreeItem<T>> visitor) {
-        TreeItemWalker<T> walker = new TreeItemWalker<>(tree);
+    public static <T> void visit(final TreeTableView<T> tree, final Consumer<? super TreeItem<T>> visitor) {
+        final TreeItemWalker<T> walker = new TreeItemWalker<>(tree);
         while (walker.hasNext()) {
             visitor.accept(walker.next());
         }
     }
 
     @SuppressWarnings("MethodCallInLoopCondition")
-    public static <T> void visit(TreeView<T> tree, Consumer<TreeItem<T>> visitor) {
-        TreeItemWalker<T> walker = new TreeItemWalker<>(tree);
+    public static <T> void visit(final TreeView<T> tree, final Consumer<? super TreeItem<T>> visitor) {
+        final TreeItemWalker<T> walker = new TreeItemWalker<>(tree);
         while (walker.hasNext()) {
             visitor.accept(walker.next());
         }
     }
 
     @SuppressWarnings("MethodCallInLoopCondition")
-    public static <T> void visitItems(TreeTableView<T> tree, Consumer<T> visitor) {
-        TreeItemWalker<T> walker = new TreeItemWalker<>(tree);
+    public static <T> void visitItems(final TreeTableView<T> tree, final Consumer<? super T> visitor) {
+        final TreeItemWalker<T> walker = new TreeItemWalker<>(tree);
         while (walker.hasNext()) {
             visitor.accept(walker.next().getValue());
         }
     }
 
     @SuppressWarnings("MethodCallInLoopCondition")
-    public static <T> void visitItems(TreeView<T> tree, Consumer<T> visitor) {
-        TreeItemWalker<T> walker = new TreeItemWalker<>(tree);
+    public static <T> void visitItems(final TreeView<T> tree, final Consumer<? super T> visitor) {
+        final TreeItemWalker<T> walker = new TreeItemWalker<>(tree);
         while (walker.hasNext()) {
             visitor.accept(walker.next().getValue());
         }
+    }
+
+    public Stream<TreeItem<T>> stream() {
+        return StreamSupport.stream(new TreeItemSpliterator(), false);
     }
 
     private boolean hasNext() {
@@ -64,9 +68,9 @@ public final class TreeItemWalker<T> {
     }
 
     private void move() {
-        TreeItemTuple<T> tuple = stack.pop();
-        ObservableList<TreeItem<T>> children = tuple.getItem().getChildren();
-        int index = tuple.getIndex() + 1;
+        final TreeItemTuple<T> tuple = stack.pop();
+        final ObservableList<TreeItem<T>> children = tuple.getItem().getChildren();
+        final int index = tuple.getIndex() + 1;
         if (children.size() <= index) {
             if (!stack.isEmpty()) {
                 move();
@@ -81,30 +85,31 @@ public final class TreeItemWalker<T> {
         if (!hasNext()) {
             throw new IllegalStateException("");
         }
-        if (stack.peek() == null) throw new AssertionError();
-        TreeItem<T> next = stack.peek().getItem();
+        if (null == stack.peek()) throw new AssertionError();
+        final TreeItem<T> next = stack.peek().getItem();
         move();
         return next;
-    }
-
-    public Stream<TreeItem<T>> stream() {
-        return StreamSupport.stream(new TreeItemSpliterator(), false);
     }
 
     private static final class TreeItemTuple<T> {
         private final int index;
         private final TreeItem<T> item;
 
-        private TreeItemTuple(TreeItem<T> item, int index) {
+        private TreeItemTuple(final TreeItem<T> item, final int index) {
             this.item = item;
             this.index = index;
+        }
+
+        @Override
+        public String toString() {
+            return "TreeItemTuple [item=" + item + ", second=" + index + "]";
         }
 
         private int getIndex() {
             return index;
         }
 
-        private TreeItemTuple<T> setIndex(int index) {
+        private TreeItemTuple<T> setIndex(final int index) {
             return new TreeItemTuple<>(item, index);
         }
 
@@ -112,20 +117,15 @@ public final class TreeItemWalker<T> {
             return item;
         }
 
-        public TreeItemTuple<T> setItem(TreeItem<T> item) {
+        public TreeItemTuple<T> setItem(final TreeItem<T> item) {
             return new TreeItemTuple<>(item, index);
-        }
-
-        @Override
-        public String toString() {
-            return "TreeItemTuple [item=" + item + ", second=" + index + "]";
         }
     }
 
     @SuppressWarnings("unused")
     private final class TreeItemSpliterator implements Spliterator<TreeItem<T>> {
         @Override
-        public boolean tryAdvance(Consumer<? super TreeItem<T>> action) {
+        public boolean tryAdvance(final Consumer<? super TreeItem<T>> action) {
             if (hasNext()) {
                 action.accept(next());
                 return true;

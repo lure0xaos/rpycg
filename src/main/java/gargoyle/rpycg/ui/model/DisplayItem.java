@@ -18,9 +18,9 @@ public final class DisplayItem {
     private final Property<VarType> type;
     private final Property<String> value;
 
-    private DisplayItem(ModelType modelType,
-                        String label, String name, String value,
-                        VarType type) {
+    private DisplayItem(final ModelType modelType,
+                        final String label, final String name, final String value,
+                        final VarType type) {
         this.modelType = new SimpleObjectProperty<>(modelType);
         this.label = new SimpleStringProperty(label);
         this.name = new SimpleStringProperty(name);
@@ -28,21 +28,21 @@ public final class DisplayItem {
         this.type = new SimpleObjectProperty<>(type);
     }
 
+    public static DisplayItem createMenu(final String label, final String name) {
+        return new DisplayItem(ModelType.MENU, label, name, "", null);
+    }
+
     public static DisplayItem createRoot() {
         return createMenu("", "");
     }
 
-    public static DisplayItem createMenu(String label, String name) {
-        return new DisplayItem(ModelType.MENU, label, name, "", null);
-    }
-
-    public static DisplayItem createVariable(VarType type,
-                                             String label, String name, String value) {
+    public static DisplayItem createVariable(final VarType type,
+                                             final String label, final String name, final String value) {
         return new DisplayItem(ModelType.VARIABLE, label, name, value, type);
     }
 
-    public static TreeItem<DisplayItem> toTreeItem(DisplayItem item, boolean expanded) {
-        TreeItem<DisplayItem> treeItem = new DisplayTreeItem(item);
+    public static TreeItem<DisplayItem> toTreeItem(final DisplayItem item, final boolean expanded) {
+        final TreeItem<DisplayItem> treeItem = new DisplayTreeItem(item);
         treeItem.setExpanded(expanded);
         return treeItem;
     }
@@ -51,40 +51,40 @@ public final class DisplayItem {
         return new DisplayItem(getModelType(), getLabel(), getName(), getValue(), getType());
     }
 
-    public ModelType getModelType() {
-        return modelType.getValue();
-    }
-
     public String getLabel() {
         return label.getValue();
+    }
+
+    public void setLabel(final String label) {
+        this.label.setValue(label);
+    }
+
+    public ModelType getModelType() {
+        return modelType.getValue();
     }
 
     public String getName() {
         return name.getValue();
     }
 
-    public void setName(String name) {
+    public void setName(final String name) {
         this.name.setValue(name);
-    }
-
-    public String getValue() {
-        return value.getValue();
     }
 
     public VarType getType() {
         return type.getValue();
     }
 
-    public void setType(VarType type) {
+    public void setType(final VarType type) {
         this.type.setValue(type);
     }
 
-    public void setValue(String value) {
-        this.value.setValue(value);
+    public String getValue() {
+        return value.getValue();
     }
 
-    public void setLabel(String label) {
-        this.label.setValue(label);
+    public void setValue(final String value) {
+        this.value.setValue(value);
     }
 
     @Override
@@ -93,14 +93,14 @@ public final class DisplayItem {
     }
 
     @Override
-    public boolean equals(Object obj) {
+    public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
         }
-        if (obj == null || DisplayItem.class != obj.getClass()) {
+        if (null == obj || DisplayItem.class != obj.getClass()) {
             return false;
         }
-        DisplayItem item = (DisplayItem) obj;
+        final DisplayItem item = (DisplayItem) obj;
         return modelType.getValue() == item.modelType.getValue() && name.getValue().equals(item.name.getValue());
     }
 
@@ -133,7 +133,7 @@ public final class DisplayItem {
     }
 
     private static final class DisplayTreeItem extends TreeItem<DisplayItem> {
-        private DisplayTreeItem(DisplayItem item) {
+        private DisplayTreeItem(final DisplayItem item) {
             super(item);
         }
 

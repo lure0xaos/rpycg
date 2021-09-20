@@ -2,7 +2,6 @@ package gargoyle.rpycg.service;
 
 import gargoyle.rpycg.ex.CodeGenerationException;
 import gargoyle.rpycg.fx.FXContext;
-import gargoyle.rpycg.fx.FXContextFactory;
 import gargoyle.rpycg.fx.FXUtil;
 import gargoyle.rpycg.model.ModelItem;
 import gargoyle.rpycg.model.ModelType;
@@ -43,126 +42,44 @@ public final class CodeConverter {
     private final KeyConverter keyConverter;
     private final Settings settings;
 
-    public CodeConverter(FXContext context, Settings settings) {
+    public CodeConverter(final FXContext context, final Settings settings) {
         keyConverter = new KeyConverter();
         this.context = context;
         this.settings = settings;
     }
 
-    private static List<String> include(Charset charset, URL resource) {
-        List<String> lines = new LinkedList<>();
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(resource.openStream(), charset))) {
+    private static List<String> include(final Charset charset, final URL resource) {
+        final List<String> lines = new LinkedList<>();
+        try (final BufferedReader reader = new BufferedReader(new InputStreamReader(resource.openStream(), charset))) {
             String line;
             while (null != (line = reader.readLine())) {
                 lines.add(line);
             }
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new CodeGenerationException(e.getLocalizedMessage());
         }
         return lines;
     }
 
-    private static String indent(int indent, String line) {
-        StringBuilder result = new StringBuilder(line);
+    private static String indent(final int indent, final String line) {
+        final StringBuilder result = new StringBuilder(line);
         for (int i = 0; i < indent; i++) {
             result.insert(0, "    ");
         }
         return result.toString();
     }
 
-    private List<String> createCheatMenu(ResourceBundle messages, ModelItem root) {
-        List<String> buffer = new LinkedList<>();
-        buffer.add("label show_cheat_menu:");
-        buffer.add("    jump CheatMenu");
-        buffer.add("label CheatMenu:");
-        buffer.add("    menu:");
-        buffer.addAll(createCheatSubmenu(1, messages, root, "CheatMenu"));
-        buffer.add("        # nevermind");
-        buffer.add(FXUtil.format("        \"~#{nevermind}~\":",
-                "nevermind", messages.containsKey(LC_NEVERMIND) ?
-                        messages.getString(LC_NEVERMIND) : MSG_NEVERMIND));
-        buffer.add("            return");
-        return buffer;
-    }
-
-    private List<String> createCheatSubmenu(int indent, ResourceBundle messages, ModelItem root, String parentLabel) {
-        List<String> buffer = new LinkedList<>();
-        for (ModelItem item : root.getChildren()) {
-            ModelType modelType = item.getModelType();
-            String itemName = item.getName();
-            String itemLabel = item.getLabel();
-            if (modelType == ModelType.VARIABLE) {
-                VarType itemType = item.getType();
-                String itemValue = item.getValue();
-                buffer.add(indent(indent,
-                        FXUtil.format("    # variable #{name}=#{type}(#{value}) #{label}",
-                                "name", itemName,
-                                "type", itemType,
-                                "value", itemValue,
-                                "label", itemLabel
-                        )));
-                String itemTypeKeyword = itemType.getKeyword();
-                if (!itemValue.isBlank()) {
-                    buffer.add(indent(indent,
-                            FXUtil.format("    \"$#{label}=#{value} \\[[#{name}]\\]\" :",
-                                    "label", itemLabel,
-                                    "value", itemValue,
-                                    "name", itemName
-                            )));
-                    if (itemType == VarType.STR) {
-                        buffer.add(indent(indent,
-                                FXUtil.format("        $#{name} = \"#{keyword}(\"#{value}\")\"",
-                                        "name", itemName,
-                                        "keyword", itemTypeKeyword,
-                                        "value", itemValue
-                                )));
-                    } else {
-                        buffer.add(indent(indent,
-                                FXUtil.format("        $#{name} = #{value}",
-                                        "name", itemName, "value", itemValue
-                                )));
-                    }
-                } else {
-                    buffer.add(indent(indent,
-                            FXUtil.format("    \"#{label} \\[[#{name}]\\]\" :",
-                                    "label", itemLabel, "name", itemName
-                            )));
-                    String prompt = messages.containsKey(LC_MESSAGE_PROMPT) ? messages.getString(LC_MESSAGE_PROMPT) :
-                            MSG_MESSAGE_PROMPT;
-                    buffer.add(indent(indent, FXUtil.format(
-                            "        $#{name} = #{keyword}(renpy.input(\"#{value}\").strip() or #{name})",
-                            "name", itemName,
-                            "keyword", itemTypeKeyword,
-                            "value", FXUtil.format(prompt, "label", itemLabel, "value", "[" + itemName + "]"),
-                            "name", itemName)));
-                }
-                buffer.add(indent(indent, FXUtil.format("        jump #{parent}", "parent", parentLabel)));
-            }
-            if (modelType == ModelType.MENU) {
-                buffer.add(indent(indent, FXUtil.format("    # menu #{label}", "label", itemLabel)));
-                buffer.add(indent(indent, FXUtil.format("    \"~#{label}~\":", "label", itemLabel)));
-                buffer.add(indent(indent, FXUtil.format("        label #{name}:", "name", itemName)));
-                buffer.add(indent(indent, "            menu:"));
-                buffer.addAll(createCheatSubmenu(indent + 3, messages, item, itemName));
-                buffer.add(indent(indent, "                # back"));
-                buffer.add(indent(indent, FXUtil.format("                \"~#{back}~\":",
-                        LC_BACK, messages.containsKey(LC_BACK) ?
-                                messages.getString(LC_BACK) : MSG_BACK)));
-                buffer.add(indent(indent, FXUtil.format("                    jump #{parent}",
-                        "parent", parentLabel)));
-            }
+    public List<String> toCode(final ModelItem menu) {
+        final ResourceBundle messages;
+        try (final FXContext fxContext = context.toBuilder().setLocale(settings.getLocaleMenu()).createContext()) {
+            messages = fxContext
+                    .loadResources(CodeConverter.class)
+                    .orElseThrow(() -> new CodeGenerationException(MessageFormat.format(LC_ERROR_NO_RESOURCES,
+                            CodeConverter.class.getName())));
         }
-        return buffer;
-    }
-
-    public List<String> toCode(ModelItem menu) {
-        ResourceBundle messages = FXContextFactory.forLocale(context, settings.getLocaleMenu())
-                .loadResources(CodeConverter.class)
-                .orElseThrow(() -> new CodeGenerationException(MessageFormat.format(LC_ERROR_NO_RESOURCES,
-                        CodeConverter.class.getName())));
-        String fileVariables = messages.containsKey(LC_FILE_VARIABLES) ? messages.getString(LC_FILE_VARIABLES) :
+        final String fileVariables = messages.containsKey(LC_FILE_VARIABLES) ? messages.getString(LC_FILE_VARIABLES) :
                 MSG_GAME_VARIABLES;
-        List<String> buffer = new LinkedList<>();
+        final List<String> buffer = new LinkedList<>();
         buffer.add("init 999 python:");
         if (settings.getEnableConsole()) {
             buffer.add("    # Enable console");
@@ -196,11 +113,11 @@ public final class CodeConverter {
             buffer.add("    config.rollback_enabled = True");
         }
         if (settings.getEnableWrite()) {
-            String messageWritten = messages.containsKey(LC_MESSAGE_WRITTEN) ? messages.getString(LC_MESSAGE_WRITTEN) :
+            final String messageWritten = messages.containsKey(LC_MESSAGE_WRITTEN) ? messages.getString(LC_MESSAGE_WRITTEN) :
                     MSG_VARIABLES_WRITTEN;
-            buffer.addAll(context.findResource(
-                    context.getBaseName(CodeConverter.class, LOC_WRITE), EXT_RPY)
-                    .map(resource -> FXUtil.format(include(context.getCharset(), resource), Map.of(
+            buffer.addAll(this.context.findResource(
+                            this.context.resolveBaseName(CodeConverter.class, LOC_WRITE), EXT_RPY)
+                    .map(resource -> FXUtil.format(include(this.context.getCharset(), resource), Map.of(
                             KEY_WRITE, keyConverter.toBinding(settings.getKeyWrite()),
                             KEY_MESSAGE_WRITTEN, messageWritten,
                             KEY_FILE_VARIABLES, fileVariables + EXT_TXT
@@ -208,6 +125,91 @@ public final class CodeConverter {
         }
         if (settings.getEnableCheat()) {
             buffer.addAll(createCheatMenu(messages, menu));
+        }
+        return buffer;
+    }
+
+    private List<String> createCheatMenu(final ResourceBundle messages, final ModelItem root) {
+        final List<String> buffer = new LinkedList<>();
+        buffer.add("label show_cheat_menu:");
+        buffer.add("    jump CheatMenu");
+        buffer.add("label CheatMenu:");
+        buffer.add("    menu:");
+        buffer.addAll(createCheatSubmenu(1, messages, root, "CheatMenu"));
+        buffer.add("        # nevermind");
+        buffer.add(FXUtil.format("        \"~#{nevermind}~\":",
+                "nevermind", messages.containsKey(LC_NEVERMIND) ?
+                        messages.getString(LC_NEVERMIND) : MSG_NEVERMIND));
+        buffer.add("            return");
+        return buffer;
+    }
+
+    private List<String> createCheatSubmenu(final int indent, final ResourceBundle messages, final ModelItem root, final String parentLabel) {
+        final List<String> buffer = new LinkedList<>();
+        for (final ModelItem item : root.getChildren()) {
+            final ModelType modelType = item.getModelType();
+            final String itemName = item.getName();
+            final String itemLabel = item.getLabel();
+            if (ModelType.VARIABLE == modelType) {
+                final VarType itemType = item.getType();
+                final String itemValue = item.getValue();
+                buffer.add(indent(indent,
+                        FXUtil.format("    # variable #{name}=#{type}(#{value}) #{label}",
+                                "name", itemName,
+                                "type", itemType,
+                                "value", itemValue,
+                                "label", itemLabel
+                        )));
+                final String itemTypeKeyword = itemType.getKeyword();
+                if (!itemValue.isBlank()) {
+                    buffer.add(indent(indent,
+                            FXUtil.format("    \"$#{label}=#{value} \\[[#{name}]\\]\" :",
+                                    "label", itemLabel,
+                                    "value", itemValue,
+                                    "name", itemName
+                            )));
+                    if (VarType.STR == itemType) {
+                        buffer.add(indent(indent,
+                                FXUtil.format("        $#{name} = \"#{keyword}(\"#{value}\")\"",
+                                        "name", itemName,
+                                        "keyword", itemTypeKeyword,
+                                        "value", itemValue
+                                )));
+                    } else {
+                        buffer.add(indent(indent,
+                                FXUtil.format("        $#{name} = #{value}",
+                                        "name", itemName, "value", itemValue
+                                )));
+                    }
+                } else {
+                    buffer.add(indent(indent,
+                            FXUtil.format("    \"#{label} \\[[#{name}]\\]\" :",
+                                    "label", itemLabel, "name", itemName
+                            )));
+                    final String prompt = messages.containsKey(LC_MESSAGE_PROMPT) ? messages.getString(LC_MESSAGE_PROMPT) :
+                            MSG_MESSAGE_PROMPT;
+                    buffer.add(indent(indent, FXUtil.format(
+                            "        $#{name} = #{keyword}(renpy.input(\"#{value}\").strip() or #{name})",
+                            "name", itemName,
+                            "keyword", itemTypeKeyword,
+                            "value", FXUtil.format(prompt, "label", itemLabel, "value", "[" + itemName + "]"),
+                            "name", itemName)));
+                }
+                buffer.add(indent(indent, FXUtil.format("        jump #{parent}", "parent", parentLabel)));
+            }
+            if (ModelType.MENU == modelType) {
+                buffer.add(indent(indent, FXUtil.format("    # menu #{label}", "label", itemLabel)));
+                buffer.add(indent(indent, FXUtil.format("    \"~#{label}~\":", "label", itemLabel)));
+                buffer.add(indent(indent, FXUtil.format("        label #{name}:", "name", itemName)));
+                buffer.add(indent(indent, "            menu:"));
+                buffer.addAll(createCheatSubmenu(indent + 3, messages, item, itemName));
+                buffer.add(indent(indent, "                # back"));
+                buffer.add(indent(indent, FXUtil.format("                \"~#{back}~\":",
+                        LC_BACK, messages.containsKey(LC_BACK) ?
+                                messages.getString(LC_BACK) : MSG_BACK)));
+                buffer.add(indent(indent, FXUtil.format("                    jump #{parent}",
+                        "parent", parentLabel)));
+            }
         }
         return buffer;
     }

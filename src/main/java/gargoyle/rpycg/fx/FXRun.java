@@ -1,5 +1,6 @@
 package gargoyle.rpycg.fx;
 
+import gargoyle.rpycg.fx.log.FXLog;
 import javafx.application.Platform;
 
 import java.util.concurrent.Callable;
@@ -7,27 +8,30 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
 
+@SuppressWarnings("unused")
 public final class FXRun {
-    private static final Logger log = LoggerFactory.getLogger(FXRun.class);
 
     private FXRun() {
         throw new IllegalStateException(FXRun.class.getName());
     }
 
-    public static <V> V callLater(Callable<V> runnable) {
+    public static <V> V callLater(final Callable<V> runnable) {
         if (Platform.isFxApplicationThread()) {
             try {
-                CompletableFuture<V> future = CompletableFuture.supplyAsync(() -> {
+                final CompletableFuture<V> future = CompletableFuture.supplyAsync(() -> {
                     try {
                         return runnable.call();
-                    } catch (Exception e) {
-                        throw new RuntimeException(e.getLocalizedMessage(), e);
+                    } catch (final Exception e) {
+                        throw new FXException("future callLater", e);
                     }
                 }).exceptionally(e -> null);
                 Platform.runLater(future::join);
                 return future.get();
-            } catch (InterruptedException | ExecutionException e) {
-                log.error(e.getLocalizedMessage(), e);
+            } catch (final InterruptedException e) {
+                FXLog.error(e, "interrupted callLater");
+                return null;
+            } catch (final ExecutionException e) {
+                FXLog.error(e.getCause(), "callLater");
                 return null;
             }
         } else {
@@ -35,14 +39,17 @@ public final class FXRun {
             Platform.runLater(task);
             try {
                 return task.get();
-            } catch (InterruptedException | ExecutionException e) {
-                log.error(e.getLocalizedMessage(), e);
+            } catch (final InterruptedException e) {
+                FXLog.error(e, "interrupted callLater");
+                return null;
+            } catch (final ExecutionException e) {
+                FXLog.error(e.getCause(), "callLater");
                 return null;
             }
         }
     }
 
-    public static void runLater(Runnable runnable) {
+    public static void runLater(final Runnable runnable) {
         if (Platform.isFxApplicationThread()) {
             CompletableFuture.runAsync(() -> Platform.runLater(runnable));
         } else {

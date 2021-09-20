@@ -10,34 +10,14 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.ScrollPane;
 
-import javax.swing.JScrollBar;
-import javax.swing.JScrollPane;
-import javax.swing.JTextPane;
-import javax.swing.SwingUtilities;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.Document;
-import javax.swing.text.Element;
-import javax.swing.text.PlainDocument;
-import javax.swing.text.PlainView;
-import javax.swing.text.Segment;
-import javax.swing.text.StyledEditorKit;
-import javax.swing.text.Utilities;
-import javax.swing.text.View;
-import javax.swing.text.ViewFactory;
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.Graphics2D;
+import javax.swing.*;
+import javax.swing.text.*;
+import java.awt.*;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.net.URL;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.ResourceBundle;
-import java.util.SortedMap;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -69,7 +49,7 @@ public final class Creator extends ScrollPane implements Initializable {
         return changed;
     }
 
-    public void decorateError(Collection<String> errors) {
+    public void decorateError(final Collection<String> errors) {
         if (errors.isEmpty()) {
             Classes.classRemove(source, CLASS_DANGER);
             content.setToolTipText(null);
@@ -85,16 +65,8 @@ public final class Creator extends ScrollPane implements Initializable {
                 .collect(Collectors.toList());
     }
 
-    private String getText() {
-        return content.getText();
-    }
-
-    private void setText(String text) {
-        content.setText(text);
-    }
-
-    public void setScript(Collection<String> script) {
-        String text = script.stream().map(String::trim).collect(Collectors.joining("\n"));
+    public void setScript(final Collection<String> script) {
+        final String text = script.stream().map(String::trim).collect(Collectors.joining("\n"));
         if (!Objects.equals(getText(), text)) {
             setText(text);
             scrollDown();
@@ -102,25 +74,25 @@ public final class Creator extends ScrollPane implements Initializable {
     }
 
     @Override
-    public void initialize(URL location, ResourceBundle resources) {
+    public void initialize(final URL location, final ResourceBundle resources) {
         SwingUtilities.invokeLater(() -> {
             content = new JTextPane();
             content.setFont(FONT);
             content.setEditorKitForContentType(MIMETYPE, new RPyCGEditorKit(PATTERN_COLORS));
             content.setContentType(MIMETYPE);
             scrollPane = new JScrollPane(this.content,
-                    JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+                    ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
             source.setContent(scrollPane);
             this.content.addFocusListener(new FocusListener() {
                 @Override
-                public void focusGained(FocusEvent e) {
+                public void focusGained(final FocusEvent e) {
                     Creator.this.content.repaint();
                     scrollPane.repaint();
                 }
 
                 @Override
-                public void focusLost(FocusEvent e) {
-                    String text = getText();
+                public void focusLost(final FocusEvent e) {
+                    final String text = getText();
                     if (!Objects.equals(text, getPrevText())) {
                         setPrevText(text);
                         changed.setValue(true);
@@ -130,19 +102,11 @@ public final class Creator extends ScrollPane implements Initializable {
         });
     }
 
-    private String getPrevText() {
-        return prevText.getValue();
-    }
-
-    private void setPrevText(String prevText) {
-        this.prevText.setValue(prevText);
-    }
-
     public boolean isChanged() {
         return changed.getValue();
     }
 
-    public void setChanged(boolean changed) {
+    public void setChanged(final boolean changed) {
         this.changed.setValue(changed);
     }
 
@@ -150,27 +114,43 @@ public final class Creator extends ScrollPane implements Initializable {
         source.requestFocus();
     }
 
-    private SimpleStringProperty prevTextProperty() {
-        return prevText;
-    }
-
-    public void setScriptUnforced(Collection<String> script) {
+    public void setScriptUnforced(final Collection<String> script) {
         if (!source.isFocused()) {
             setScript(script);
         }
     }
 
+    private String getPrevText() {
+        return prevText.getValue();
+    }
+
+    private void setPrevText(final String prevText) {
+        this.prevText.setValue(prevText);
+    }
+
+    private String getText() {
+        return content.getText();
+    }
+
+    private void setText(final String text) {
+        content.setText(text);
+    }
+
+    private SimpleStringProperty prevTextProperty() {
+        return prevText;
+    }
+
     private void scrollDown() {
         Creator.this.content.setCaretPosition(Creator.this.content.getDocument().getLength());
-        JScrollBar scrollBar = scrollPane.getVerticalScrollBar();
+        final JScrollBar scrollBar = scrollPane.getVerticalScrollBar();
         scrollBar.setValue(scrollBar.getMaximum());
     }
 
-    private static class RPyCGEditorKit extends StyledEditorKit {
+    private static final class RPyCGEditorKit extends StyledEditorKit {
         private static final long serialVersionUID = 2969169649596107757L;
         private final ViewFactory viewFactory;
 
-        public RPyCGEditorKit(Map<Pattern, Color> patternColors) {
+        public RPyCGEditorKit(final Map<Pattern, Color> patternColors) {
             viewFactory = new RPyCGViewFactory(patternColors);
         }
 
@@ -183,27 +163,32 @@ public final class Creator extends ScrollPane implements Initializable {
         public ViewFactory getViewFactory() {
             return viewFactory;
         }
+
+        @Override
+        public Object clone() {
+            throw new IllegalStateException();
+        }
     }
 
-    private static class RPyCGView extends PlainView {
+    private static final class RPyCGView extends PlainView {
         private final Map<Pattern, Color> patternColors;
 
-        public RPyCGView(Element element, Map<Pattern, Color> patternColors) {
+        public RPyCGView(final Element element, final Map<Pattern, Color> patternColors) {
             super(element);
             getDocument().putProperty(PlainDocument.tabSizeAttribute, 4);
             this.patternColors = patternColors;
         }
 
         @Override
-        protected float drawUnselectedText(Graphics2D graphics, float x, float y, int p0, int p1)
+        protected float drawUnselectedText(final Graphics2D graphics, float x, final float y, final int p0, final int p1)
                 throws BadLocationException {
-            Document doc = getDocument();
-            String text = doc.getText(p0, p1 - p0);
-            Segment segment = getLineBuffer();
-            SortedMap<Integer, Integer> startMap = new TreeMap<>();
-            SortedMap<Integer, Color> colorMap = new TreeMap<>();
-            for (Map.Entry<Pattern, Color> entry : patternColors.entrySet()) {
-                Matcher matcher = entry.getKey().matcher(text);
+            final Document doc = getDocument();
+            final String text = doc.getText(p0, p1 - p0);
+            final Segment segment = getLineBuffer();
+            final SortedMap<Integer, Integer> startMap = new TreeMap<>();
+            final SortedMap<Integer, Color> colorMap = new TreeMap<>();
+            for (final Map.Entry<Pattern, Color> entry : patternColors.entrySet()) {
+                final Matcher matcher = entry.getKey().matcher(text);
                 while (matcher.find()) {
                     startMap.put(matcher.start(1), matcher.end());
                     colorMap.put(matcher.start(1), entry.getValue());
@@ -211,9 +196,9 @@ public final class Creator extends ScrollPane implements Initializable {
             }
             // TODO: check the map for overlapping parts
             int i = 0;
-            for (Map.Entry<Integer, Integer> entry : startMap.entrySet()) {
-                int start = entry.getKey();
-                int end = entry.getValue();
+            for (final Map.Entry<Integer, Integer> entry : startMap.entrySet()) {
+                final int start = entry.getKey();
+                final int end = entry.getValue();
                 if (i < start) {
                     graphics.setColor(Color.BLACK);
                     doc.getText(p0 + i, start - i, segment);
@@ -234,15 +219,15 @@ public final class Creator extends ScrollPane implements Initializable {
         }
     }
 
-    private static class RPyCGViewFactory implements ViewFactory {
+    private static final class RPyCGViewFactory implements ViewFactory {
         private final Map<Pattern, Color> patternColors;
 
-        private RPyCGViewFactory(Map<Pattern, Color> patternColors) {
+        private RPyCGViewFactory(final Map<Pattern, Color> patternColors) {
             this.patternColors = patternColors;
         }
 
         @Override
-        public View create(Element element) {
+        public View create(final Element element) {
             return new RPyCGView(element, patternColors);
         }
     }

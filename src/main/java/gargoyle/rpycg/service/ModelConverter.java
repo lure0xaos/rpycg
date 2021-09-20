@@ -10,11 +10,11 @@ import java.text.MessageFormat;
 import java.util.Set;
 
 public final class ModelConverter {
-    public ModelItem toModel(TreeItem<DisplayItem> root) {
-        DisplayItem rootValue = root.getValue();
-        ModelItem parent = ModelItem.createMenu(rootValue.getLabel(), rootValue.getName());
-        for (TreeItem<DisplayItem> treeItem : root.getChildren()) {
-            DisplayItem value = treeItem.getValue();
+    public ModelItem toModel(final TreeItem<DisplayItem> root) {
+        final DisplayItem rootValue = root.getValue();
+        final ModelItem parent = ModelItem.createMenu(rootValue.getLabel(), rootValue.getName());
+        for (final TreeItem<DisplayItem> treeItem : root.getChildren()) {
+            final DisplayItem value = treeItem.getValue();
             switch (value.getModelType()) {
                 case MENU:
                     parent.addChild(toModel(treeItem));
@@ -29,21 +29,21 @@ public final class ModelConverter {
         return parent;
     }
 
-    public TreeItem<DisplayItem> toTree(ModelItem item) {
-        ModelType modelType = item.getModelType();
+    public TreeItem<DisplayItem> toTree(final ModelItem item) {
+        final ModelType modelType = item.getModelType();
         switch (modelType) {
             case MENU:
-                DisplayItem menu = DisplayItem.createMenu(item.getLabel(), item.getName());
-                Set<ModelItem> children = item.getChildren();
-                TreeItem<DisplayItem> treeItem = DisplayItem.toTreeItem(menu,
-                        item.getParent() == null || children.isEmpty());
-                for (ModelItem child : children) {
+                final DisplayItem menu = DisplayItem.createMenu(item.getLabel(), item.getName());
+                final Set<ModelItem> children = item.getChildren();
+                final TreeItem<DisplayItem> treeItem = DisplayItem.toTreeItem(menu,
+                        null == item.getParent() || children.isEmpty());
+                for (final ModelItem child : children) {
                     treeItem.getChildren().add(toTree(child));
                 }
                 return treeItem;
             case VARIABLE:
-                DisplayItem variable = DisplayItem.createVariable(
-                        item.getType() == null ? VarType.STR : item.getType(),
+                final DisplayItem variable = DisplayItem.createVariable(
+                        null == item.getType() ? VarType.STR : item.getType(),
                         item.getLabel(), item.getName(), item.getValue()
                 );
                 return DisplayItem.toTreeItem(variable, false);

@@ -4,12 +4,12 @@ import gargoyle.rpycg.ex.AppUserException;
 import gargoyle.rpycg.fx.FXConstants;
 import gargoyle.rpycg.fx.FXContext;
 import gargoyle.rpycg.fx.FXContextFactory;
-import gargoyle.rpycg.fx.FXDialogs;
 import gargoyle.rpycg.fx.FXLauncher;
 import gargoyle.rpycg.fx.FXUserException;
 import gargoyle.rpycg.fx.FXUtil;
 import gargoyle.rpycg.model.Settings;
 import gargoyle.rpycg.service.LocaleConverter;
+import gargoyle.rpycg.ui.flags.FLAGS;
 import javafx.beans.binding.Bindings;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -23,13 +23,11 @@ import javafx.scene.control.MenuButton;
 import javafx.scene.control.MenuItem;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
-import javafx.stage.Stage;
 import javafx.util.Callback;
 
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.text.MessageFormat;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
@@ -46,7 +44,7 @@ public final class TabSettings extends GridPane implements Initializable {
     private static final String PREF_GAME = "game";
     private static final String PREF_STORAGE = "storage";
     private static final String USER_HOME = System.getProperty("user.home");
-    private final LocaleConverter localeConverter = new LocaleConverter();
+    private final LocaleConverter localeConverter;
     private final Preferences preferences;
     @FXML
     private CheckBox chkEnableCheat;
@@ -73,10 +71,11 @@ public final class TabSettings extends GridPane implements Initializable {
     private Settings settings;
 
     public TabSettings() {
-        preferences = Objects.requireNonNull(FXContextFactory.currentContext().getPreferences());
-        FXContextFactory.currentContext().loadComponent(this)
-                .orElseThrow(() ->
-                        new AppUserException(AppUserException.LC_ERROR_NO_VIEW, TabSettings.class.getName()));
+        final FXContext context = FXContextFactory.currentContext();
+        preferences = context.getPreferences();
+        localeConverter = new LocaleConverter(context);
+        context.loadComponent(this).orElseThrow(() ->
+                new AppUserException(AppUserException.LC_ERROR_NO_VIEW, TabSettings.class.getName()));
     }
 
     @SuppressWarnings("AccessOfSystemProperties")
@@ -84,8 +83,12 @@ public final class TabSettings extends GridPane implements Initializable {
         return Paths.get(preferences.get(PREF_GAME, USER_HOME));
     }
 
-    public void setGameDirectory(Path gameDirectory) {
+    public void setGameDirectory(final Path gameDirectory) {
         preferences.put(PREF_GAME, gameDirectory.toFile().getAbsolutePath());
+    }
+
+    public Settings getSettings() {
+        return settings;
     }
 
     @SuppressWarnings("AccessOfSystemProperties")
@@ -93,17 +96,13 @@ public final class TabSettings extends GridPane implements Initializable {
         return Paths.get(preferences.get(PREF_STORAGE, USER_HOME));
     }
 
-    public void setStorageDirectory(Path storageDirectory) {
+    public void setStorageDirectory(final Path storageDirectory) {
         preferences.put(PREF_STORAGE, storageDirectory.toFile().getAbsolutePath());
     }
 
-    public Settings getSettings() {
-        return settings;
-    }
-
     @Override
-    public void initialize(URL location, ResourceBundle resources) {
-        settings = initializeSettings(new Settings(preferences,
+    public void initialize(final URL location, final ResourceBundle resources) {
+        settings = initializeSettings(new Settings(localeConverter, preferences,
                 chkEnableCheat.isSelected(), chkEnableConsole.isSelected(),
                 chkEnableDeveloper.isSelected(), chkEnableWrite.isSelected(), chkEnableRollback.isSelected(),
                 keyCheat.getDefaultCombination(), keyConsole.getDefaultCombination(),
@@ -114,7 +113,63 @@ public final class TabSettings extends GridPane implements Initializable {
                 location.toExternalForm()));
     }
 
-    private Settings initializeSettings(Settings set) {
+    @FXML
+    void onResetKeys(final ActionEvent actionEvent) {
+        for (final KeyText keyText : new KeyText[]{keyCheat, keyConsole, keyWrite}) {
+            keyText.reset();
+        }
+    }
+
+    private static Optional<ImageView> getFlag(final String language) {
+        return FXContextFactory.currentContext().findResource(FLAGS.class, language, FXConstants.EXT__IMAGES)
+                .map(URL::toExternalForm).map(ImageView::new);
+    }
+
+    private void initializeLocaleComboBox(final ComboBox<Locale> comboBox, final Locale locale) {
+        final Callback<ListView<Locale>, ListCell<Locale>> cellFactory = param ->
+                new DecoratedListCell<>((cell, item) -> {
+                    if (null == item) {
+                        cell.setGraphic(null);
+                        cell.setText("");
+                    } else {
+                        getFlag(item.getLanguage()).ifPresent(cell::setGraphic);
+                        cell.setText(localeConverter.toDisplayString(item));
+                    }
+                });
+        comboBox.setButtonCell(cellFactory.call(null));
+        comboBox.setCellFactory(cellFactory);
+        comboBox.getItems().setAll(localeConverter.getLocales());
+        final Locale similarLocale = localeConverter.getSimilarLocale(locale);
+        comboBox.setValue(similarLocale);
+        comboBox.getSelectionModel().select(similarLocale);
+    }
+
+    private void initializeLocaleUi(final ResourceBundle resources) {
+        cmbLocaleUi.getItems().setAll(localeConverter.getLocales().stream().map(locale -> getFlag(locale.getLanguage())
+                .map(imageView -> {
+                    final MenuItem menuItem = new MenuItem(localeConverter.toDisplayString(locale), imageView);
+                    menuItem.setOnAction(event -> {
+                        final FXContext context = FXContextFactory.currentContext();
+                        FXContextFactory.changeContext(context.toBuilder()
+                                .setLocale(localeConverter.getSimilarLocale(locale)).createContext());
+                        if (context.confirm(resources.getString(LC_NEED_RESTART), Map.of(
+                                ButtonBar.ButtonData.OK_DONE, resources.getString(LC_NEED_RESTART_OK),
+                                ButtonBar.ButtonData.CANCEL_CLOSE, resources.getString(LC_NEED_RESTART_CANCEL)))) {
+                            FXLauncher.requestRestart(context.toBuilder().setLocale(locale).createContext());
+                        }
+                    });
+                    return menuItem;
+                }).orElse(null)).filter(Objects::nonNull).collect(Collectors.toList()));
+        settings.localeMenuProperty().addListener((observable, oldValue, newValue) -> {
+            cmbLocaleUi.setText(localeConverter.toDisplayString(newValue));
+            getFlag(newValue.getLanguage()).ifPresent(cmbLocaleUi::setGraphic);
+        });
+        final Locale currentLocale = localeConverter.getSimilarLocale(FXContextFactory.currentContext().getLocale());
+        cmbLocaleUi.setText(localeConverter.toDisplayString(currentLocale));
+        getFlag(currentLocale.getLanguage()).ifPresent(cmbLocaleUi::setGraphic);
+    }
+
+    private Settings initializeSettings(final Settings set) {
         cmbLocaleMenu.getSelectionModel().select(set.getLocaleMenu());
         chkEnableRollback.selectedProperty().setValue(set.enableRollbackProperty().getValue());
         chkEnableCheat.selectedProperty().setValue(set.enableCheatProperty().getValue());
@@ -142,75 +197,15 @@ public final class TabSettings extends GridPane implements Initializable {
         return set;
     }
 
-    private void initializeLocaleComboBox(ComboBox<Locale> comboBox, Locale locale) {
-        Callback<ListView<Locale>, ListCell<Locale>> cellFactory = param -> new DecoratedListCell<>((cell, item) -> {
-            if (item == null) {
-                cell.setGraphic(null);
-                cell.setText("");
-            } else {
-                getFlag(item.getLanguage()).ifPresent(cell::setGraphic);
-                cell.setText(localeConverter.toDisplayString(item));
-            }
-        });
-        comboBox.setButtonCell(cellFactory.call(null));
-        comboBox.setCellFactory(cellFactory);
-        comboBox.getItems().setAll(localeConverter.getLocales());
-        Locale similarLocale = localeConverter.getSimilarLocale(localeConverter.getLocales(), locale);
-        comboBox.setValue(similarLocale);
-        comboBox.getSelectionModel().select(similarLocale);
-    }
-
-    private void initializeLocaleUi(ResourceBundle resources) {
-        cmbLocaleUi.getItems().setAll(localeConverter.getLocales().stream().map(locale -> getFlag(locale.getLanguage())
-                .map(imageView -> {
-                    MenuItem menuItem = new MenuItem(localeConverter.toDisplayString(locale), imageView);
-                    menuItem.setOnAction(event -> {
-                        FXContextFactory.changeLocale(locale);
-                        if (FXDialogs.confirm(getStage().orElseThrow(), resources.getString(LC_NEED_RESTART), Map.of(
-                                ButtonBar.ButtonData.OK_DONE, resources.getString(LC_NEED_RESTART_OK),
-                                ButtonBar.ButtonData.CANCEL_CLOSE, resources.getString(LC_NEED_RESTART_CANCEL)))) {
-                            FXLauncher.requestRestart(getStage().orElseThrow());
-                        }
-                    });
-                    return menuItem;
-                }).orElse(null)).filter(Objects::nonNull).collect(Collectors.toList()));
-        settings.localeMenuProperty().addListener((observable, oldValue, newValue) -> {
-            cmbLocaleUi.setText(localeConverter.toDisplayString(newValue));
-            getFlag(newValue.getLanguage()).ifPresent(cmbLocaleUi::setGraphic);
-        });
-        Locale currentLocale = localeConverter.getSimilarLocale(localeConverter.getLocales(),
-                FXContextFactory.currentContext().getLocale());
-        cmbLocaleUi.setText(localeConverter.toDisplayString(currentLocale));
-        getFlag(currentLocale.getLanguage()).ifPresent(cmbLocaleUi::setGraphic);
-    }
-
-    private Optional<ImageView> getFlag(String language) {
-        FXContext context = FXContextFactory.currentContext();
-        return context.findResource(context.getBaseName(TabSettings.class,
-                MessageFormat.format("flags/{0}", language)), FXConstants.EXT_IMAGES)
-                .map(URL::toExternalForm).map(ImageView::new);
-    }
-
-    private Optional<Stage> getStage() {
-        return FXUtil.findStage(cmbLocaleMenu);
-    }
-
-    @FXML
-    void onResetKeys(ActionEvent actionEvent) {
-        for (KeyText keyText : new KeyText[]{keyCheat, keyConsole, keyWrite}) {
-            keyText.reset();
-        }
-    }
-
     private static final class DecoratedListCell<T> extends ListCell<T> {
-        private final BiConsumer<ListCell<T>, T> decorator;
+        private final BiConsumer<? super ListCell<T>, ? super T> decorator;
 
-        public DecoratedListCell(BiConsumer<ListCell<T>, T> decorator) {
+        public DecoratedListCell(final BiConsumer<? super ListCell<T>, ? super T> decorator) {
             this.decorator = decorator;
         }
 
         @Override
-        protected void updateItem(T item, boolean empty) {
+        protected void updateItem(final T item, final boolean empty) {
             super.updateItem(item, empty);
             decorator.accept(this, empty ? null : item);
         }

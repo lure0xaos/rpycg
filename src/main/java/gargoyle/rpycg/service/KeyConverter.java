@@ -14,28 +14,28 @@ public final class KeyConverter {
     private static final char PLUS = '+';
     private static final String UNDERSCORE = "_";
 
-    public String toBinding(KeyCodeCombination key) {
-        StringBuilder sb = new StringBuilder(32);
+    public String toBinding(final KeyCodeCombination key) {
+        final StringBuilder sb = new StringBuilder(32);
         boolean complex = false;
-        if (key.getShift() == KeyCombination.ModifierValue.DOWN) {
+        if (KeyCombination.ModifierValue.DOWN == key.getShift()) {
             sb.append(KeyCode.SHIFT.getName().toLowerCase(Locale.ENGLISH));
             complex = true;
         }
-        if (key.getControl() == KeyCombination.ModifierValue.DOWN) {
+        if (KeyCombination.ModifierValue.DOWN == key.getControl()) {
             if (complex) {
                 sb.append(UNDERSCORE);
             }
             sb.append(KeyCode.CONTROL.getName().toLowerCase(Locale.ENGLISH));
             complex = true;
         }
-        if (key.getAlt() == KeyCombination.ModifierValue.DOWN) {
+        if (KeyCombination.ModifierValue.DOWN == key.getAlt()) {
             if (complex) {
                 sb.append(UNDERSCORE);
             }
             sb.append(KeyCode.ALT.getName().toLowerCase(Locale.ENGLISH));
             complex = true;
         }
-        if (key.getMeta() == KeyCombination.ModifierValue.DOWN) {
+        if (KeyCombination.ModifierValue.DOWN == key.getMeta()) {
             if (complex) {
                 sb.append(UNDERSCORE);
             }
@@ -49,12 +49,12 @@ public final class KeyConverter {
         return sb.toString();
     }
 
-    public Optional<KeyCodeCombination> toCombination(String keys) {
+    public Optional<KeyCodeCombination> toCombination(final String keys) {
         try {
             KeyCode keyCode = KeyCode.UNDEFINED;
-            Set<KeyCombination.Modifier> modifiers = new HashSet<>(4);
-            for (String name : keys.split(UNDERSCORE)) {
-                KeyCode value = KeyCode.valueOf(name);
+            final Set<KeyCombination.Modifier> modifiers = new HashSet<>(4);
+            for (final String name : keys.split(UNDERSCORE)) {
+                final KeyCode value = KeyCode.valueOf(name);
                 switch (value) {
                     case SHIFT:
                         modifiers.add(KeyCombination.SHIFT_DOWN);
@@ -73,33 +73,33 @@ public final class KeyConverter {
                 }
             }
             return Optional.of(new KeyCodeCombination(keyCode, modifiers.toArray(MODIFIERS)));
-        } catch (IllegalArgumentException e) {
+        } catch (final IllegalArgumentException e) {
             return Optional.empty();
         }
     }
 
-    public String toString(KeyCodeCombination keyCodeCombination) {
-        StringBuilder sb = new StringBuilder(32);
+    public String toString(final KeyCodeCombination keyCodeCombination) {
+        final StringBuilder sb = new StringBuilder(32);
         boolean complex = false;
-        if (keyCodeCombination.getShift() == KeyCombination.ModifierValue.DOWN) {
+        if (KeyCombination.ModifierValue.DOWN == keyCodeCombination.getShift()) {
             sb.append(KeyCode.SHIFT.getName().toUpperCase(Locale.ENGLISH));
             complex = true;
         }
-        if (keyCodeCombination.getControl() == KeyCombination.ModifierValue.DOWN) {
+        if (KeyCombination.ModifierValue.DOWN == keyCodeCombination.getControl()) {
             if (complex) {
                 sb.append(PLUS);
             }
             sb.append(KeyCode.CONTROL.getName().toUpperCase(Locale.ENGLISH));
             complex = true;
         }
-        if (keyCodeCombination.getAlt() == KeyCombination.ModifierValue.DOWN) {
+        if (KeyCombination.ModifierValue.DOWN == keyCodeCombination.getAlt()) {
             if (complex) {
                 sb.append(PLUS);
             }
             sb.append(KeyCode.ALT.getName().toUpperCase(Locale.ENGLISH));
             complex = true;
         }
-        if (keyCodeCombination.getMeta() == KeyCombination.ModifierValue.DOWN) {
+        if (KeyCombination.ModifierValue.DOWN == keyCodeCombination.getMeta()) {
             if (complex) {
                 sb.append(PLUS);
             }

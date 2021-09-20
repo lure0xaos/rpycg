@@ -1,7 +1,15 @@
 package gargoyle.rpycg.ui;
 
 import gargoyle.rpycg.ex.AppUserException;
-import gargoyle.rpycg.fx.*;
+import gargoyle.rpycg.fx.FXComponent;
+import gargoyle.rpycg.fx.FXConstants;
+import gargoyle.rpycg.fx.FXContext;
+import gargoyle.rpycg.fx.FXContextFactory;
+import gargoyle.rpycg.fx.FXRun;
+import gargoyle.rpycg.fx.FXUserException;
+import gargoyle.rpycg.fx.FXUtil;
+import gargoyle.rpycg.fx.log.FXLog;
+import gargoyle.rpycg.ui.icons.Icons;
 import gargoyle.rpycg.util.GameUtil;
 import javafx.beans.property.Property;
 import javafx.beans.property.SimpleObjectProperty;
@@ -10,7 +18,14 @@ import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.Node;
-import javafx.scene.control.*;
+import javafx.scene.Parent;
+import javafx.scene.control.ButtonBar;
+import javafx.scene.control.Dialog;
+import javafx.scene.control.SelectionMode;
+import javafx.scene.control.Tooltip;
+import javafx.scene.control.TreeCell;
+import javafx.scene.control.TreeItem;
+import javafx.scene.control.TreeView;
 import javafx.scene.image.ImageView;
 import javafx.stage.Stage;
 import javafx.util.Callback;
@@ -21,8 +36,22 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.URL;
 import java.net.UnknownHostException;
-import java.nio.file.*;
-import java.util.*;
+import java.nio.file.ClosedWatchServiceException;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardWatchEventKinds;
+import java.nio.file.WatchEvent;
+import java.nio.file.WatchKey;
+import java.nio.file.WatchService;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.ResourceBundle;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
@@ -32,42 +61,87 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 public final class FolderChooser extends Dialog<Path> implements Initializable {
-    private static final String ICON_COMPUTER = "icons/computer";
-    private static final String ICON_FILE = "icons/text-x-generic";
-    private static final String ICON_FOLDER = "icons/folder";
-    private static final String ICON_FOLDER_OPEN = "icons/folder-open";
     private static final String LC_CANCEL = "cancel";
     private static final String LC_OK = "ok";
     private static final String LC_ROOT = "root";
     private static final String LC_TITLE = "title";
     private final Property<BiFunction<Path, Boolean, Optional<Node>>> additionalIconProvider;
+    private final FXComponent<FolderChooser, Parent> component;
     private final FileWatcher fileWatcher;
     private final Property<Path> initialDirectory;
     private final Property<Predicate<Path>> selectionFilter;
     @FXML
     private TreeView<Path> fileTree;
     private String rootLabel;
-    private static final Logger log = LoggerFactory.getLogger(FolderChooser.class);
 
     public FolderChooser() {
         fileWatcher = new FileWatcher();
         initialDirectory = new SimpleObjectProperty<>(null);
         selectionFilter = new SimpleObjectProperty<>(null);
         additionalIconProvider = new SimpleObjectProperty<>(null);
-        FXContextFactory.currentContext().loadDialog(this)
+        component = FXContextFactory.currentContext().loadDialog(this)
                 .orElseThrow(() ->
                         new AppUserException(AppUserException.LC_ERROR_NO_VIEW, FolderChooser.class.getName()));
+    }
+
+    private static ObservableList<TreeItem<Path>> findChildren(final Path path, final FileWatcher fileWatcher,
+                                                               final BiFunction<Path, Boolean, Optional<Node>>
+                                                                       iconProvider,
+                                                               final BiConsumer<TreeItem<Path>, Boolean> navigate) {
+        if (null == path) {
+            return FXCollections.observableArrayList(
+                    StreamSupport.stream(FileSystems.getDefault().getRootDirectories().spliterator(), false)
+                            .filter(Files::isDirectory).sorted()
+                            .map(watchPath -> new FileTreeItem(watchPath, fileWatcher, iconProvider, navigate))
+                            .collect(Collectors.toList()));
+        }
+        if (Files.isDirectory(path)) {
+            try (final Stream<Path> list = Files.list(path)) {
+                final List<FileTreeItem> collect = list.filter(Files::isDirectory).sorted()
+                        .map(watchPath -> new FileTreeItem(watchPath, fileWatcher, iconProvider, navigate))
+                        .collect(Collectors.toList());
+                return FXCollections.observableArrayList(collect);
+            } catch (final IOException e) {
+                return FXCollections.observableArrayList();
+            }
+        }
+        return FXCollections.observableArrayList();
+    }
+
+    private static String getPathText(final Path path, final boolean full, final String rootLabel) {
+        if (null != path) {
+            if (full || null == path.getFileName()) {
+                try {
+                    if (Files.isSameFile(path, path.getRoot())) {
+                        return FileSystemView.getFileSystemView().getSystemDisplayName(path.toFile());
+                    }
+                } catch (final IOException e) {
+                    return path.toString();
+                }
+                return path.toString();
+            }
+            return path.getFileName().toString();
+        }
+        try {
+            return InetAddress.getLocalHost().getHostName();
+        } catch (final UnknownHostException x) {
+            return rootLabel;
+        }
     }
 
     public Property<BiFunction<Path, Boolean, Optional<Node>>> additionalIconProviderProperty() {
         return additionalIconProvider;
     }
 
+    public void dispose() {
+        fileWatcher.close();
+    }
+
     public BiFunction<Path, Boolean, Optional<Node>> getAdditionalIconProvider() {
         return additionalIconProvider.getValue();
     }
 
-    public void setAdditionalIconProvider(BiFunction<Path, Boolean, Optional<Node>> additionalIconProvider) {
+    public void setAdditionalIconProvider(final BiFunction<Path, Boolean, Optional<Node>> additionalIconProvider) {
         this.additionalIconProvider.setValue(additionalIconProvider);
     }
 
@@ -75,7 +149,7 @@ public final class FolderChooser extends Dialog<Path> implements Initializable {
         return initialDirectory.getValue();
     }
 
-    public void setInitialDirectory(Path initialDirectory) {
+    public void setInitialDirectory(final Path initialDirectory) {
         this.initialDirectory.setValue(initialDirectory);
     }
 
@@ -83,15 +157,15 @@ public final class FolderChooser extends Dialog<Path> implements Initializable {
         return selectionFilter.getValue();
     }
 
-    public void setSelectionFilter(Predicate<Path> selectionFilter) {
+    public void setSelectionFilter(final Predicate<Path> selectionFilter) {
         this.selectionFilter.setValue(selectionFilter);
     }
 
     @SuppressWarnings("ReturnOfNull")
     @Override
-    public void initialize(URL location, ResourceBundle resources) {
+    public void initialize(final URL location, final ResourceBundle resources) {
         FXUtil.requireNonNull(resources, FXUserException.LC_ERROR_NO_RESOURCES, location.toExternalForm());
-        FXDialogs.decorateDialog(this, buttonType ->
+        FXContextFactory.currentContext().decorateDialog(this, buttonType ->
                 buttonType.getButtonData().isCancelButton() ? null :
                         fileTree.getSelectionModel().getSelectedItem().getValue(), Map.of(
                 ButtonBar.ButtonData.OK_DONE, resources.getString(LC_OK),
@@ -101,92 +175,66 @@ public final class FolderChooser extends Dialog<Path> implements Initializable {
         rootLabel = resources.getString(LC_ROOT);
         fileTree.setCellFactory(treeView -> new FileTreeCell(rootLabel, this::getPathGraphic));
         fileTree.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
-        TreeItem<Path> rootNode = new TreeItem<>(null, getPathGraphic(null, false)
+        final TreeItem<Path> rootNode = new TreeItem<>(null, getPathGraphic(null, false)
                 .orElse(null));
         rootNode.getChildren().setAll(findChildren(null, fileWatcher, this::getPathGraphic,
                 (treeItem, expanded) -> scrollTo(treeItem)));
         rootNode.setExpanded(true);
         fileTree.setRoot(rootNode);
         fileTree.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-            Predicate<Path> selectionFilterValue = selectionFilter.getValue();
-            if (selectionFilterValue != null && newValue != null && newValue.getValue() != null) {
+            final Predicate<Path> selectionFilterValue = selectionFilter.getValue();
+            if (null != selectionFilterValue && null != newValue && null != newValue.getValue()) {
                 getDialogPane().getButtonTypes().stream()
                         .filter(buttonType -> buttonType.getButtonData().isDefaultButton())
                         .findFirst().ifPresent(buttonType -> getDialogPane().lookupButton(buttonType)
-                        .setDisable(!selectionFilterValue.test(newValue.getValue())));
+                                .setDisable(!selectionFilterValue.test(newValue.getValue())));
             }
         });
         initialDirectory.addListener((observable, oldValue, newValue) -> {
-            if (newValue != null) {
+            if (null != newValue) {
                 selectItem(newValue, !GameUtil.isGameDirectory(newValue));
             }
         });
         FXRun.runLater(() -> fileTree.requestFocus());
     }
 
-    private Optional<Node> getPathGraphic(Path path, boolean expanded) {
-        FXContext context = FXContextFactory.currentContext();
-        return Optional.ofNullable(additionalIconProvider.getValue())
-                .map(iconProvider -> iconProvider.apply(path, expanded))
-                .filter(Optional::isPresent)
-                .orElseGet(() -> {
-                    String baseName = path == null ? ICON_COMPUTER :
-                            Files.isDirectory(path) ?
-                                    expanded ? ICON_FOLDER_OPEN : ICON_FOLDER :
-                                    ICON_FILE;
-                    return context.findResource(
-                            context.getBaseName(FolderChooser.class, baseName),
-                            FXConstants.EXT_IMAGES)
-                            .map(URL::toExternalForm)
-                            .map(ImageView::new);
-                });
+    public Property<Predicate<Path>> selectionFilterProperty() {
+        return selectionFilter;
     }
 
-    private static ObservableList<TreeItem<Path>> findChildren(Path path, FileWatcher fileWatcher,
-                                                               BiFunction<Path, Boolean, Optional<Node>>
-                                                                       iconProvider,
-                                                               BiConsumer<TreeItem<Path>, Boolean> navigate) {
-        if (path == null) {
-            return FXCollections.observableArrayList(
-                    StreamSupport.stream(FileSystems.getDefault().getRootDirectories().spliterator(), false)
-                            .filter(Files::isDirectory).sorted()
-                            .map(watchPath -> new FileTreeItem(watchPath, fileWatcher, iconProvider, navigate))
-                            .collect(Collectors.toList()));
+    public Path showDialog() {
+        fileWatcher.start();
+        final Stage stage = component.getPrimaryStage();
+        if (!stage.isShowing()) {
+            initOwner(stage);
         }
-        if (Files.isDirectory(path)) {
-            try (Stream<Path> list = Files.list(path)) {
-                List<FileTreeItem> collect = list.filter(Files::isDirectory).sorted()
-                        .map(watchPath -> new FileTreeItem(watchPath, fileWatcher, iconProvider, navigate))
-                        .collect(Collectors.toList());
-                return FXCollections.observableArrayList(collect);
-            } catch (IOException e) {
-                return FXCollections.observableArrayList();
-            }
+        updateItems(fileTree.getSelectionModel().getSelectedItem().getValue());
+        final Optional<Path> file = showAndWait();
+        fileWatcher.close();
+        file.ifPresent(initialDirectory::setValue);
+        return file.orElse(null);
+    }
+
+    @Override
+    public String toString() {
+        return getPathText(null, false, rootLabel);
+    }
+
+    @SuppressWarnings("MethodCallInLoopCondition")
+    private Path getExistingParent(final Path curPath) {
+        Path path = curPath;
+        while (!Files.isReadable(path)) {
+            path = path.getParent();
         }
-        return FXCollections.observableArrayList();
+        return path;
     }
 
-    private void scrollTo(TreeItem<Path> item) {
-        fileTree.scrollTo(fileTree.getRow(item));
-    }
-
-    private void selectItem(Path path, boolean expanded) {
-        Collection<TreeItem<Path>> result = new LinkedList<>();
-        TreeItem<Path> item = getItems(fileTree.getRoot(), result, getExistingParent(path));
-        result.forEach(treeItem -> {
-            treeItem.setExpanded(true);
-            fileTree.getSelectionModel().select(treeItem);
-        });
-        item.setExpanded(expanded);
-        scrollTo(item);
-    }
-
-    private TreeItem<Path> getItems(TreeItem<Path> root,
-                                    Collection<TreeItem<Path>> result,
-                                    Path targetPath) {
+    private TreeItem<Path> getItems(final TreeItem<Path> root,
+                                    final Collection<? super TreeItem<Path>> result,
+                                    final Path targetPath) {
         TreeItem<Path> item = root;
-        for (Path path : getParentPaths(targetPath)) {
-            for (TreeItem<Path> child : item.getChildren()) {
+        for (final Path path : getParentPaths(targetPath)) {
+            for (final TreeItem<Path> child : item.getChildren()) {
                 if (path.equals(child.getValue())) {
                     item = child;
                     result.add(item);
@@ -196,98 +244,74 @@ public final class FolderChooser extends Dialog<Path> implements Initializable {
         return item;
     }
 
-    @SuppressWarnings("MethodCallInLoopCondition")
-    private Path getExistingParent(Path curPath) {
+    private List<Path> getParentPaths(final Path curPath) {
         Path path = curPath;
-        while (!Files.isReadable(path)) {
-            path = path.getParent();
-        }
-        return path;
-    }
-
-    private List<Path> getParentPaths(Path curPath) {
-        Path path = curPath;
-        List<Path> paths = new ArrayList<>(path.getNameCount());
-        while (path != null) {
+        final List<Path> paths = new ArrayList<>(path.getNameCount());
+        while (null != path) {
             paths.add(0, path);
             path = path.getParent();
         }
         return paths;
     }
 
-    public Property<Predicate<Path>> selectionFilterProperty() {
-        return selectionFilter;
+    private Optional<Node> getPathGraphic(final Path path, final boolean expanded) {
+        final FXContext context = FXContextFactory.currentContext();
+        return Optional.ofNullable(additionalIconProvider.getValue())
+                .map(iconProvider -> iconProvider.apply(path, expanded))
+                .filter(Optional::isPresent)
+                .orElseGet(() -> context.findResource(Icons.class, null == path ? Icons.ICON_COMPUTER :
+                                Files.isDirectory(path) ?
+                                        expanded ? Icons.ICON_FOLDER_OPEN : Icons.ICON_FOLDER :
+                                        Icons.ICON_FILE, FXConstants.EXT__IMAGES)
+                        .map(URL::toExternalForm)
+                        .map(ImageView::new));
     }
 
-    public Path showDialog() {
-        fileWatcher.start();
-        Stage stage = FXContextFactory.currentContext().getStage();
-        if (!stage.isShowing()) {
-            initOwner(stage);
-        }
-        updateItems(fileTree.getSelectionModel().getSelectedItem().getValue());
-        Optional<Path> file = showAndWait();
-        fileWatcher.close();
-        file.ifPresent(initialDirectory::setValue);
-        return file.orElse(null);
+    private void scrollTo(final TreeItem<Path> item) {
+        fileTree.scrollTo(fileTree.getRow(item));
     }
 
-    private void updateItems(Path path) {
-        Collection<TreeItem<Path>> result = new LinkedList<>();
+    private void selectItem(final Path path, final boolean expanded) {
+        final Collection<TreeItem<Path>> result = new LinkedList<>();
+        final TreeItem<Path> item = getItems(fileTree.getRoot(), result, getExistingParent(path));
+        result.forEach(treeItem -> {
+            treeItem.setExpanded(true);
+            fileTree.getSelectionModel().select(treeItem);
+        });
+        item.setExpanded(expanded);
+        scrollTo(item);
+    }
+
+    private void updateItems(final Path path) {
+        final Collection<TreeItem<Path>> result = new LinkedList<>();
         getItems(fileTree.getRoot(), result, path);
         result.forEach(treeItem -> {
-            ObservableList<TreeItem<Path>> oldChildren = treeItem.getChildren();
-            ObservableList<TreeItem<Path>> newChildren = FXCollections.observableArrayList(oldChildren);
+            final ObservableList<TreeItem<Path>> oldChildren = treeItem.getChildren();
+            final ObservableList<TreeItem<Path>> newChildren = FXCollections.observableArrayList(oldChildren);
             newChildren.removeIf(item -> !Files.isReadable(item.getValue()));
             FolderChooser.findChildren(treeItem.getValue(), fileWatcher, this::getPathGraphic,
-                    (item, expanded) -> scrollTo(item))
+                            (item, expanded) -> scrollTo(item))
                     .stream().filter(item -> Files.isReadable(item.getValue())
-                    && !oldChildren.contains(item))
+                            && !oldChildren.contains(item))
                     .forEach(newChildren::add);
             oldChildren.setAll(newChildren);
         });
     }
 
-    @Override
-    public String toString() {
-        return getPathText(null, false, rootLabel);
-    }
-
-    private static String getPathText(Path path, boolean full, String rootLabel) {
-        if (path != null) {
-            if (full || path.getFileName() == null) {
-                try {
-                    if (Files.isSameFile(path, path.getRoot())) {
-                        return FileSystemView.getFileSystemView().getSystemDisplayName(path.toFile());
-                    }
-                } catch (IOException e) {
-                    return path.toString();
-                }
-                return path.toString();
-            }
-            return path.getFileName().toString();
-        }
-        try {
-            return InetAddress.getLocalHost().getHostName();
-        } catch (UnknownHostException x) {
-            return rootLabel;
-        }
-    }
-
     private static final class FileTreeCell extends TreeCell<Path> {
-        private final BiFunction<Path, Boolean, Optional<Node>> iconProvider;
+        private final BiFunction<? super Path, ? super Boolean, Optional<Node>> iconProvider;
         private final String rootLabel;
 
-        private FileTreeCell(String rootLabel,
-                             BiFunction<Path, Boolean, Optional<Node>> iconProvider) {
+        private FileTreeCell(final String rootLabel,
+                             final BiFunction<? super Path, ? super Boolean, Optional<Node>> iconProvider) {
             this.rootLabel = rootLabel;
             this.iconProvider = iconProvider;
         }
 
         @Override
-        protected void updateItem(Path item, boolean empty) {
+        protected void updateItem(final Path item, final boolean empty) {
             super.updateItem(item, empty);
-            if (empty || getTreeItem() == null) {
+            if (empty || null == getTreeItem()) {
                 setGraphic(null);
             } else {
                 iconProvider.apply(item, getTreeItem().isExpanded()).ifPresent(this::setGraphic);
@@ -303,62 +327,41 @@ public final class FolderChooser extends Dialog<Path> implements Initializable {
         private final BiConsumer<TreeItem<Path>, Boolean> navigate;
         private boolean fetch;
 
-        private FileTreeItem(Path path, FileWatcher fileWatcher,
-                             BiFunction<Path, Boolean, Optional<Node>> iconProvider,
-                             BiConsumer<TreeItem<Path>, Boolean> navigate) {
+        private FileTreeItem(final Path path, final FileWatcher fileWatcher,
+                             final BiFunction<Path, Boolean, Optional<Node>> iconProvider,
+                             final BiConsumer<TreeItem<Path>, Boolean> navigate) {
             super(path);
             this.fileWatcher = fileWatcher;
             this.iconProvider = iconProvider;
             this.navigate = navigate;
-            if (path != null) {
+            if (null != path) {
                 setValue(path);
                 if (Files.isDirectory(path)) {
                     addEventHandler(TreeItem.branchCollapsedEvent(), (TreeModificationEvent<Path> e) -> {
-                        TreeItem<Path> treeItem = e.getSource();
+                        final TreeItem<Path> treeItem = e.getSource();
                         iconProvider.apply(treeItem.getValue(), e.getSource().isExpanded())
                                 .ifPresent(treeItem::setGraphic);
                         treeItem.getChildren().clear();
-                        FXRun.runLater(()->navigate.accept(treeItem, false));
+                        FXRun.runLater(() -> navigate.accept(treeItem, false));
                     });
                     addEventHandler(TreeItem.branchExpandedEvent(), (TreeModificationEvent<Path> e) -> {
-                        TreeItem<Path> treeItem = e.getSource();
+                        final TreeItem<Path> treeItem = e.getSource();
                         updateChildren(treeItem);
                         iconProvider.apply(treeItem.getValue(), treeItem.isExpanded())
                                 .ifPresent(treeItem::setGraphic);
                         fetch = false;
-                        FXRun.runLater(()->navigate.accept(treeItem, true));
+                        FXRun.runLater(() -> navigate.accept(treeItem, true));
                     });
                     fileWatcher.register(getValue(), ev -> updateChildren(this));
                 }
                 iconProvider.apply(path, false).ifPresent(this::setGraphic);
                 parentProperty().addListener((observable, oldValue, newValue) -> {
-                    if (newValue == null) {
+                    if (null == newValue) {
                         fetch = false;
                         fileWatcher.unregister(path);
                     }
                 });
             }
-        }
-
-        private Boolean updateChildren(TreeItem<Path> treeItem) {
-            ObservableList<TreeItem<Path>> oldChildren = treeItem.getChildren();
-            fetch = true;
-            ObservableList<TreeItem<Path>> newChildren = findNewChildren(treeItem, oldChildren, navigate);
-            oldChildren.setAll(newChildren);
-            return fetch;
-        }
-
-        @SuppressWarnings("TypeMayBeWeakened")
-        private ObservableList<TreeItem<Path>> findNewChildren(TreeItem<Path> treeItem, ObservableList<TreeItem<Path>> oldChildren,
-                                                               BiConsumer<TreeItem<Path>, Boolean> collapse) {
-            ObservableList<TreeItem<Path>> newChildren = FXCollections.observableArrayList(oldChildren);
-            newChildren.removeIf(item -> !Files.isReadable(item.getValue()));
-            FolderChooser.findChildren(treeItem.getValue(), fileWatcher, iconProvider, collapse)
-                    .stream().filter(item -> Files.isReadable(item.getValue())
-                    && !oldChildren.contains(item)
-                    && item.getValue().getParent().equals(treeItem.getValue()))
-                    .forEach(newChildren::add);
-            return newChildren;
         }
 
         @Override
@@ -368,7 +371,7 @@ public final class FolderChooser extends Dialog<Path> implements Initializable {
 
         @SuppressWarnings("unchecked")
         @Override
-        public boolean equals(Object obj) {
+        public boolean equals(final Object obj) {
             return obj instanceof TreeItem && getValue().equals(((TreeItem<Path>) obj).getValue());
         }
 
@@ -379,44 +382,61 @@ public final class FolderChooser extends Dialog<Path> implements Initializable {
 
         @Override
         public ObservableList<TreeItem<Path>> getChildren() {
-            ObservableList<TreeItem<Path>> oldChildren = super.getChildren();
+            final ObservableList<TreeItem<Path>> oldChildren = super.getChildren();
             if (fetch) {
                 return oldChildren;
             }
             fetch = true;
-            ObservableList<TreeItem<Path>> newChildren = findNewChildren(this, oldChildren, navigate);
+            final ObservableList<TreeItem<Path>> newChildren = findNewChildren(this, oldChildren, navigate);
             oldChildren.setAll(newChildren);
             return newChildren;
+        }
+
+        @SuppressWarnings("TypeMayBeWeakened")
+        private ObservableList<TreeItem<Path>> findNewChildren(final TreeItem<? extends Path> treeItem, final ObservableList<? extends TreeItem<Path>> oldChildren,
+                                                               final BiConsumer<TreeItem<Path>, Boolean> collapse) {
+            final ObservableList<TreeItem<Path>> newChildren = FXCollections.observableArrayList(oldChildren);
+            newChildren.removeIf(item -> !Files.isReadable(item.getValue()));
+            FolderChooser.findChildren(treeItem.getValue(), fileWatcher, iconProvider, collapse)
+                    .stream().filter(item -> Files.isReadable(item.getValue())
+                            && !oldChildren.contains(item)
+                            && item.getValue().getParent().equals(treeItem.getValue()))
+                    .forEach(newChildren::add);
+            return newChildren;
+        }
+
+        private Boolean updateChildren(final TreeItem<Path> treeItem) {
+            final ObservableList<TreeItem<Path>> oldChildren = treeItem.getChildren();
+            fetch = true;
+            final ObservableList<TreeItem<Path>> newChildren = findNewChildren(treeItem, oldChildren, navigate);
+            oldChildren.setAll(newChildren);
+            return fetch;
         }
     }
 
     private static final class FileWatcher implements Closeable {
-        private static final Logger log = LoggerFactory.getLogger(FileWatcher.class);
         private final Map<Path, FileWatcherData> watch = new ConcurrentHashMap<>(2);
+        private final WatchService watchService;
         private volatile boolean running;
+
+        public FileWatcher() {
+            try {
+                watchService = FileSystems.getDefault().newWatchService();
+            } catch (final IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
 
         @Override
         public void close() {
             running = false;
-        }
-
-        private void register(Path path, Callback<FileWatcherEvent, Boolean> callback) {
-            if (path != null && Files.isReadable(path) && !watch.containsKey(path)) {
-                try {
-                    WatchService watchService = path.getFileSystem().newWatchService();
-                    path.register(watchService, StandardWatchEventKinds.ENTRY_CREATE,
-                            StandardWatchEventKinds.ENTRY_DELETE,
-                            StandardWatchEventKinds.ENTRY_MODIFY);
-                    watch.put(path, new FileWatcherData(path, callback, watchService));
-                } catch (IOException e) {
-                    log.error(e.getLocalizedMessage(), e);
-                }
+            try {
+                watch.forEach((key, value) -> unregister(key));
+                watch.clear();
+                watchService.close();
+            } catch (final IOException e) {
+                e.printStackTrace();
             }
-        }
-
-        private void start() {
-            Thread thread = createThread();
-            thread.start();
         }
 
         @SuppressWarnings({"BusyWait", "NestedAssignment", "MethodCallInLoopCondition"})
@@ -426,23 +446,22 @@ public final class FolderChooser extends Dialog<Path> implements Initializable {
                 while (running) {
                     try {
                         Thread.sleep(100);
-                    } catch (InterruptedException e) {
-                        log.error(e.getLocalizedMessage(), e);
+                    } catch (final InterruptedException e) {
+                        FXLog.error(e, "interrupted");
                     }
-                    Iterator<Map.Entry<Path, FileWatcherData>> iterator = watch.entrySet().iterator();
+                    final Iterator<Map.Entry<Path, FileWatcherData>> iterator = watch.entrySet().iterator();
                     while (iterator.hasNext()) {
-                        Map.Entry<Path, FileWatcherData> entry = iterator.next();
-                        Path path = entry.getKey();
-                        FileWatcherData data = entry.getValue();
-                        if (data != null) {
-                            WatchService watchService = data.getWatchService();
-                            Path dataPath = data.getPath();
+                        final Map.Entry<Path, FileWatcherData> entry = iterator.next();
+                        final Path path = entry.getKey();
+                        final FileWatcherData data = entry.getValue();
+                        if (null != data) {
+                            final Path dataPath = data.getPath();
                             try {
                                 WatchKey key;
-                                List<FileWatcherEventData> watchPaths = new LinkedList<>();
-                                while ((key = watchService.poll()) != null) {
-                                    for (WatchEvent<?> watchEvent : key.pollEvents()) {
-                                        if (path == null || dataPath.equals(path)) {
+                                final List<FileWatcherEventData> watchPaths = new LinkedList<>();
+                                while (null != (key = watchService.poll())) {
+                                    for (final WatchEvent<?> watchEvent : key.pollEvents()) {
+                                        if (null == path || dataPath.equals(path)) {
                                             watchPaths.add(new FileWatcherEventData(
                                                     dataPath.resolve((Path) watchEvent.context()),
                                                     watchEvent.kind(),
@@ -451,37 +470,39 @@ public final class FolderChooser extends Dialog<Path> implements Initializable {
                                     }
                                     key.reset();
                                 }
-                                if (!watchPaths.isEmpty() && path != null) {
+                                if (!watchPaths.isEmpty() && null != path) {
                                     data.getCallback().call(new FileWatcherEvent(path, watchPaths));
                                 }
-                            } catch (ClosedWatchServiceException e) {
+                            } catch (final ClosedWatchServiceException e) {
                                 iterator.remove();
                             }
-                        }
-                    }
-                }
-                for (Map.Entry<Path, FileWatcherData> entry : watch.entrySet()) {
-                    FileWatcherData data = watch.get(entry.getKey());
-                    if (data != null) {
-                        WatchService watchService = data.getWatchService();
-                        try {
-                            watchService.close();
-                        } catch (IOException e) {
-                            log.error(e.getLocalizedMessage(), e);
                         }
                     }
                 }
             }, FileWatcher.class.getName());
         }
 
-        private void unregister(Path path) {
-            FileWatcherData data = watch.get(path);
-            if (data != null) {
+        private void register(final Path path, final Callback<FileWatcherEvent, Boolean> callback) {
+            if (null != path && Files.isReadable(path) && !watch.containsKey(path)) {
                 try {
-                    data.getWatchService().close();
-                } catch (IOException e) {
-                    log.error(e.getLocalizedMessage(), e);
+                    path.register(watchService, StandardWatchEventKinds.ENTRY_CREATE,
+                            StandardWatchEventKinds.ENTRY_DELETE,
+                            StandardWatchEventKinds.ENTRY_MODIFY);
+                    watch.put(path, new FileWatcherData(path, callback));
+                } catch (final IOException e) {
+                    FXLog.error(e, "register");
                 }
+            }
+        }
+
+        private void start() {
+            final Thread thread = createThread();
+            thread.setDaemon(true);
+            thread.start();
+        }
+
+        private void unregister(final Path path) {
+            if (watch.containsKey(path)) {
                 watch.remove(path);
             }
         }
@@ -490,13 +511,10 @@ public final class FolderChooser extends Dialog<Path> implements Initializable {
     private static final class FileWatcherData {
         private final Callback<FileWatcherEvent, Boolean> callback;
         private final Path path;
-        private final WatchService watchService;
 
-        private FileWatcherData(Path path, Callback<FileWatcherEvent, Boolean> callback,
-                                WatchService watchService) {
+        private FileWatcherData(final Path path, final Callback<FileWatcherEvent, Boolean> callback) {
             this.path = path;
             this.callback = callback;
-            this.watchService = watchService;
         }
 
         private Callback<FileWatcherEvent, Boolean> getCallback() {
@@ -506,17 +524,13 @@ public final class FolderChooser extends Dialog<Path> implements Initializable {
         private Path getPath() {
             return path;
         }
-
-        private WatchService getWatchService() {
-            return watchService;
-        }
     }
 
     private static final class FileWatcherEvent {
         private final Path registeredPath;
         private final List<FileWatcherEventData> watcherEventData;
 
-        private FileWatcherEvent(Path registeredPath, List<FileWatcherEventData> watcherEventData) {
+        private FileWatcherEvent(final Path registeredPath, final List<FileWatcherEventData> watcherEventData) {
             this.registeredPath = registeredPath;
             this.watcherEventData = watcherEventData;
         }
@@ -535,7 +549,7 @@ public final class FolderChooser extends Dialog<Path> implements Initializable {
         private final WatchEvent.Kind<?> kind;
         private final Path path;
 
-        private FileWatcherEventData(Path path, WatchEvent.Kind<?> kind, int count) {
+        private FileWatcherEventData(final Path path, final WatchEvent.Kind<?> kind, final int count) {
             this.path = path;
             this.kind = kind;
             this.count = count;

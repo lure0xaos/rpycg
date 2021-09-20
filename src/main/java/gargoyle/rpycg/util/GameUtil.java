@@ -8,8 +8,8 @@ public final class GameUtil {
         throw new IllegalStateException(GameUtil.class.getName());
     }
 
-    public static boolean isGameDirectory(Path path) {
-        return path != null &&
+    public static boolean isGameDirectory(final Path path) {
+        return null != path &&
                 Files.isDirectory(path) &&
                 Files.isDirectory(path.resolve("renpy")) &&
                 Files.isDirectory(path.resolve("game")) &&

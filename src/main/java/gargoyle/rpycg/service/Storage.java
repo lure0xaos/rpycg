@@ -33,7 +33,7 @@ public final class Storage {
         return gamePath.getValue();
     }
 
-    public void setGamePath(Path path) {
+    public void setGamePath(final Path path) {
         this.gamePath.setValue(path);
     }
 
@@ -41,7 +41,7 @@ public final class Storage {
         return modified.getValue();
     }
 
-    public void setModified(Boolean modified) {
+    public void setModified(final Boolean modified) {
         this.modified.setValue(modified);
     }
 
@@ -49,11 +49,11 @@ public final class Storage {
         return path.getValue();
     }
 
-    public void setPath(Path path) {
+    public void setPath(final Path path) {
         this.path.setValue(path);
     }
 
-    public ModelItem load(Path loadPath) {
+    public ModelItem load(final Path loadPath) {
         path.setValue(loadPath);
         return reload();
     }
@@ -66,28 +66,28 @@ public final class Storage {
         return path;
     }
 
+    public void saveAs(final Path savePath, final ModelItem root) {
+        path.setValue(savePath);
+        save(root);
+    }
+
     private ModelItem reload() {
         try {
-            ModelItem item = converter.fromScript(Files.readAllLines(path.getValue()));
+            final ModelItem item = converter.fromScript(Files.readAllLines(path.getValue()));
             modified.setValue(false);
             return item;
-        } catch (IOException e) {
+        } catch (final IOException e) {
             modified.setValue(true);
             throw new AppUserException(e, LC_ERROR_LOAD, path.toString());
         }
     }
 
-    private void save(ModelItem root) {
+    private void save(final ModelItem root) {
         try {
             Files.writeString(path.getValue(), String.join(System.lineSeparator(), converter.toScript(root)));
             modified.setValue(false);
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new AppUserException(e, LC_ERROR_SAVE, path.toString());
         }
-    }
-
-    public void saveAs(Path savePath, ModelItem root) {
-        path.setValue(savePath);
-        save(root);
     }
 }
