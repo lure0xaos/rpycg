@@ -1,6 +1,6 @@
 module RenPyCheatGeneratorFX {
-    exports gargoyle.fx;
-    exports gargoyle.fx.log;
+    requires kotlin.stdlib;
+    requires kotlin.reflect;
     requires javafx.controls;
     requires javafx.fxml;
     requires javafx.graphics;
@@ -9,5 +9,7 @@ module RenPyCheatGeneratorFX {
     requires java.prefs;
     requires java.logging;
 
+    exports gargoyle.fx;
+    exports gargoyle.fx.log;
     opens gargoyle.fx.icons;
 }
