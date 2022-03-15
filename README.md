@@ -39,30 +39,7 @@ Although application mimic the original, it has some differences:
 ## TODO
 - Improve a visual hint where dropped item will be placed, as it's difficult to aim
   - (should think of the way how to do it)
-- ~~Visually separate menus~~
-- ~~Some kind of syntax highlighting in Creator tab~~
 ## The latest changes
-- 05.08.2020 18:00 - First final usable version.
-- 10.08.2020 13:00 - Packaging into exe.
-- 10.08.2020 20:00 - Save&Load feature. Rearranged settings.
-- 10.08.2020 23:00 - Color if size is too big.
-- 12.08.2020 15:00 - Visually separate menus.
-- 12.08.2020 22:00 - Changed colors (and moved them to stylesheets).
-- 29.08.2020 22:00 - Added extended console dump.
-- 19.09.2020 17:00 - Added history rollback option (use of mouse wheel).
-- 21.09.2020 23:00 - Directory chooser switched to tree dialog (custom).
-- 02.10.2020 18:00 - Directory chooser expansion bug.
-- 05.10.2020 23:00 - Directory chooser directory changes watching.
-- 17.10.2020 23:00 - CORRUPTED MENU BUG FIXED (due to autoformat on commit, sorry :( ).
-- 19.10.2020 17:00 - some bugs fixed.
-- 19.10.2020 17:00 - validation.
-- 19.10.2020 19:00 - Back button now goes to previous menu (introducing menu aliases for such purposes).
-- 19.10.2020 19:00 - Validation and many bug fixes.
-- 20.10.2020 21:00 - Русский перевод.
-- 26.10.2020 16:00 - "Split menu" function (via context menu).
-- 13.11.2020 16:00 - Custom dialogs buttons for better user experience.
-- 17.11.2020 22:00 - Ui improvements.
-- 19.11.2020 15:00 - Syntax highlighting (Swing component).
-- 23.04.2021 13:00 - Reinstall option, i.e. update script in game folder.
+- 28.09.2021 18:00 - **GRADLE REWRITE (Java 16), INSTALLER OPTION!.**
 ### List of tested games
 - Corruption
