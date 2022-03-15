@@ -1,0 +1,9 @@
+.tree-view {
+    -fx-background-color: #d0d0d0;
+    -fx-background-image: url("Creator_girl.jpg");
+    -fx-background-repeat: no-repeat;
+    -fx-background-position: bottom right;
+}
+.tree-view .tree-cell {
+    -fx-background-color: null;
+}
