@@ -1,4 +1,6 @@
 module RenPyCheatGenerator {
+    requires kotlin.stdlib;
+    requires kotlin.stdlib.jdk7;
     requires RenPyCheatGeneratorFX;
     requires java.desktop;
     requires java.prefs;

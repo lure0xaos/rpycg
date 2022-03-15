@@ -6,5 +6,6 @@ pluginManagement {
         gradlePluginPortal()
     }
 }
-include("app")
+
 include("fx")
+include("app")
