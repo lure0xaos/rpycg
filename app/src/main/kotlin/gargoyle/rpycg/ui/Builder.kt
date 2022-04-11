@@ -112,7 +112,9 @@ class Builder : ScrollPane(), Initializable {
 
     private fun addItem(item: TreeItem<DisplayItem>, displayItem: DisplayItem, expanded: Boolean) {
         val newItem: TreeItem<DisplayItem> = DisplayItem.toTreeItem(displayItem, expanded)
-        item.children.add(newItem)
+        FxRun.runLater {
+            item.children.add(newItem)
+        }
         changed.value = true
         selectItem(newItem)
     }
@@ -407,22 +409,26 @@ class Builder : ScrollPane(), Initializable {
     }
 
     private fun putAbove(destItem: TreeItem<DisplayItem>, dragItem: TreeItem<DisplayItem>) {
-        val destSiblings = destItem.parent.children
-        dragItem.parent.children.remove(dragItem)
-        destSiblings.add(destSiblings.indexOf(destItem), dragItem)
-        selectItem(dragItem)
+        FxRun.runLater {
+            val destSiblings = destItem.parent.children
+            dragItem.parent.children.remove(dragItem)
+            destSiblings.add(destSiblings.indexOf(destItem), dragItem)
+            selectItem(dragItem)
+        }
     }
 
     private fun putBelow(destItem: TreeItem<DisplayItem>, dragItem: TreeItem<DisplayItem>) {
-        val destSiblings = destItem.parent.children
-        val index = destSiblings.indexOf(destItem)
-        dragItem.parent.children.remove(dragItem)
-        if (index < destSiblings.size - 1) {
-            destSiblings.add(index + 1, dragItem)
-        } else {
-            destSiblings.add(dragItem)
+        FxRun.runLater {
+            val destSiblings = destItem.parent.children
+            val index = destSiblings.indexOf(destItem)
+            dragItem.parent.children.remove(dragItem)
+            if (index < destSiblings.size - 1) {
+                destSiblings.add(index + 1, dragItem)
+            } else {
+                destSiblings.add(dragItem)
+            }
+            selectItem(dragItem)
         }
-        selectItem(dragItem)
     }
 
     private fun removeItem(treeItem: TreeItem<DisplayItem>) {
@@ -433,26 +439,32 @@ class Builder : ScrollPane(), Initializable {
                 )
             )
         ) {
-            treeItem.parent.children.remove(treeItem)
+            FxRun.runLater {
+                treeItem.parent.children.remove(treeItem)
+            }
         }
     }
 
     private fun replaceItem(item: TreeItem<DisplayItem>?, displayItem: DisplayItem) {
-        if (null != item) {
-            item.value = displayItem
-            changed.value = true
-            selectItem(item)
+        FxRun.runLater {
+            if (null != item) {
+                item.value = displayItem
+                changed.value = true
+                selectItem(item)
+            }
         }
     }
 
     private fun selectItem(item: TreeItem<DisplayItem>) {
-        var treeItem: TreeItem<DisplayItem>? = item
-        while (null != treeItem) {
-            treeItem.isExpanded = null != treeItem.value && ModelType.MENU === treeItem.value!!.modelType.value
-            treeItem = treeItem.parent
+        FxRun.runLater {
+            var treeItem: TreeItem<DisplayItem>? = item
+            while (null != treeItem) {
+                treeItem.isExpanded = null != treeItem.value && ModelType.MENU === treeItem.value!!.modelType.value
+                treeItem = treeItem.parent
+            }
+            tree.selectionModel.select(item)
+            tree.scrollTo(tree.getRow(item))
         }
-        tree.selectionModel.select(item)
-        tree.scrollTo(tree.getRow(item))
     }
 
     private fun shouldClearRoot(): Boolean =
@@ -461,7 +473,9 @@ class Builder : ScrollPane(), Initializable {
     private fun shouldUpdateTree(root: TreeItem<DisplayItem>): Boolean =
         if (isDifferentTrees(tree.root, root)) {
             tree.root = root
-            root.isExpanded = true
+            FxRun.runLater {
+                root.isExpanded = true
+            }
             selectItem(root)
             true
         } else false
@@ -494,8 +508,8 @@ class Builder : ScrollPane(), Initializable {
     }
 
     private fun updateCell(cell: TreeCell<DisplayItem>, treeItem: TreeItem<DisplayItem>, cellIndex: Int) {
-        cell.contextMenu = createContextMenuForCell(treeItem)
         FxRun.runLater {
+            cell.contextMenu = createContextMenuForCell(treeItem)
             setCellZebraDecorations(cell, cell.treeItem, cellIndex)
             setCellSignalDecorations(cell, cell.treeItem)
             setCellSplitDecorations(cell, cell.treeItem)
@@ -544,16 +558,18 @@ class Builder : ScrollPane(), Initializable {
             get() = emptyPredicate(skinnable)
 
         private fun updatePlaceholderSupport() {
-            if (isTreeEmpty) {
-                if (null == placeholderRegion) {
-                    placeholderRegion = StackPane()
-                    placeholderRegion!!.styleClass.setAll(CLASS_PLACEHOLDER)
-                    children.add(placeholderRegion)
-                    placeholderRegion!!.children.setAll(placeholder)
+            FxRun.runLater {
+                if (isTreeEmpty) {
+                    if (null == placeholderRegion) {
+                        placeholderRegion = StackPane()
+                        placeholderRegion!!.styleClass.setAll(CLASS_PLACEHOLDER)
+                        children.add(placeholderRegion)
+                        placeholderRegion!!.children.setAll(placeholder)
+                    }
                 }
+                virtualFlow.isVisible = !isTreeEmpty
+                placeholderRegion?.isVisible = isTreeEmpty
             }
-            virtualFlow.isVisible = !isTreeEmpty
-            placeholderRegion?.isVisible = isTreeEmpty
         }
 
         companion object {

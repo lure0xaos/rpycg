@@ -102,7 +102,7 @@ jlink {
 }
 
 tasks.build {
-    dependsOn += tasks.jpackage
+//    dependsOn += tasks.jpackage
 }
 
 tasks.startScripts {

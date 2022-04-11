@@ -15,7 +15,6 @@ import kotlin.reflect.KClass
 
 object FxUtil {
 
-    private val CONTROL = ResourceBundle.Control.getControl(ResourceBundle.Control.FORMAT_DEFAULT)
     private val PATTERN_FORMAT = ("\\{([^}{'\\s]+)}").toRegex()
 
     fun findResource(baseClass: KClass<*>, locale: Locale, baseName: String, suffixes: String): URL? {

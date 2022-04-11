@@ -1,6 +1,7 @@
 package gargoyle.rpycg.ui
 
 import gargoyle.fx.FxContext
+import gargoyle.fx.FxRun
 import gargoyle.fx.FxUtil.get
 import javafx.beans.DefaultProperty
 import javafx.beans.property.Property
@@ -91,7 +92,9 @@ class KeyText : TextField() {
     }
 
     private fun updateTooltip(keyCodeCombination: KeyCodeCombination, tooltipString: String) {
-        tooltip = Tooltip("$tooltipString ${keyCodeCombination.displayText}")
+        FxRun.runLater {
+            tooltip = Tooltip("$tooltipString ${keyCodeCombination.displayText}")
+        }
     }
 
     companion object {

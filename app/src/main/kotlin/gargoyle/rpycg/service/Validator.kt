@@ -7,7 +7,7 @@ import javafx.beans.value.ObservableValue
 class Validator {
     private val listeners: MutableMap<Property<*>, (Set<String>) -> Unit> = LinkedHashMap(2)
     private val valid = SimpleBooleanProperty(true)
-    private val validators: MutableMap<Property<*>, MutableSet<(Any) -> String>> = LinkedHashMap(2)
+    private val validators: MutableMap<Property<*>, MutableSet<(Any) -> String?>> = LinkedHashMap(2)
 
     @Suppress("UNCHECKED_CAST")
     fun <T : Any> addValidator(property: Property<T>, validator: (T) -> String?, listener: (Set<String>) -> Unit) {
@@ -15,8 +15,7 @@ class Validator {
             listeners[property] = listener
             validators[property] = mutableSetOf()
             property.addListener { _: ObservableValue<out T>, _: T, _: T ->
-                val errors = validators[property]!!
-                    .map { it(property.value) }
+                val errors: List<String> = validators[property]!!.mapNotNull { it(property.value) }
                 validate()
                 listener(errors.toSet())
             }
@@ -29,9 +28,9 @@ class Validator {
     fun validProperty(): SimpleBooleanProperty = valid
 
     fun validate(): Map<Property<*>, Set<String>> {
-        val errors: MutableMap<Property<*>, MutableSet<String>> =
-            validators.mapValues { (key, value): Map.Entry<Property<*>, MutableSet<(Any) -> String>> ->
-                value.map { it(key.value) }.toMutableSet()
+        val errors =
+            validators.mapValues { (key, value) ->
+                value.mapNotNull { it(key.value) }.toMutableSet()
             }.toMutableMap()
         listeners.forEach { (property: Property<*>, listConsumer: (Set<String>) -> Unit) ->
             listConsumer(errors[property]!!)
