@@ -39,15 +39,15 @@ class CodeConverter(private val context: FxContext, private val settings: Settin
             buffer += "    # Define function to open the menu"
             buffer += "    def enable_cheat_menu():"
             buffer += "        renpy.call_in_new_context(\"show_cheat_menu\")"
-            buffer += "    config.keymap[\"cheat_menu_bind\"] = [\"#${keyConverter.toBinding(settings.getKeyCheat())}\"]"
+            buffer += "    config.keymap[\"cheat_menu_bind\"] = [\"${keyConverter.toBinding(settings.getKeyCheat())}\"]"
         }
         if (settings.getEnableConsole()) {
             buffer += "    # Enable fast console"
-            buffer += "    config.keymap[\"console\"] = [\"#${keyConverter.toBinding(settings.getKeyConsole())}\"]"
+            buffer += "    config.keymap[\"console\"] = [\"${keyConverter.toBinding(settings.getKeyConsole())}\"]"
         }
         if (settings.getEnableDeveloper()) {
             buffer += "    # Enable developer mode"
-            buffer += "    config.keymap[\"developer\"] = [\"#${keyConverter.toBinding(settings.getKeyDeveloper())}\"]"
+            buffer += "    config.keymap[\"developer\"] = [\"${keyConverter.toBinding(settings.getKeyDeveloper())}\"]"
             buffer += "    config.underlay.append(renpy.Keymap(cheat_menu_bind=enable_cheat_menu))"
         }
         if (settings.getEnableRollback()) {
@@ -80,7 +80,7 @@ class CodeConverter(private val context: FxContext, private val settings: Settin
         buffer += "    menu:"
         buffer += createCheatSubmenu(1, messages, root, "CheatMenu")
         buffer += "        # nevermind"
-        buffer += "        \"~#${messages[LC_NEVERMIND, MSG_NEVERMIND]}~\":"
+        buffer += "        \"~${messages[LC_NEVERMIND, MSG_NEVERMIND]}~\":"
         buffer += "            return"
         return buffer
     }
@@ -100,39 +100,39 @@ class CodeConverter(private val context: FxContext, private val settings: Settin
                 ModelType.VARIABLE == modelType -> {
                     val itemType = item.type
                     val itemValue = item.value
-                    buffer += indent(indent, "    # variable #${itemName}=#${itemType}(#${itemValue}) #${itemLabel}")
+                    buffer += indent(indent, "    # variable ${itemName}=${itemType}(${itemValue}) ${itemLabel}")
                     val itemTypeKeyword = itemType.keyword
                     if (itemValue.isNotBlank()) {
-                        buffer += indent(indent, "    \"$#${itemLabel}=#${itemValue} \\[[#${itemName}]\\]\" :")
+                        buffer += indent(indent, "    \"$${itemLabel}=${itemValue} \\[[${itemName}]\\]\" :")
                         buffer += if (VarType.STR == itemType) {
-                            indent(indent, "        $#${itemName} = \"#${itemTypeKeyword}(\"#${itemValue}\")\"")
+                            indent(indent, "        $${itemName} = \"${itemTypeKeyword}(\"${itemValue}\")\"")
                         } else {
-                            indent(indent, "        $#${itemName} = #${itemValue}")
+                            indent(indent, "        $${itemName} = ${itemValue}")
                         }
                     } else {
-                        buffer += indent(indent, "    \"#${itemLabel} \\[[#${itemName}]\\]\" :")
+                        buffer += indent(indent, "    \"${itemLabel} \\[[${itemName}]\\]\" :")
                         val prompt = messages[LC_MESSAGE_PROMPT, MSG_MESSAGE_PROMPT]
                         buffer += indent(
                             indent,
-                            "        $#${itemName} = #${itemTypeKeyword}(renpy.input(\"#${
+                            "        $${itemName} = ${itemTypeKeyword}(renpy.input(\"${
                                 FxUtil.format(prompt, mapOf("label" to itemLabel, "value" to "[$itemName]"))
-                            }\").strip() or #${itemName})",
+                            }\").strip() or ${itemName})",
                         )
                     }
-                    buffer += indent(indent, "        jump #${parentLabel}")
+                    buffer += indent(indent, "        jump ${parentLabel}")
                 }
                 ModelType.MENU == modelType -> {
-                    buffer += indent(indent, "    # menu #${itemLabel}")
-                    buffer += indent(indent, "    \"~#${itemLabel}~\":")
-                    buffer += indent(indent, "        label #${itemName}:")
+                    buffer += indent(indent, "    # menu ${itemLabel}")
+                    buffer += indent(indent, "    \"~${itemLabel}~\":")
+                    buffer += indent(indent, "        label ${itemName}:")
                     buffer += indent(indent, "            menu:")
                     buffer += createCheatSubmenu(indent + 3, messages, item, itemName)
                     buffer += indent(indent, "                # back")
                     buffer += indent(
                         indent,
-                        "                \"~#${messages[LC_BACK, MSG_BACK]}~\":"
+                        "                \"~${messages[LC_BACK, MSG_BACK]}~\":"
                     )
-                    buffer += indent(indent, "                    jump #${parentLabel}")
+                    buffer += indent(indent, "                    jump ${parentLabel}")
                 }
             }
         }
