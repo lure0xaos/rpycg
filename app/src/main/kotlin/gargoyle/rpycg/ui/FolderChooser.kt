@@ -16,34 +16,19 @@ import javafx.fxml.FXML
 import javafx.fxml.Initializable
 import javafx.scene.Node
 import javafx.scene.Parent
+import javafx.scene.control.*
 import javafx.scene.control.ButtonBar.ButtonData
-import javafx.scene.control.Dialog
-import javafx.scene.control.SelectionMode
-import javafx.scene.control.Tooltip
-import javafx.scene.control.TreeCell
-import javafx.scene.control.TreeItem
-import javafx.scene.control.TreeView
 import javafx.scene.image.ImageView
 import javafx.util.Callback
 import java.io.Closeable
 import java.net.InetAddress
 import java.net.URL
 import java.net.UnknownHostException
-import java.nio.file.ClosedWatchServiceException
-import java.nio.file.FileSystems
-import java.nio.file.Path
-import java.nio.file.StandardWatchEventKinds
-import java.nio.file.WatchEvent
-import java.nio.file.WatchKey
-import java.nio.file.WatchService
-import java.util.ResourceBundle
+import java.nio.file.*
+import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import javax.swing.filechooser.FileSystemView
-import kotlin.io.path.isDirectory
-import kotlin.io.path.isReadable
-import kotlin.io.path.isRegularFile
-import kotlin.io.path.isSameFileAs
-import kotlin.io.path.listDirectoryEntries
+import kotlin.io.path.*
 
 class FolderChooser : Dialog<Path>(), Initializable {
     private val additionalIconProvider: Property<(Path, Boolean) -> Node> = SimpleObjectProperty(null)
@@ -346,24 +331,17 @@ class FolderChooser : Dialog<Path>(), Initializable {
                         val dataPath: Path = data.path
                         try {
                             var key: WatchKey? = null
-                            val watchPaths: MutableList<FileWatcherEventData> = mutableListOf()
+                            var matches = false
                             while (null != watchService.poll()?.also { key = it }) {
-
                                 for (watchEvent in key!!.pollEvents()) {
                                     if (dataPath == path) {
-                                        watchPaths.add(
-                                            FileWatcherEventData(
-                                                dataPath.resolve(watchEvent.context() as Path),
-                                                watchEvent.kind(),
-                                                watchEvent.count()
-                                            )
-                                        )
+                                        matches = true
                                     }
                                 }
                                 key?.reset()
                             }
-                            if (watchPaths.isNotEmpty()) {
-                                data.callback(FileWatcherEvent(path, watchPaths))
+                            if (matches) {
+                                data.callback()
                             }
                         } catch (e: ClosedWatchServiceException) {
                             watch.remove(path)
@@ -373,7 +351,7 @@ class FolderChooser : Dialog<Path>(), Initializable {
             }, FileWatcher::class.qualifiedName!!)
         }
 
-        fun register(path: Path?, callback: (FileWatcherEvent) -> Boolean) {
+        fun register(path: Path?, callback: () -> Boolean) {
             if (path?.isReadable() == true && !watch.containsKey(path)) {
                 try {
                     path.register(
@@ -401,14 +379,7 @@ class FolderChooser : Dialog<Path>(), Initializable {
         }
     }
 
-    private class FileWatcherData(val path: Path, val callback: (FileWatcherEvent) -> Boolean)
-    private class FileWatcherEvent(
-        private val registeredPath: Path, private val watcherEventData: List<FileWatcherEventData>
-    )
-
-    private class FileWatcherEventData(
-        private val path: Path, private val kind: WatchEvent.Kind<*>, private val count: Int
-    )
+    private class FileWatcherData(val path: Path, val callback: () -> Boolean)
 
     companion object {
         private const val LC_CANCEL = "cancel"

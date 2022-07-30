@@ -16,7 +16,7 @@ import javafx.scene.input.KeyCode
 import javafx.scene.input.KeyCodeCombination
 import javafx.scene.input.KeyCombination
 import javafx.scene.input.KeyEvent
-import java.util.ResourceBundle
+import java.util.*
 
 @DefaultProperty("keyCode")
 class KeyText : TextField() {
@@ -98,7 +98,7 @@ class KeyText : TextField() {
     }
 
     companion object {
-        val NONE = KeyCodeCombination(KeyCode.CODE_INPUT)
+        val NONE: KeyCodeCombination = KeyCodeCombination(KeyCode.CODE_INPUT)
         private const val LC_DEFAULT = "default-is"
         private const val LC_PRESS_ANY_KEY = "press-any-key"
         private fun toCombination(event: KeyEvent): KeyCodeCombination =

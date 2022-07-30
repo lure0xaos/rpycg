@@ -13,7 +13,7 @@ import java.io.IOException
 import java.io.InputStreamReader
 import java.net.URL
 import java.nio.charset.Charset
-import java.util.ResourceBundle
+import java.util.*
 
 class CodeConverter(private val context: FxContext, private val settings: Settings) {
 
@@ -100,17 +100,17 @@ class CodeConverter(private val context: FxContext, private val settings: Settin
                 ModelType.VARIABLE == modelType -> {
                     val itemType = item.type
                     val itemValue = item.value
-                    buffer += indent(indent, "    # variable ${itemName}=${itemType}(${itemValue}) ${itemLabel}")
+                    buffer += indent(indent, "    # variable ${itemName}=${itemType}(${itemValue}) $itemLabel")
                     val itemTypeKeyword = itemType.keyword
                     if (itemValue.isNotBlank()) {
                         buffer += indent(indent, "    \"$${itemLabel}=${itemValue} \\[[${itemName}]\\]\" :")
                         buffer += if (VarType.STR == itemType) {
                             indent(indent, "        $${itemName} = \"${itemTypeKeyword}(\"${itemValue}\")\"")
                         } else {
-                            indent(indent, "        $${itemName} = ${itemValue}")
+                            indent(indent, "        $${itemName} = $itemValue")
                         }
                     } else {
-                        buffer += indent(indent, "    \"${itemLabel} \\[[${itemName}]\\]\" :")
+                        buffer += indent(indent, "    \"$itemLabel \\[[${itemName}]\\]\" :")
                         val prompt = messages[LC_MESSAGE_PROMPT, MSG_MESSAGE_PROMPT]
                         buffer += indent(
                             indent,
@@ -119,10 +119,10 @@ class CodeConverter(private val context: FxContext, private val settings: Settin
                             }\").strip() or ${itemName})",
                         )
                     }
-                    buffer += indent(indent, "        jump ${parentLabel}")
+                    buffer += indent(indent, "        jump $parentLabel")
                 }
                 ModelType.MENU == modelType -> {
-                    buffer += indent(indent, "    # menu ${itemLabel}")
+                    buffer += indent(indent, "    # menu $itemLabel")
                     buffer += indent(indent, "    \"~${itemLabel}~\":")
                     buffer += indent(indent, "        label ${itemName}:")
                     buffer += indent(indent, "            menu:")
@@ -132,7 +132,7 @@ class CodeConverter(private val context: FxContext, private val settings: Settin
                         indent,
                         "                \"~${messages[LC_BACK, MSG_BACK]}~\":"
                     )
-                    buffer += indent(indent, "                    jump ${parentLabel}")
+                    buffer += indent(indent, "                    jump $parentLabel")
                 }
             }
         }
